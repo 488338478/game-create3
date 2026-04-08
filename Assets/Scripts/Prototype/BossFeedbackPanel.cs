@@ -5,8 +5,8 @@ namespace GameCreate3
 {
     public sealed class BossFeedbackPanel : MonoBehaviour
     {
-        private Text feedbackLabel;
-        private Image bubbleImage;
+        [SerializeField] private Text feedbackLabel;
+        [SerializeField] private Image bubbleImage;
 
         public void Initialize(Text label, Image bubble)
         {

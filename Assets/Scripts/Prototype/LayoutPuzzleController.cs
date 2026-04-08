@@ -15,12 +15,17 @@ namespace GameCreate3
             "这版看着还是别扭。"
         };
 
-        private CanvasGroup interactionGroup;
-        private Button submitButton;
-        private BossFeedbackPanel feedbackPanel;
-        private Text hintLabel;
-        private List<DraggableLayoutBlock> blocks;
-        private List<RectTransform> targetRects;
+        [SerializeField] private CanvasGroup interactionGroup;
+        [SerializeField] private Button submitButton;
+        [SerializeField] private BossFeedbackPanel feedbackPanel;
+        [SerializeField] private Text hintLabel;
+        [SerializeField] private List<DraggableLayoutBlock> blocks = new List<DraggableLayoutBlock>();
+        [SerializeField] private List<RectTransform> targetRects = new List<RectTransform>();
+        [SerializeField] private bool forceFirstFailure = true;
+        [SerializeField] private float strictTolerance = 4f;
+        [SerializeField] private float assistedTolerance = 50f;
+        [SerializeField] private float disabledAlpha = 0.42f;
+
         private bool assistEnabled;
         private bool interactable;
         private bool forcedFailurePending = true;
@@ -60,6 +65,42 @@ namespace GameCreate3
             }
         }
 
+        public void RuntimeConfigure(
+            CanvasGroup canvasGroup,
+            Button submit,
+            BossFeedbackPanel bossFeedback,
+            Text hint,
+            List<DraggableLayoutBlock> blockList,
+            List<RectTransform> targets)
+        {
+            Initialize(canvasGroup, submit, bossFeedback, hint, blockList, targets);
+        }
+
+        private void Awake()
+        {
+            forcedFailurePending = forceFirstFailure;
+        }
+
+        private void OnEnable()
+        {
+            if (submitButton != null)
+            {
+                submitButton.onClick.RemoveListener(HandleSubmitClicked);
+                submitButton.onClick.AddListener(HandleSubmitClicked);
+            }
+
+            SetAssistEnabled(false);
+            SetInteractable(true);
+        }
+
+        private void OnDisable()
+        {
+            if (submitButton != null)
+            {
+                submitButton.onClick.RemoveListener(HandleSubmitClicked);
+            }
+        }
+
         public void SetAssistEnabled(bool enabled)
         {
             assistEnabled = enabled;
@@ -90,7 +131,7 @@ namespace GameCreate3
             {
                 interactionGroup.interactable = enabled;
                 interactionGroup.blocksRaycasts = enabled;
-                interactionGroup.alpha = 1f;
+                interactionGroup.alpha = enabled ? 1f : disabledAlpha;
             }
 
             if (submitButton != null)
@@ -108,10 +149,11 @@ namespace GameCreate3
         {
             var totalCount = blocks.Count;
             var alignedCount = 0;
+            var tolerance = assistEnabled ? assistedTolerance : strictTolerance;
 
             foreach (var block in blocks)
             {
-                if (block.IsAligned(assistEnabled ? 50f : 4f))
+                if (block.IsAligned(tolerance))
                 {
                     alignedCount++;
                 }
@@ -163,6 +205,18 @@ namespace GameCreate3
             var line = rejectLines[rejectLineIndex];
             rejectLineIndex = (rejectLineIndex + 1) % rejectLines.Length;
             return line;
+        }
+
+        public void ResetPuzzle()
+        {
+            forcedFailurePending = forceFirstFailure;
+            rejectLineIndex = 0;
+            SetAssistEnabled(false);
+            SetInteractable(true);
+            foreach (var block in blocks)
+            {
+                block.ResetBlock();
+            }
         }
     }
 

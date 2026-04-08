@@ -6,20 +6,35 @@ namespace GameCreate3
 {
     public sealed class DraggableLayoutBlock : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        private RectTransform rectTransform;
-        private RectTransform targetRect;
+        [SerializeField] private RectTransform rectTransform;
+        [SerializeField] private RectTransform targetRect;
         private Image image;
         private bool assistEnabled;
         private bool interactable = true;
         private bool isDragging;
         private bool locked;
         private Vector2 pointerOffset;
+        private Vector2 initialPosition;
 
         public void Initialize(RectTransform blockRect, RectTransform target)
         {
             rectTransform = blockRect;
             targetRect = target;
-            image = GetComponent<Image>();
+            CacheComponents();
+        }
+
+        private void Awake()
+        {
+            if (rectTransform == null)
+            {
+                rectTransform = transform as RectTransform;
+            }
+
+            CacheComponents();
+            if (rectTransform != null)
+            {
+                initialPosition = rectTransform.anchoredPosition;
+            }
         }
 
         public void SetAssistEnabled(bool enabled)
@@ -127,6 +142,25 @@ namespace GameCreate3
             }
 
             image.color = color;
+        }
+
+        private void CacheComponents()
+        {
+            if (image == null)
+            {
+                image = GetComponent<Image>();
+            }
+        }
+
+        public void ResetBlock()
+        {
+            locked = false;
+            isDragging = false;
+            if (rectTransform != null)
+            {
+                rectTransform.anchoredPosition = initialPosition;
+            }
+            UpdateVisual();
         }
     }
 }

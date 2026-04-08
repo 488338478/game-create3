@@ -3,6 +3,9 @@
 最后更新：2026-03-23  
 适用版本：Unity 2022.3.62f3c1
 
+## 0. 原型 / 实验文档入口
+- 第二章双世界联动大原型（`Chapter2Prototype.unity` 运行时自动生成版）：`Docs/Chapter2_Demo_Prototype.md`
+
 ## 1. 项目定位
 - 类型：2D 横版滚动叙事冒险（Narrative Side-scroller）。
 - 主题：绘本 + 童话。

@@ -6,10 +6,11 @@ namespace GameCreate3
     public sealed class DreamGoalTrigger : MonoBehaviour
     {
         private bool completed;
-        private Transform destination;
-        private Transform movingGoal;
+        [SerializeField] private Transform destination;
+        [SerializeField] private Transform movingGoal;
         private Rigidbody2D goalBody;
         [SerializeField] private float completionDistance = 0.08f;
+        private Vector3 initialPosition;
 
         public event Action Completed;
 
@@ -18,6 +19,20 @@ namespace GameCreate3
             movingGoal = goalTransform;
             destination = destinationTransform;
             goalBody = goalTransform != null ? goalTransform.GetComponent<Rigidbody2D>() : null;
+        }
+
+        private void Awake()
+        {
+            if (movingGoal == null)
+            {
+                movingGoal = transform;
+            }
+
+            goalBody = movingGoal != null ? movingGoal.GetComponent<Rigidbody2D>() : null;
+            if (movingGoal != null)
+            {
+                initialPosition = movingGoal.position;
+            }
         }
 
         private void Update()
@@ -46,6 +61,24 @@ namespace GameCreate3
 
             completed = true;
             Completed?.Invoke();
+        }
+
+        public void ResetGoal()
+        {
+            completed = false;
+            goalBody = movingGoal != null ? movingGoal.GetComponent<Rigidbody2D>() : null;
+            if (movingGoal != null)
+            {
+                movingGoal.position = initialPosition;
+            }
+            if (goalBody != null && goalBody.bodyType == RigidbodyType2D.Static)
+            {
+                goalBody.bodyType = RigidbodyType2D.Dynamic;
+                goalBody.gravityScale = 0f;
+                goalBody.constraints = RigidbodyConstraints2D.FreezePositionY | RigidbodyConstraints2D.FreezeRotation;
+                goalBody.velocity = Vector2.zero;
+                goalBody.angularVelocity = 0f;
+            }
         }
     }
 }

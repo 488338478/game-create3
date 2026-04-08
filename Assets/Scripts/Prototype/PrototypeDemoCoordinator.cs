@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,130 +6,360 @@ namespace GameCreate3
 {
     public sealed class PrototypeDemoCoordinator : MonoBehaviour
     {
-        private DemoState currentState;
-        private Camera worldCamera;
-        private LayoutPuzzleController layoutPuzzle;
-        private LeftWorldActivationController leftWorld;
-        private DreamGoalTrigger dreamGoal;
-        private RectTransform leftFrame;
-        private RectTransform rightFrame;
-        private Text stageLabel;
-        private Text leftStateText;
-        private Text rightStateText;
-        private Image leftMask;
-        private Image rightMask;
-        private Text completionLabel;
+        [Header("Camera")]
+        [SerializeField] private Camera worldCamera;
+        [SerializeField] private SideScrollCameraFollow cameraFollow;
 
-        public void Initialize(
-            Camera gameplayCamera,
-            LayoutPuzzleController puzzle,
-            LeftWorldActivationController leftWorldController,
-            DreamGoalTrigger goalTrigger,
-            RectTransform leftWorldFrame,
-            RectTransform rightWorldFrame,
-            Text stageText,
-            Text leftHintText,
-            Text rightHintText,
-            Image leftOverlayMask,
-            Image rightOverlayMask,
-            Text completionText)
+        [Header("Screen Frames")]
+        [SerializeField] private RectTransform leftFrame;
+        [SerializeField] private RectTransform rightFrame;
+        [SerializeField] private Image leftMask;
+        [SerializeField] private Image rightMask;
+        [SerializeField] private Text stageLabel;
+        [SerializeField] private Text leftHint;
+        [SerializeField] private Text rightHint;
+        [SerializeField] private Text completionLabel;
+
+        [Header("Player")]
+        [SerializeField] private Transform player;
+        [SerializeField] private SideScrollerPlayerController playerController;
+        [SerializeField] private Transform stage1Spawn;
+        [SerializeField] private Transform stage2Spawn;
+
+        [Header("Stage Roots")]
+        [SerializeField] private GameObject stage1LeftRoot;
+        [SerializeField] private GameObject stage2LeftRoot;
+        [SerializeField] private GameObject stage1RightRoot;
+        [SerializeField] private GameObject stage2RightRoot;
+
+        [Header("Stage Controllers")]
+        [SerializeField] private LayoutPuzzleController stage1RightController;
+        [SerializeField] private DreamGoalTrigger stage1DreamController;
+        [SerializeField] private LeftWorldActivationController stage1LeftController;
+        [SerializeField] private ColorPuzzleController stage2RightController;
+        [SerializeField] private DreamColorCollectController stage2LeftController;
+
+        private ChapterState currentState;
+        private bool subscriptionsBound;
+
+        private void OnEnable()
         {
-            worldCamera = gameplayCamera;
-            layoutPuzzle = puzzle;
-            leftWorld = leftWorldController;
-            dreamGoal = goalTrigger;
-            leftFrame = leftWorldFrame;
-            rightFrame = rightWorldFrame;
-            stageLabel = stageText;
-            leftStateText = leftHintText;
-            rightStateText = rightHintText;
-            leftMask = leftOverlayMask;
-            rightMask = rightOverlayMask;
-            completionLabel = completionText;
+            BindSubscriptions();
+        }
 
-            if (dreamGoal != null)
+        private void OnDisable()
+        {
+            UnbindSubscriptions();
+        }
+
+        private void Start()
+        {
+            BeginChapter();
+        }
+
+        public void InitializeRuntime(
+            Camera runtimeWorldCamera,
+            SideScrollCameraFollow runtimeCameraFollow,
+            RectTransform runtimeLeftFrame,
+            RectTransform runtimeRightFrame,
+            Image runtimeLeftMask,
+            Image runtimeRightMask,
+            Text runtimeStageLabel,
+            Text runtimeLeftHint,
+            Text runtimeRightHint,
+            Text runtimeCompletionLabel,
+            Transform runtimePlayer,
+            SideScrollerPlayerController runtimePlayerController,
+            Transform runtimeStage1Spawn,
+            Transform runtimeStage2Spawn,
+            GameObject runtimeStage1LeftRoot,
+            GameObject runtimeStage2LeftRoot,
+            GameObject runtimeStage1RightRoot,
+            GameObject runtimeStage2RightRoot,
+            LayoutPuzzleController runtimeStage1RightController,
+            DreamGoalTrigger runtimeStage1DreamController,
+            LeftWorldActivationController runtimeStage1LeftController,
+            ColorPuzzleController runtimeStage2RightController,
+            DreamColorCollectController runtimeStage2LeftController)
+        {
+            worldCamera = runtimeWorldCamera;
+            cameraFollow = runtimeCameraFollow;
+            leftFrame = runtimeLeftFrame;
+            rightFrame = runtimeRightFrame;
+            leftMask = runtimeLeftMask;
+            rightMask = runtimeRightMask;
+            stageLabel = runtimeStageLabel;
+            leftHint = runtimeLeftHint;
+            rightHint = runtimeRightHint;
+            completionLabel = runtimeCompletionLabel;
+            player = runtimePlayer;
+            playerController = runtimePlayerController;
+            stage1Spawn = runtimeStage1Spawn;
+            stage2Spawn = runtimeStage2Spawn;
+            stage1LeftRoot = runtimeStage1LeftRoot;
+            stage2LeftRoot = runtimeStage2LeftRoot;
+            stage1RightRoot = runtimeStage1RightRoot;
+            stage2RightRoot = runtimeStage2RightRoot;
+            stage1RightController = runtimeStage1RightController;
+            stage1DreamController = runtimeStage1DreamController;
+            stage1LeftController = runtimeStage1LeftController;
+            stage2RightController = runtimeStage2RightController;
+            stage2LeftController = runtimeStage2LeftController;
+
+            if (isActiveAndEnabled)
             {
-                dreamGoal.Completed += HandleDreamComplete;
+                BindSubscriptions();
             }
         }
 
-        private void OnDestroy()
+        public void BeginChapter()
         {
-            if (dreamGoal != null)
+            if (completionLabel != null)
             {
-                dreamGoal.Completed -= HandleDreamComplete;
+                completionLabel.gameObject.SetActive(false);
             }
-        }
 
-        public void BeginDemo()
-        {
-            currentState = DemoState.Intro;
+            stage1RightController?.ResetPuzzle();
+            stage1DreamController?.ResetGoal();
+            stage2RightController?.ResetPuzzle();
+            stage2LeftController?.ResetStage();
+            SetStage1Active(true);
+            SetStage2Active(false);
+            MovePlayerTo(stage1Spawn);
             ApplyLayout(splitView: false);
-            ApplyRightWorldState(interactable: true, stateText: "拖动模块并点击提交");
-            ApplyLeftWorldState(interactable: false, stateText: "现实卡住后，梦境才会接管");
-            SetStage("第二章 DEMO：右屏排版卡关");
-            completionLabel.gameObject.SetActive(false);
-            currentState = DemoState.RightPuzzleBeforeDream;
+            ApplyStageLabel("第二章 阶段一：右屏排版");
+            ApplyLeftState(false, "梦境暂未开启");
+            ApplyRightState(true, "拖动模块并点击提交");
+            currentState = ChapterState.Stage1RightFullScreen;
         }
 
-        public void HandleRightSubmit(LayoutSubmitResult result)
+        private void HandleStage1Submit(LayoutSubmitResult result)
         {
-            if (layoutPuzzle == null)
-            {
-                return;
-            }
-
             switch (currentState)
             {
-                case DemoState.RightPuzzleBeforeDream:
-                    currentState = DemoState.BossReject;
+                case ChapterState.Stage1RightFullScreen:
                     ApplyLayout(splitView: true);
-                    SetStage("老板否掉了方案，梦境开始浮现");
-                    ApplyRightWorldState(interactable: false, stateText: "右屏暂时冻结，去左侧寻找答案");
-                    ApplyLeftWorldState(interactable: true, stateText: "控制角色跳到终点，修复空间感");
-                    currentState = DemoState.LeftPlatformSection;
+                    ApplyStageLabel("阶段一：进入梦境，恢复空间感");
+                    ApplyLeftState(true, "把梦境块推到目标位");
+                    ApplyRightState(false, "右屏暂时冻结，左侧继续");
+                    currentState = ChapterState.Stage1LeftUnlocked;
                     break;
 
-                case DemoState.RightPuzzleAfterDream:
-                    if (result.success)
+                case ChapterState.Stage1RightAssisted:
+                    if (!result.success)
                     {
-                        currentState = DemoState.BossApprove;
-                        SetStage("老板通过了排版方案");
-                        ApplyRightWorldState(interactable: false, stateText: "排版通过");
-                        ApplyLeftWorldState(interactable: false, stateText: "梦境已稳定");
-                        completionLabel.text = "Demo 完成：双世界联动闭环已验证";
-                        completionLabel.gameObject.SetActive(true);
-                        currentState = DemoState.DemoComplete;
-                    }
-                    else
-                    {
-                        SetStage("梦境已经帮你校准感觉，再试一次排版");
+                        ApplyStageLabel("阶段一：梦境已经帮助你校准排版，再试一次");
+                        return;
                     }
 
+                    currentState = ChapterState.Stage1Complete;
+                    EnterStage2();
                     break;
             }
         }
 
-        public void HandleDreamComplete()
+        private void HandleStage1DreamComplete()
         {
-            if (currentState != DemoState.LeftPlatformSection || layoutPuzzle == null)
+            if (currentState != ChapterState.Stage1LeftUnlocked)
             {
                 return;
             }
 
-            leftWorld.MarkCompleted();
-            layoutPuzzle.SetAssistEnabled(true);
-            ApplyLeftWorldState(interactable: true, stateText: "梦境仍可自由移动");
-            ApplyRightWorldState(interactable: true, stateText: "现在模块会吸附，重新提交");
-            SetStage("回到右屏：梦境让排版变得顺手");
-            currentState = DemoState.RightPuzzleAfterDream;
+            stage1LeftController?.MarkCompleted();
+            stage1RightController?.SetAssistEnabled(true);
+            ApplyStageLabel("阶段一：回到右屏完成排版");
+            ApplyLeftState(true, "梦境仍可自由移动");
+            ApplyRightState(true, "目标位已高亮，模块会自动吸附");
+            currentState = ChapterState.Stage1RightAssisted;
         }
 
-        private void ApplyLeftWorldState(bool interactable, string stateText)
+        private void EnterStage2()
         {
-            if (leftWorld != null)
+            SetStage1Active(false);
+            SetStage2Active(true);
+            MovePlayerTo(stage2Spawn);
+            ApplyLayout(splitView: false);
+            ApplyStageLabel("第二章 阶段二：右屏配色");
+            ApplyLeftState(false, "等待右屏再次卡住后解锁");
+            ApplyRightState(true, "先试着配色并提交");
+            stage2RightController?.SetDreamPaletteEnabled(false);
+            currentState = ChapterState.Stage2RightFullScreen;
+        }
+
+        private void HandleStage2Submit(ColorSubmitResult result)
+        {
+            switch (currentState)
             {
-                leftWorld.SetInteractive(interactable);
+                case ChapterState.Stage2RightFullScreen:
+                    ApplyLayout(splitView: true);
+                    ApplyStageLabel("阶段二：进入梦境，收集正确颜色");
+                    if (stage2LeftController != null)
+                    {
+                        stage2LeftController.SetInteractive(true);
+                    }
+                    ApplyLeftState(true, "收集正确颜色");
+                    ApplyRightState(false, "右屏暂时冻结，先去梦境寻找颜色");
+                    currentState = ChapterState.Stage2LeftUnlocked;
+                    break;
+
+                case ChapterState.Stage2RightAssisted:
+                    if (!result.success)
+                    {
+                        ApplyStageLabel("阶段二：使用梦境色卡完成配色");
+                        return;
+                    }
+
+                    currentState = ChapterState.Stage2Complete;
+                    FinishChapter();
+                    break;
+            }
+        }
+
+        private void HandleStage2DreamComplete(IReadOnlyList<Color> colors)
+        {
+            if (currentState != ChapterState.Stage2LeftUnlocked)
+            {
+                return;
+            }
+
+            stage2RightController?.SetDreamPaletteColors(colors);
+            stage2RightController?.SetDreamPaletteEnabled(true);
+            ApplyStageLabel("阶段二：回到右屏使用梦境色卡");
+            ApplyLeftState(true, "梦境仍可自由移动");
+            ApplyRightState(true, "梦境色卡已解锁，选择颜色并应用到目标区域");
+            currentState = ChapterState.Stage2RightAssisted;
+        }
+
+        private void FinishChapter()
+        {
+            ApplyLayout(splitView: true);
+            ApplyStageLabel("第二章完成");
+            ApplyLeftState(false, "本章完成");
+            ApplyRightState(false, "本章完成");
+            if (completionLabel != null)
+            {
+                completionLabel.text = "第二章大原型已完成";
+                completionLabel.gameObject.SetActive(true);
+            }
+
+            currentState = ChapterState.ChapterComplete;
+        }
+
+        private void BindSubscriptions()
+        {
+            UnbindSubscriptions();
+
+            if (stage1RightController != null)
+            {
+                stage1RightController.OnSubmitAttempted += HandleStage1Submit;
+            }
+
+            if (stage1DreamController != null)
+            {
+                stage1DreamController.Completed += HandleStage1DreamComplete;
+            }
+
+            if (stage2RightController != null)
+            {
+                stage2RightController.OnSubmitAttempted += HandleStage2Submit;
+            }
+
+            if (stage2LeftController != null)
+            {
+                stage2LeftController.Completed += HandleStage2DreamComplete;
+            }
+
+            subscriptionsBound = true;
+        }
+
+        private void UnbindSubscriptions()
+        {
+            if (!subscriptionsBound)
+            {
+                return;
+            }
+
+            if (stage1RightController != null)
+            {
+                stage1RightController.OnSubmitAttempted -= HandleStage1Submit;
+            }
+
+            if (stage1DreamController != null)
+            {
+                stage1DreamController.Completed -= HandleStage1DreamComplete;
+            }
+
+            if (stage2RightController != null)
+            {
+                stage2RightController.OnSubmitAttempted -= HandleStage2Submit;
+            }
+
+            if (stage2LeftController != null)
+            {
+                stage2LeftController.Completed -= HandleStage2DreamComplete;
+            }
+
+            subscriptionsBound = false;
+        }
+
+        private void SetStage1Active(bool active)
+        {
+            if (stage1LeftRoot != null)
+            {
+                stage1LeftRoot.SetActive(active);
+            }
+
+            if (stage1RightRoot != null)
+            {
+                stage1RightRoot.SetActive(active);
+            }
+        }
+
+        private void SetStage2Active(bool active)
+        {
+            if (stage2LeftRoot != null)
+            {
+                stage2LeftRoot.SetActive(active);
+            }
+
+            if (stage2RightRoot != null)
+            {
+                stage2RightRoot.SetActive(active);
+            }
+        }
+
+        private void MovePlayerTo(Transform spawn)
+        {
+            if (player == null || spawn == null)
+            {
+                return;
+            }
+
+            player.position = spawn.position;
+
+            var body = player.GetComponent<Rigidbody2D>();
+            if (body != null)
+            {
+                body.velocity = Vector2.zero;
+                body.angularVelocity = 0f;
+            }
+        }
+
+        private void ApplyLeftState(bool interactable, string hint)
+        {
+            if (playerController != null)
+            {
+                playerController.SetInputLocked(!interactable);
+            }
+
+            if (stage1LeftController != null && stage1LeftRoot != null && stage1LeftRoot.activeSelf)
+            {
+                stage1LeftController.SetInteractive(interactable);
+            }
+
+            if (stage2LeftController != null && stage2LeftRoot != null && stage2LeftRoot.activeSelf)
+            {
+                stage2LeftController.SetInteractive(interactable);
             }
 
             if (leftMask != null)
@@ -138,18 +369,23 @@ namespace GameCreate3
                     : new Color(0.05f, 0.06f, 0.08f, 0.68f);
             }
 
-            if (leftStateText != null)
+            if (leftHint != null)
             {
-                leftStateText.text = stateText;
-                leftStateText.gameObject.SetActive(!interactable);
+                leftHint.text = hint;
+                leftHint.gameObject.SetActive(!interactable);
             }
         }
 
-        private void ApplyRightWorldState(bool interactable, string stateText)
+        private void ApplyRightState(bool interactable, string hint)
         {
-            if (layoutPuzzle != null)
+            if (stage1RightRoot != null && stage1RightRoot.activeSelf)
             {
-                layoutPuzzle.SetInteractable(interactable);
+                stage1RightController?.SetInteractable(interactable);
+            }
+
+            if (stage2RightRoot != null && stage2RightRoot.activeSelf)
+            {
+                stage2RightController?.SetInteractable(interactable);
             }
 
             if (rightMask != null)
@@ -159,14 +395,14 @@ namespace GameCreate3
                     : new Color(0.03f, 0.04f, 0.05f, 0.6f);
             }
 
-            if (rightStateText != null)
+            if (rightHint != null)
             {
-                rightStateText.text = stateText;
-                rightStateText.gameObject.SetActive(!interactable);
+                rightHint.text = hint;
+                rightHint.gameObject.SetActive(!interactable);
             }
         }
 
-        private void SetStage(string text)
+        private void ApplyStageLabel(string text)
         {
             if (stageLabel != null)
             {
@@ -208,15 +444,17 @@ namespace GameCreate3
             rect.localScale = Vector3.one;
         }
 
-        private enum DemoState
+        private enum ChapterState
         {
-            Intro,
-            RightPuzzleBeforeDream,
-            BossReject,
-            LeftPlatformSection,
-            RightPuzzleAfterDream,
-            BossApprove,
-            DemoComplete
+            Stage1RightFullScreen,
+            Stage1LeftUnlocked,
+            Stage1RightAssisted,
+            Stage1Complete,
+            Stage2RightFullScreen,
+            Stage2LeftUnlocked,
+            Stage2RightAssisted,
+            Stage2Complete,
+            ChapterComplete
         }
     }
 }

@@ -4,8 +4,8 @@ namespace GameCreate3
 {
     public sealed class LeftWorldActivationController : MonoBehaviour
     {
-        private SideScrollerPlayerController playerController;
-        private SpriteRenderer goalRenderer;
+        [SerializeField] private SideScrollerPlayerController playerController;
+        [SerializeField] private SpriteRenderer goalRenderer;
 
         public void Initialize(SideScrollerPlayerController controller, SpriteRenderer goal)
         {

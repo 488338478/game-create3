@@ -1,171 +1,363 @@
 # Game-create3 项目手册（唯一维护入口）
 
-最后更新：2026-04-15  
+最后更新：2026-04-16  
 适用版本：Unity 2022.3.62f3c1
 
 ## 0. 原型 / 实验文档入口
-- 第二章双世界联动大原型（`Chapter2Prototype.unity` 运行时自动生成版）：`Docs/Chapter2_Demo_Prototype.md`
+- 第二章双世界联动大原型：`Assets/Scenes/Chapter2Prototype.unity`
+- 第二章原型说明：`Docs/Chapter2_Demo_Prototype.md`
 
 ## 1. 项目定位
-- 类型：2D 横版滚动叙事冒险（Narrative Side-scroller）。
-- 主题：绘本 + 童话。
-- 目标体验：探索场景 -> 触发对话 -> 做选择 -> 解轻机关 -> 剧情状态变化 -> 开启新路径。
+- 类型：2D 横版滚动叙事冒险（Narrative Side-scroller）
+- 主题：绘本 + 童话
+- 目标体验：探索场景 -> 触发对话/事件 -> 轻玩法 -> 状态变化 -> 开启新路径
 
-## 2. 当前系统总览
+## 2. 当前模块总览
 
-| 功能模块 | 当前状态 | 对应脚本 |
+| 模块 | 当前状态 | 主要入口 |
 |---|---|---|
-| 玩家移动（旧） | 已实现基础移动/跳跃/输入锁定 | `SideScrollerPlayerController` |
-| 镜头跟随（旧） | 已实现平滑跟随与边界限制 | `SideScrollCameraFollow` |
-| 对话数据结构 | 已实现节点、选项、条件、变量修改 | `DialogueAsset` |
-| 对话运行器 | 已实现进入对话、节点跳转、选项选择、结束对话 | `DialogueController` |
-| 对话 UI 桥接 | 已实现说话人/正文/选项按钮渲染 | `DialoguePanelUI` |
-| 剧情变量系统 | 已实现 Bool/Int/String 变量读写与条件判断 | `NarrativeVariableStore` |
-| 可交互系统（旧） | 已实现交互接口、可交互基类、范围检测 | `IInteractable` / `InteractableBase` / `InteractionDetector` |
-| 机关系统 | 已实现拉杆、门禁（条件开门） | `LeverSwitch` / `PuzzleGate` |
-| 任务系统 | 已实现目标定义与完成追踪 | `ObjectiveDefinition` / `ObjectiveTracker` |
-| 存档系统 | 已实现 JSON 存档/读档（位置+变量+任务） | `SaveDataModels` / `JsonSaveUtility` / `SaveGameController` |
-| 演出触发 | 已实现 Timeline 触发与玩家输入锁定 | `SimpleCutsceneTrigger` |
-| SideScroll 基础模块（新） | 已实现第一版可跑工作区骨架 | `Assets/Scripts/SideScroll/*` |
+| 旧玩家移动链路 | 保留 | `SideScrollerPlayerController` |
+| 旧镜头跟随链路 | 保留 | `SideScrollCameraFollow` |
+| 对话系统 | 已实现 | `DialogueController` / `DialogueAsset` |
+| 变量系统 | 已实现 | `NarrativeVariableStore` |
+| 旧交互链路 | 保留 | `IInteractable` / `InteractableBase` / `InteractionDetector` |
+| 第二章原型链路 | 保留 | `Assets/Scripts/Prototype/*` |
+| SideScroll 第一阶段 | 已实现 | `Assets/Scripts/SideScroll/*` |
+| SideScroll 第二阶段 | 已实现核心结构 | `StoryWorkspace / GameplayWorkspace / Trigger / Interaction / CameraZone / Templates` |
 
-## 3. 旧系统依赖关系
-1. `NarrativeVariableStore` 是核心状态中心。
-2. `DialogueController`、`PuzzleGate`、`ObjectiveTracker` 依赖变量系统。
-3. `InteractionDetector` 负责发现可交互对象并触发交互。
-4. `SaveGameController` 负责把玩家位置、变量状态、任务状态持久化。
-5. `DialoguePanelUI` 只是展示层，核心逻辑不写在 UI 里。
+## 3. 迁移策略
+- 采用“并存迁移”
+- 旧 `Prototype / Player / Camera / Interaction` 不删除、不改入口
+- 新横板基础统一放在 `Assets/Scripts/SideScroll`
+- 新系统先在独立模板场景和测试场景里验证，再逐步回接正式玩法
 
-## 4. 旧原型链路说明
-以下脚本继续保留，当前不参与新 `SideScroll` 第一版测试场景：
-- `Assets/Scripts/Player/SideScrollerPlayerController.cs`
-- `Assets/Scripts/Camera/SideScrollCameraFollow.cs`
-- `Assets/Scripts/Interaction/IInteractable.cs`
-- `Assets/Scripts/Interaction/InteractableBase.cs`
-- `Assets/Scripts/Interaction/InteractionDetector.cs`
-- `Assets/Scripts/Prototype/*`
-
-迁移策略：
-- 第一版采用“并存迁移”。
-- 旧原型不删除、不重命名、不替换入口。
-- 新横板基础能力统一放到 `Assets/Scripts/SideScroll` 下。
-
-## 5. SideScroll 第一版目录职责
+## 4. SideScroll 目录职责
 - `Assets/Scripts/SideScroll/Core`
-  放 `WorkspaceMode`、工作区枚举与基础共享类型。
-- `Assets/Scripts/SideScroll/Workspace`
-  放 `SideScrollWorkspaceBase` 与测试场景运行时搭建入口。
-- `Assets/Scripts/SideScroll/Character`
-  放角色控制器、移动 Motor、跳跃 Motor、地面检测、输入代理。
-- `Assets/Scripts/SideScroll/Camera`
-  放 `SideScrollCameraController`，统一封装 Cinemachine。
-- `Assets/Scripts/SideScroll/Interaction`
-  放新交互接口、交互基类、交互检测器。
-- `Assets/Scripts/SideScroll/Trigger`
-  放基础触发器和工作区事件触发器。
+  - 枚举、共享基础类型
 - `Assets/Scripts/SideScroll/Data`
-  放 `ScriptableObject` 配置类型。
+  - `SideScrollWorkspaceConfig`
+  - `CharacterMoveConfig`
+  - `CharacterJumpConfig`
+  - `CameraConfig`
+  - `ConditionRequirementData`
+- `Assets/Scripts/SideScroll/Character`
+  - 角色控制器、输入代理、移动/跳跃 Motor、地面检测
+- `Assets/Scripts/SideScroll/Camera`
+  - `SideScrollCameraController`
+  - `CameraZone`
+- `Assets/Scripts/SideScroll/Interaction`
+  - 交互接口、交互基类、拾取物、推动物、观察点、出口
+- `Assets/Scripts/SideScroll/Trigger`
+  - 基础触发器、对话触发、条件触发、目标触发、镜头触发
+- `Assets/Scripts/SideScroll/Workspace`
+  - `SideScrollWorkspaceBase`
+  - `SideScrollStoryWorkspace`
+  - `SideScrollGameplayWorkspace`
+  - 测试/模板场景 bootstrap 与 runtime builder
 
-## 6. SideScroll 第一版核心脚本
+## 5. SideScroll 核心架构原则
+- 交互物、触发器、镜头区不直接互相找对象
+- 它们统一向当前 `Workspace` 上报事件或状态
+- `Workspace` 负责记录：
+  - 已触发事件
+  - 已拾取道具
+  - 已完成目标
+- `Workspace` 负责流程编排：
+  - 条件判断
+  - 完成判定
+  - 退出逻辑
+  - 相机切换
 
-### 6.1 工作区
-- `SideScrollWorkspaceBase`
-  负责 `Initialize() / Enter() / Exit() / Pause() / Resume()`
-  负责工作区配置绑定、玩家/相机绑定、交互物与触发器注册。
+### 5.1 当前工作区事件中心
+`SideScrollWorkspaceBase` 当前已支持：
+- `RaiseWorkspaceEvent(string eventId)`
+- `HasWorkspaceEvent(string eventId)`
+- `RegisterPickup(string pickupId)`
+- `HasPickup(string pickupId)`
+- `RegisterGoal(string goalId)`
+- `HasGoal(string goalId)`
+- `EvaluateRequirements(IReadOnlyList<ConditionRequirementData>)`
 
-### 6.2 角色
-- `SideScrollCharacterControllerBase`
-  协调输入代理、移动、跳跃、交互能力开关。
-- `CharacterMovementMotor`
-  处理水平移动、加速、减速、朝向翻转。
-- `CharacterJumpMotor`
-  处理跳跃、coyote time、jump buffer、上下落重力差。
-- `CharacterGroundDetector`
-  负责地面检测。
-- `CharacterInputProxy`
-  统一读取输入源。
-- `ICharacterInputSource`
-  当前第一版实现：
-  `PlayerInputSource`
-  `DisabledInputSource`
-
-### 6.3 相机
-- `SideScrollCameraController`
-  负责 `SetFollowTarget()`、`ApplyCameraConfig()`、`ResetToDefault()`
-  基于 `CinemachineVirtualCamera + CinemachineConfiner2D`
-
-### 6.4 交互与触发
+### 5.2 自动扫描与归属绑定
+`Workspace.Initialize()` 会自动扫描自己子节点内的：
 - `ISideScrollInteractable`
-- `SideScrollInteractableBase`
-- `SideScrollInteractionDetector`
 - `TriggerZoneBase`
+- `CameraZone`
+
+然后把当前工作区引用回填给这些对象：
+- `SideScrollInteractableBase.BindWorkspace(...)`
+- `TriggerZoneBase.BindWorkspace(...)`
+- `CameraZone.BindWorkspace(...)`
+
+结论：
+- 新增交互物/触发器时，只要放进 `WorkspaceRoot` 子树，工作区会自动接管
+- 不需要让这些对象彼此直接拖引用
+
+## 6. 工作区类型
+
+### 6.1 SideScrollWorkspaceBase
+职责：
+- 解析玩家与相机引用
+- 应用工作区配置
+- 扫描并注册子节点对象
+- 维护工作区事件、拾取、目标状态
+- 控制进入/退出/暂停/恢复
+
+主要公开接口：
+- `PlayerController`
+- `CameraController`
+- `IsEntered`
+- `RaiseWorkspaceEvent(...)`
+- `HasWorkspaceEvent(...)`
+
+### 6.2 SideScrollStoryWorkspace
+职责：
+- 管理观察点、剧情事件、剧情输入锁定
+- 接收 `ObservationPoint` / `DialogueTriggerZone` / `CameraZone` 事件
+
+当前限制：
+- 这轮不直接接 `DialogueController`
+- `DialogueTriggerZone` 只发 `dialogue.*` 工作区事件
+
+### 6.3 SideScrollGameplayWorkspace
+职责：
+- 管理拾取、推物、目标达成、完成判定
+- 接收 `PickupObject` / `PushableObject` / `GoalTriggerZone` / `ExitPoint` 事件
+
+主要公开接口：
+- `IsCompleted`
+- `EvaluateCompletion()`
+
+## 7. 角色与输入
+角色入口：
+- `SideScrollCharacterControllerBase`
+
+组成：
+- `CharacterInputProxy`
+- `CharacterGroundDetector`
+- `CharacterMovementMotor`
+- `CharacterJumpMotor`
+- `SideScrollInteractionDetector`
+
+输入方案：
+- SideScroll 侧使用 Unity `Input System`
+- 当前 `PlayerInputSource` 运行时创建 `InputAction`
+
+默认输入：
+- 移动：`A/D`、左右方向键、手柄左摇杆 X
+- 跳跃：`Space`、`W`、上方向键、手柄 South
+- 交互：`E`、`Enter`、手柄 West
+
+## 8. 相机系统
+入口：
+- `SideScrollCameraController`
+- `CameraZone`
+
+当前规则：
+- 默认配置来自 `CameraConfig`
+- 进入 `CameraZone` 时应用区域配置
+- 离开 `CameraZone` 时恢复默认配置
+- 当前只支持单层覆盖，不做多层优先级
+
+## 9. 交互物
+当前已实现：
+- `ObservationPoint`
+- `ExitPoint`
+- `PickupObject`
+- `PushableObject`
+- `SideScrollDebugInteractable`
+
+行为约定：
+- `ObservationPoint`
+  - 发 `observation.{id}`
+- `ExitPoint`
+  - 根据工作区条件决定可否交互
+  - 发 `exit.{id}`
+- `PickupObject`
+  - 注册 pickup 并发 `pickup.{id}`
+- `PushableObject`
+  - 只负责单轴推动
+  - 推动相关状态上报工作区
+
+## 10. 触发器
+当前已实现：
 - `WorkspaceEventTriggerZone`
+- `DialogueTriggerZone`
+- `CameraTriggerZone`
+- `ConditionTriggerZone`
+- `GoalTriggerZone`
 
-### 6.5 配置
-- `SideScrollWorkspaceConfig`
-- `CharacterMoveConfig`
-- `CharacterJumpConfig`
-- `CameraConfig`
+行为约定：
+- `DialogueTriggerZone`
+  - 发 `dialogue.{id}`
+- `CameraTriggerZone`
+  - 切换相机覆盖
+- `ConditionTriggerZone`
+  - 条件满足时发 `condition.{id}.passed`
+- `GoalTriggerZone`
+  - 注册目标并发 `goal.{id}`
 
-## 7. 输入方案
-- SideScroll 第一版使用 Unity `Input System`
-- 当前直接在 `PlayerInputSource` 中创建运行时 `InputAction`
-- 默认输入：
-  - 移动：`A/D`、左右方向键、手柄左摇杆 X
-  - 跳跃：`Space`、`W`、上方向键、手柄 South
-  - 交互：`E`、`Enter`、手柄 West
-
-项目当前 `activeInputHandler` 为 `2`，可兼容旧输入链路与新输入链路并存。
-
-## 8. Layer 约定
-本次新增最小必要 Layer：
+## 11. Layer 约定
 - `Ground`
 - `Interactable`
 - `Trigger`
 - `Player`
 
 用途：
-- `Ground`：角色地面检测与碰撞地形
+- `Ground`：角色落地检测与地形碰撞
 - `Interactable`：交互扫描
-- `Trigger`：工作区触发区域
+- `Trigger`：触发区 / 镜头区
 - `Player`：横板角色对象
 
-## 9. SideScroll 测试场景入口
-- 场景：`Assets/Scenes/SS_Test_Workspace.unity`
-- 运行方式：打开场景后直接 Play
-- 运行时入口：`SideScrollTestWorkspaceBootstrap`
-- 场景搭建器：`SideScrollTestWorkspaceAutoBuilder`
+## 12. Prefab 清单
+目录：
+- `Assets/Prefabs/SideScroll`
 
-当前测试场景会在运行时自动生成：
+当前交付：
+- `WorkspaceRoot.prefab`
+- `SideScrollPlayer.prefab`
+- `CameraRig.prefab`
+- `Interactable_ObservationPoint.prefab`
+- `Interactable_ExitPoint.prefab`
+- `Interactable_PickupObject.prefab`
+- `Interactable_PushableObject.prefab`
+- `Trigger_WorkspaceEvent.prefab`
+- `Trigger_Dialogue.prefab`
+- `Trigger_Goal.prefab`
+- `CameraZone.prefab`
+
+说明：
+- 这轮 prefab 以“最小可复用入口”为目标
+- 复杂装配仍由模板场景和 runtime builder 兜底
+
+## 13. 场景入口
+
+### 13.1 测试场景
+- `Assets/Scenes/SS_Test_Workspace.unity`
+- 运行入口：`SideScrollTestWorkspaceBootstrap`
+
+### 13.2 Story 模板场景
+- `Assets/Scenes/Templates/SS_Story_Template.unity`
+- 运行入口：`SideScrollStoryTemplateBootstrap`
+- runtime builder：`SideScrollTemplateSceneAutoBuilder.BuildStoryTemplateIfNeeded()`
+
+### 13.3 Gameplay 模板场景
+- `Assets/Scenes/Templates/SS_Gameplay_Template.unity`
+- 运行入口：`SideScrollGameplayTemplateBootstrap`
+- runtime builder：`SideScrollTemplateSceneAutoBuilder.BuildGameplayTemplateIfNeeded()`
+
+## 14. 模板场景内容
+
+### 14.1 Story 模板
+运行时会生成：
 - `WorkspaceRoot`
 - `PlayerSpawn`
 - `SideScrollPlayer`
 - `CameraRig`
 - `Environment`
-- `DebugInteractable`
-- `WorkspaceEventTrigger`
+- `ObservationPoint`
+- `DialogueTriggerZone`
+- `CameraZone`
+- `ExitPoint`
 - `CameraBounds`
 
-说明：
-- 测试场景是第一版唯一验收入口。
-- `Chapter2Prototype` 不接入新工作区基础框架。
+### 14.2 Gameplay 模板
+运行时会生成：
+- `WorkspaceRoot`
+- `PlayerSpawn`
+- `SideScrollPlayer`
+- `CameraRig`
+- `Environment`
+- `PickupObject`
+- `PushableObject`
+- `GoalTriggerZone`
+- `ExitPoint`
+- `CameraZone`
+- `CameraBounds`
 
-## 10. SideScroll 第一版验收清单
-- 进入 `SS_Test_Workspace` 后，工作区能自动初始化玩家、相机、输入链路。
-- 玩家可左右移动、跳跃、落地，地面检测稳定。
-- 输入禁用后，角色不再响应移动与跳跃。
-- Cinemachine 相机能稳定跟随玩家，并受 `CameraBounds` 约束。
-- 玩家靠近交互物后，按交互键可触发 `SideScrollDebugInteractable`。
-- 玩家进入触发区后，可触发 `WorkspaceEventTriggerZone` 日志事件。
-- 旧场景 `Chapter2Prototype` 不因新系统加入而失效。
+## 15. 手动挂载指南
 
-## 11. 开发约束
-- 新剧情、玩法扩展不要回写到旧 `Prototype` 链路。
-- 横板基础扩展优先通过 `SideScrollWorkspaceBase` 子类完成。
-- 如需新增 Story / Gameplay 工作区子类，沿用当前 `SideScroll` 目录结构。
+### 15.1 WorkspaceRoot
+挂：
+- `SideScrollWorkspaceBase` 或其子类
 
-## 12. 强制规则
+推荐子节点：
+- `PlayerSpawn`
+- `SideScrollPlayer`
+- `Environment`
+- `Interactables`
+- `Triggers`
+- `CameraZones`
+
+字段绑定：
+- `workspaceConfig`
+- `spawnPoint`
+- `playerController`
+- `cameraController`
+
+### 15.2 Player
+推荐组件：
+- `SpriteRenderer`
+- `BoxCollider2D`
+- `Rigidbody2D`
+- `CharacterInputProxy`
+- `CharacterGroundDetector`
+- `CharacterMovementMotor`
+- `CharacterJumpMotor`
+- `SideScrollInteractionDetector`
+- `SideScrollCharacterControllerBase`
+
+### 15.3 CameraRig
+场景主相机：
+- `Camera`
+- `AudioListener`
+- `CinemachineBrain`
+
+`CameraRig`：
+- `SideScrollCameraController`
+
+子物体 `CM_VCam`：
+- `CinemachineVirtualCamera`
+- `CinemachineConfiner2D`
+
+`CameraBounds`：
+- 使用 `BoxCollider2D`
+- 勾选 `Is Trigger = true`
+- 只提供给 `CinemachineConfiner2D` 做边界约束
+- 不应参与玩家阻挡或地形碰撞
+
+### 15.4 交互物
+交互物放到 `Interactables` 下，Layer 设为 `Interactable`
+
+最小要求：
+- `Collider2D`
+- 一个交互脚本
+
+### 15.5 触发器 / 镜头区
+触发器放到 `Triggers` / `CameraZones` 下，Layer 设为 `Trigger`
+
+最小要求：
+- `Collider2D`
+- `Is Trigger = true`
+- 一个触发脚本或 `CameraZone`
+
+## 16. 验收清单
+- `dotnet build Game-create3.sln` 通过
+- `SS_Test_Workspace` 可运行
+- `SS_Story_Template` 可运行
+- `SS_Gameplay_Template` 可运行
+- `ObservationPoint` / `DialogueTriggerZone` / `CameraZone` / `ExitPoint` 在 Story 模板中可用
+- `PickupObject` / `PushableObject` / `GoalTriggerZone` / `ExitPoint` 在 Gameplay 模板中可用
+- `Chapter2Prototype` 不受新系统影响
+
+## 17. 已知边界
+- Story 侧这轮不直接接 `DialogueController`
+- `DialogueTriggerZone` 只发工作区事件
+- 条件系统当前只判断工作区内部状态，不接 Narrative 变量系统
+- prefab 当前是最小入口资源，不是最终关卡生产标准件
+
+## 18. 强制规则
 ### Rule DOC-001：任何变更必须同步更新文档
-- 触发条件：功能逻辑、项目配置、开发流程任一发生变化。
-- 强制动作：在同一次提交中更新 `Docs/Project_Handbook.md`。
-- 提交要求：提交或 PR 说明中必须写明 `Updated Docs/Project_Handbook.md`。
-- 例外情况：纯注释、纯格式化、无行为变化重命名可不更新，但需写 `No doc impact`。
+- 功能逻辑、项目配置、开发流程变化时，同次提交必须更新 `Docs/Project_Handbook.md`
+- 提交说明中必须写明 `Updated Docs/Project_Handbook.md`
+- 纯注释、纯格式化、无行为变化重命名可写 `No doc impact`

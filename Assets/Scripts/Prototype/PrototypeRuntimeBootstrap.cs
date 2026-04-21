@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Reflection;
 
 namespace GameCreate3
 {
@@ -30,7 +31,9 @@ namespace GameCreate3
             var sceneName = SceneManager.GetActiveScene().name;
             if (sceneName == "Chapter2Prototype")
             {
-                Chapter2PrototypeAutoBuilder.BuildIfNeeded();
+                var type = typeof(PrototypeRuntimeBootstrap).Assembly.GetType("GameCreate3.Chapter2PrototypeAutoBuilder");
+                var method = type?.GetMethod("BuildIfNeeded", BindingFlags.Public | BindingFlags.Static);
+                method?.Invoke(null, null);
                 return;
             }
 

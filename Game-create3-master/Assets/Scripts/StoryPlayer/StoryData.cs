@@ -105,13 +105,13 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private float delayBeforeShow;
         [SerializeField] private float duration = -1f;
 
-        public string TextId => textId;
-        public string Speaker => speaker;
-        public string Content => content;
-        public TextDisplayMode DisplayMode => displayMode;
-        public float TypewriterSpeed => typewriterSpeed;
-        public float DelayBeforeShow => delayBeforeShow;
-        public float Duration => duration;
+        public string TextId { get => textId; set => textId = value; }
+        public string Speaker { get => speaker; set => speaker = value; }
+        public string Content { get => content; set => content = value; }
+        public TextDisplayMode DisplayMode { get => displayMode; set => displayMode = value; }
+        public float TypewriterSpeed { get => typewriterSpeed; set => typewriterSpeed = value; }
+        public float DelayBeforeShow { get => delayBeforeShow; set => delayBeforeShow = value; }
+        public float Duration { get => duration; set => duration = value; }
     }
 
     public enum TextDisplayMode

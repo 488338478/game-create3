@@ -74,6 +74,11 @@ namespace GameCreate3.StoryPlayer
 
         public void BindEventSystem(StoryEventSystem eventSystem)
         {
+            if (this.eventSystem != null)
+            {
+                this.eventSystem.OnEventTriggered -= HandleStoryEvent;
+            }
+
             this.eventSystem = eventSystem;
 
             if (eventSystem != null)

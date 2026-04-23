@@ -112,6 +112,10 @@ namespace GameCreate3.StoryPlayer
             {
                 Debug.LogError($"[StoryPageRenderer] Render error: {ex.Message}");
             }
+            finally
+            {
+                isRendering = false;
+            }
         }
 
         public async Task HidePageAsync(StoryPage page, StoryTransitionType transitionType, float duration)
@@ -177,7 +181,10 @@ namespace GameCreate3.StoryPlayer
                 cgImage.color = Color.white;
             }
 
-            await FadeInAsync(backgroundContainer, page.TransitionDuration, ct);
+            if (backgroundContainer != null)
+            {
+                await FadeInAsync(backgroundContainer, page.TransitionDuration, ct);
+            }
         }
 
         private async Task RenderForegroundAsync(StoryPage page, CancellationToken ct)
@@ -190,7 +197,10 @@ namespace GameCreate3.StoryPlayer
 
             if (page.ForegroundImage != null)
             {
-                await FadeInAsync(foregroundContainer, page.TransitionDuration, ct);
+                if (foregroundContainer != null)
+                {
+                    await FadeInAsync(foregroundContainer, page.TransitionDuration, ct);
+                }
             }
         }
 
@@ -235,7 +245,10 @@ namespace GameCreate3.StoryPlayer
 
                     case TextDisplayMode.FadeIn:
                         contentLabel.text = currentFullText;
-                        await FadeInAsync(textContainer, textBlock.TypewriterSpeed, ct);
+                        if (textContainer != null)
+                        {
+                            await FadeInAsync(textContainer, textBlock.TypewriterSpeed, ct);
+                        }
                         break;
                 }
             }
@@ -286,7 +299,10 @@ namespace GameCreate3.StoryPlayer
                 return;
             }
 
-            await FadeOutAsync(textContainer, 0.2f, renderCts?.Token ?? default);
+            if (textContainer != null)
+            {
+                await FadeOutAsync(textContainer, 0.2f, renderCts?.Token ?? default);
+            }
             await ShowTextBlockAsync(currentTextBlocks[currentTextBlockIndex], renderCts?.Token ?? default);
         }
 

@@ -138,12 +138,12 @@ namespace GameCreate3.StoryPlayer
 
             var clickDuration = Time.time - pointerDownTime;
 
-            if (clickDuration < fastForwardThreshold)
+            if (clickDuration >= skipHoldDuration)
             {
                 return;
             }
 
-            if (holdDuration < skipHoldDuration)
+            if (clickDuration <= fastForwardThreshold || holdDuration < skipHoldDuration)
             {
                 HandleAdvanceInput();
             }

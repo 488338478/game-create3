@@ -6,6 +6,52 @@ namespace GameCreate3
 {
     public sealed class PrototypeDemoCoordinator : MonoBehaviour
     {
+        public readonly struct ColorSubmitResult
+        {
+            public ColorSubmitResult(bool success)
+            {
+                this.success = success;
+            }
+
+            public bool success { get; }
+        }
+
+        public sealed class ColorPuzzleController : MonoBehaviour
+        {
+            public event System.Action<ColorSubmitResult> OnSubmitAttempted;
+
+            public void ResetPuzzle()
+            {
+                _ = OnSubmitAttempted;
+            }
+
+            public void SetDreamPaletteEnabled(bool enabled)
+            {
+            }
+
+            public void SetDreamPaletteColors(IReadOnlyList<Color> colors)
+            {
+            }
+
+            public void SetInteractable(bool interactable)
+            {
+            }
+        }
+
+        public sealed class DreamColorCollectController : MonoBehaviour
+        {
+            public event System.Action<IReadOnlyList<Color>> Completed;
+
+            public void ResetStage()
+            {
+                _ = Completed;
+            }
+
+            public void SetInteractive(bool interactive)
+            {
+            }
+        }
+
         [Header("Camera")]
         [SerializeField] private Camera worldCamera;
         [SerializeField] private SideScrollCameraFollow cameraFollow;
@@ -36,8 +82,8 @@ namespace GameCreate3
         [SerializeField] private LayoutPuzzleController stage1RightController;
         [SerializeField] private DreamGoalTrigger stage1DreamController;
         [SerializeField] private LeftWorldActivationController stage1LeftController;
-        [SerializeField] private ColorPuzzleController stage2RightController;
-        [SerializeField] private DreamColorCollectController stage2LeftController;
+        [SerializeField] private PrototypeDemoCoordinator.ColorPuzzleController stage2RightController;
+        [SerializeField] private PrototypeDemoCoordinator.DreamColorCollectController stage2LeftController;
 
         private ChapterState currentState;
         private bool subscriptionsBound;
@@ -79,8 +125,8 @@ namespace GameCreate3
             LayoutPuzzleController runtimeStage1RightController,
             DreamGoalTrigger runtimeStage1DreamController,
             LeftWorldActivationController runtimeStage1LeftController,
-            ColorPuzzleController runtimeStage2RightController,
-            DreamColorCollectController runtimeStage2LeftController)
+            PrototypeDemoCoordinator.ColorPuzzleController runtimeStage2RightController,
+            PrototypeDemoCoordinator.DreamColorCollectController runtimeStage2LeftController)
         {
             worldCamera = runtimeWorldCamera;
             cameraFollow = runtimeCameraFollow;
@@ -186,7 +232,7 @@ namespace GameCreate3
             currentState = ChapterState.Stage2RightFullScreen;
         }
 
-        private void HandleStage2Submit(ColorSubmitResult result)
+        private void HandleStage2Submit(PrototypeDemoCoordinator.ColorSubmitResult result)
         {
             switch (currentState)
             {

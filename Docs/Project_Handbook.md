@@ -1,6 +1,6 @@
 # Game-create3 项目手册（唯一维护入口）
 
-最后更新：2026-04-15  
+最后更新：2026-04-26  
 适用版本：Unity 2022.3.62f3c1
 
 ## 0. 原型 / 实验文档入口
@@ -26,7 +26,8 @@
 | 任务系统 | 已实现目标定义与完成追踪 | `ObjectiveDefinition` / `ObjectiveTracker` |
 | 存档系统 | 已实现 JSON 存档/读档（位置+变量+任务） | `SaveDataModels` / `JsonSaveUtility` / `SaveGameController` |
 | 演出触发 | 已实现 Timeline 触发与玩家输入锁定 | `SimpleCutsceneTrigger` |
-| SideScroll 基础模块（新） | 已实现第一版可跑工作区骨架 | `Assets/Scripts/SideScroll/*` |
+| SideScroll 基础模块（新） | 第一版骨架已建立 | `Assets/Scripts/SideScroll/*` |
+| 双世界关卡模块（DualWorld） | 第一版对齐子关闭环可玩，颜色子关仅占位 | `Assets/Scripts/DualWorld/*` |
 
 ## 3. 旧系统依赖关系
 1. `NarrativeVariableStore` 是核心状态中心。
@@ -163,7 +164,54 @@
 - 横板基础扩展优先通过 `SideScrollWorkspaceBase` 子类完成。
 - 如需新增 Story / Gameplay 工作区子类，沿用当前 `SideScroll` 目录结构。
 
-## 12. 强制规则
+## 12. 双世界关卡模块（DualWorld）第一版
+
+### 12.1 目录结构
+- `Assets/Scripts/DualWorld/Flow`
+  子关阶段枚举、抽象基类、对齐子关具体实现、颜色子关 stub、关卡内流程控制器。
+- `Assets/Scripts/DualWorld/Reality`
+  右屏（现实侧）排版任务：`RealityAlignmentTask`、`DraggableAlignmentBlock`、`RealitySubmitResult`。
+- `Assets/Scripts/DualWorld/Dream`
+  左屏（梦境侧）推物舒适区：`DreamPushTarget` + `DreamPushable` 标记组件，以及路径开启 `DreamPathOpener`。
+- `Assets/Scripts/DualWorld/CrossWorld`
+  跨世界事件总线：`CrossWorldEvent` / `CrossWorldEventBus` / `DreamToRealityEnhancer` / `RealityToDreamRepair`。
+- `Assets/Scripts/DualWorld/Chat`
+  聊天任务管线：`ChatTaskDefinition`（ScriptableObject）/ `ChatTaskController` / `ChatTaskPanelUI`。
+- `Assets/Scripts/DualWorld/ColorTokens`
+  为颜色子关预留的 `ColorToken` 结构。
+- `Assets/Scripts/DualWorld/Workspace`
+  `DualWorldWorkspace`（继承 `SideScrollWorkspaceBase`）、运行时引导 `DualWorldRuntimeBootstrap`、自动搭建器 `DualWorldTestSceneAutoBuilder`。
+
+### 12.2 子关阶段枚举（SubLevelPhase）
+固定 8 个阶段，构成对齐子关闭环：
+1. `RealityTaskActive`：右屏拖拽可提交，左屏遮罩。
+2. `RealityTaskBlocked`：第一次提交失败，聊天弹卡关消息。
+3. `DreamTaskUnlocked`：左屏激活，玩家可推物。
+4. `RealityTaskEnhanced`：左屏完成 → 右屏吸附增强。
+5. `RealityTaskCompleted`：玩家二次提交成功。
+6. `DreamWorldResolved`：左屏路径开启动画结束。
+7. `DreamTraversalActive`：玩家可在横版地形通行。
+8. `SubLevelCompleted`：到达出口，子关结束。
+
+### 12.3 入口与测试场景
+- 测试场景：`Assets/Scenes/DW_Test_Workspace.unity`
+- 直接 Play 即可。`DualWorldRuntimeBootstrap` 在 `AfterSceneLoad` 自动调用 `DualWorldTestSceneAutoBuilder.BuildIfNeeded()`，反射注入私有 `[SerializeField]` 字段，运行时构建工作区、对齐任务 UI、左屏推物舒适区、聊天面板。
+- 因当前测试场景未生成横板玩家，自动搭建器还提供两个调试按钮：
+  - `DEBUG: 模拟梦境完成` 直接调用 `AlignmentSubLevelFlow.OnDreamComplete`。
+  - `DEBUG: 模拟走到出口` 直接调用 `OnTraversalReachedExit`，便于离线验收闭环。
+
+### 12.4 与 SideScroll 的关系
+- `DualWorldWorkspace : SideScrollWorkspaceBase`，复用工作区生命周期与玩家/相机绑定。
+- 输入接管走 `CharacterInputProxy.SetSource(DisabledInputSource)`，不直接调用旧 `SideScrollerPlayerController.SetInputLocked`。
+- 颜色子关（`ColorSubLevelFlow`）仅留 stub，不参与第一版验收。
+
+### 12.5 第一版不在范围
+- 颜色子关玩法
+- 存档接入子关进度
+- 真实剧情入口（`StoryFlowBridge.EnterSideScroller("chapter_dual_world")`）
+- 美术、音效、最终演出资产
+
+## 13. 强制规则
 ### Rule DOC-001：任何变更必须同步更新文档
 - 触发条件：功能逻辑、项目配置、开发流程任一发生变化。
 - 强制动作：在同一次提交中更新 `Docs/Project_Handbook.md`。

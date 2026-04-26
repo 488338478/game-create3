@@ -1,0 +1,403 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace GameCreate3.DualWorld
+{
+    public static class DualWorldTestSceneAutoBuilder
+    {
+        private static bool hasBuilt;
+
+        public static void BuildIfNeeded()
+        {
+            if (hasBuilt || Object.FindObjectOfType<DualWorldWorkspace>() != null)
+            {
+                hasBuilt = true;
+                return;
+            }
+
+            Build();
+            hasBuilt = true;
+        }
+
+        private static void Build()
+        {
+            var root = new GameObject("DualWorldRoot");
+            var workspace = root.AddComponent<DualWorldWorkspace>();
+
+            var flowGo = new GameObject("LevelInGameFlow");
+            flowGo.transform.SetParent(root.transform, false);
+            var flowController = flowGo.AddComponent<LevelInGameFlowController>();
+
+            var realityRoot = new GameObject("RealityRoot");
+            realityRoot.transform.SetParent(root.transform, false);
+            var realityCanvas = BuildRealityCanvas(realityRoot.transform, out var alignmentTask);
+
+            var dreamRoot = new GameObject("DreamRoot");
+            dreamRoot.transform.SetParent(root.transform, false);
+            var pushTarget = BuildDreamScene(dreamRoot.transform, out var pathOpener, out var exitTriggerGo);
+
+            var (chatController, chatPanel) = BuildChatPanel(realityCanvas.transform, workspace);
+            var taskDef = BuildAlignmentTaskDefinition();
+
+            var subLevelGo = new GameObject("AlignmentSubLevel");
+            subLevelGo.transform.SetParent(flowGo.transform, false);
+            var alignmentFlow = subLevelGo.AddComponent<AlignmentSubLevelFlow>();
+            ApplyAlignmentFlowFields(alignmentFlow, alignmentTask, realityRoot, pushTarget, dreamRoot, taskDef);
+
+            var bridgesGo = new GameObject("CrossWorldBridges");
+            bridgesGo.transform.SetParent(root.transform, false);
+            var enhancer = bridgesGo.AddComponent<DreamToRealityEnhancer>();
+            var repair = bridgesGo.AddComponent<RealityToDreamRepair>();
+            ApplyBridgeFields(enhancer, workspace, alignmentTask);
+            ApplyBridgeFields(repair, workspace, pathOpener);
+
+            ApplyFlowControllerSubLevels(flowController, new List<BaseSubLevelFlow> { alignmentFlow });
+            ApplyWorkspaceFields(workspace, flowController, chatController);
+
+            BuildDebugButton(realityCanvas.transform, "DEBUG: 模拟梦境完成", new Vector2(-20f, 70f), alignmentFlow.OnDreamComplete);
+            BuildDebugButton(realityCanvas.transform, "DEBUG: 模拟走到出口", new Vector2(-20f, 20f), alignmentFlow.OnTraversalReachedExit);
+
+            Debug.Log("[DualWorldTestSceneAutoBuilder] Dual world test scene built. Note: no player is spawned — use the DEBUG buttons to simulate dream completion and traversal.");
+        }
+
+        private static void BuildDebugButton(Transform canvasTransform, string text, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(text);
+            go.transform.SetParent(canvasTransform, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(220f, 40f);
+            var image = go.AddComponent<Image>();
+            image.color = new Color(0.4f, 0.2f, 0.2f, 0.9f);
+            var button = go.AddComponent<Button>();
+            button.onClick.AddListener(onClick);
+
+            var labelGo = new GameObject("Label");
+            labelGo.transform.SetParent(go.transform, false);
+            var labelRect = labelGo.AddComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            var label = labelGo.AddComponent<Text>();
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.text = text;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = Color.white;
+        }
+
+        private static Canvas BuildRealityCanvas(Transform parent, out RealityAlignmentTask alignmentTask)
+        {
+            var canvasGo = new GameObject("RealityCanvas");
+            canvasGo.transform.SetParent(parent, false);
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGo.AddComponent<CanvasScaler>();
+            canvasGo.AddComponent<GraphicRaycaster>();
+
+            var taskGo = new GameObject("AlignmentTask");
+            taskGo.transform.SetParent(canvasGo.transform, false);
+            var taskRect = taskGo.AddComponent<RectTransform>();
+            taskRect.anchorMin = new Vector2(0.5f, 0.5f);
+            taskRect.anchorMax = new Vector2(0.5f, 0.5f);
+            taskRect.sizeDelta = new Vector2(420f, 320f);
+            taskRect.anchoredPosition = new Vector2(220f, 0f);
+
+            var taskGroup = taskGo.AddComponent<CanvasGroup>();
+            alignmentTask = taskGo.AddComponent<RealityAlignmentTask>();
+
+            var blocks = new List<DraggableAlignmentBlock>();
+            var targets = new List<RectTransform>();
+
+            for (var i = 0; i < 3; i++)
+            {
+                var target = CreateUiBlock(taskGo.transform, $"Target_{i}", new Vector2(-120f + i * 120f, 60f), new Color(0.8f, 0.8f, 0.4f, 0.4f));
+                targets.Add(target);
+
+                var block = CreateUiBlock(taskGo.transform, $"Block_{i}", new Vector2(-120f + i * 120f, -80f), new Color(0.85f, 0.5f, 0.4f));
+                var draggable = block.gameObject.AddComponent<DraggableAlignmentBlock>();
+                ApplyDraggableFields(draggable, target);
+                blocks.Add(draggable);
+            }
+
+            var submitGo = new GameObject("SubmitButton");
+            submitGo.transform.SetParent(taskGo.transform, false);
+            var submitRect = submitGo.AddComponent<RectTransform>();
+            submitRect.sizeDelta = new Vector2(160f, 50f);
+            submitRect.anchoredPosition = new Vector2(0f, -130f);
+            var submitImage = submitGo.AddComponent<Image>();
+            submitImage.color = new Color(0.3f, 0.4f, 0.6f);
+            var submit = submitGo.AddComponent<Button>();
+            var labelGo = new GameObject("Label");
+            labelGo.transform.SetParent(submitGo.transform, false);
+            var labelRect = labelGo.AddComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            var label = labelGo.AddComponent<Text>();
+            label.text = "提交";
+            label.alignment = TextAnchor.MiddleCenter;
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+            ApplyAlignmentTaskFields(alignmentTask, taskGroup, submit, blocks, targets);
+            return canvas;
+        }
+
+        private static RectTransform CreateUiBlock(Transform parent, string name, Vector2 anchoredPosition, Color color)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var rect = go.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(80f, 80f);
+            rect.anchoredPosition = anchoredPosition;
+            var image = go.AddComponent<Image>();
+            image.color = color;
+            return rect;
+        }
+
+        private static DreamPushTarget BuildDreamScene(Transform parent, out DreamPathOpener pathOpener, out GameObject exitTriggerGo)
+        {
+            var ground = CreateWorldQuad(parent, "Ground", new Vector3(0f, -3.4f, 0f), new Vector3(20f, 1f, 1f), new Color(0.25f, 0.3f, 0.35f), addBox: true);
+
+            var pushable = CreateWorldQuad(parent, "PushableBlock", new Vector3(-3f, -2f, 0f), new Vector3(1f, 1f, 1f), new Color(0.85f, 0.55f, 0.3f), addBox: true);
+            pushable.AddComponent<DreamPushable>();
+            var pushBody = pushable.AddComponent<Rigidbody2D>();
+            pushBody.gravityScale = 3f;
+            pushBody.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+            var targetGo = new GameObject("DreamPushTarget");
+            targetGo.transform.SetParent(parent, false);
+            targetGo.transform.position = new Vector3(3f, -2f, 0f);
+            var targetCollider = targetGo.AddComponent<BoxCollider2D>();
+            targetCollider.isTrigger = true;
+            targetCollider.size = new Vector2(2f, 2f);
+            var targetVisual = targetGo.AddComponent<SpriteRenderer>();
+            targetVisual.sprite = BuildSquareSprite();
+            targetVisual.color = new Color(0.4f, 0.85f, 0.6f, 0.4f);
+            var pushTarget = targetGo.AddComponent<DreamPushTarget>();
+
+            var blockedPath = CreateWorldQuad(parent, "BlockedPath", new Vector3(7f, -2f, 0f), new Vector3(1f, 2f, 1f), new Color(0.4f, 0.4f, 0.4f), addBox: true);
+            var openPath = CreateWorldQuad(parent, "OpenPath", new Vector3(7f, -2.4f, 0f), new Vector3(2f, 0.2f, 1f), new Color(0.6f, 0.85f, 1f), addBox: false);
+            openPath.SetActive(false);
+
+            var pathGo = new GameObject("DreamPathOpener");
+            pathGo.transform.SetParent(parent, false);
+            pathOpener = pathGo.AddComponent<DreamPathOpener>();
+            ApplyPathOpenerFields(pathOpener, blockedPath, openPath);
+
+            exitTriggerGo = new GameObject("ExitTrigger");
+            exitTriggerGo.transform.SetParent(parent, false);
+            exitTriggerGo.transform.position = new Vector3(9f, -2f, 0f);
+            var exitCollider = exitTriggerGo.AddComponent<BoxCollider2D>();
+            exitCollider.isTrigger = true;
+            exitCollider.size = new Vector2(1.5f, 3f);
+            var exitTrigger = exitTriggerGo.AddComponent<WorkspaceEventTriggerZone>();
+            ApplyExitTriggerFields(exitTrigger, "alignment_exit");
+
+            return pushTarget;
+        }
+
+        private static (ChatTaskController, ChatTaskPanelUI) BuildChatPanel(Transform canvasTransform, DualWorldWorkspace workspace)
+        {
+            var panelGo = new GameObject("ChatTaskPanel");
+            panelGo.transform.SetParent(canvasTransform, false);
+            var panelRect = panelGo.AddComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0f, 1f);
+            panelRect.anchorMax = new Vector2(0f, 1f);
+            panelRect.pivot = new Vector2(0f, 1f);
+            panelRect.anchoredPosition = new Vector2(20f, -20f);
+            panelRect.sizeDelta = new Vector2(360f, 140f);
+
+            var panelImage = panelGo.AddComponent<Image>();
+            panelImage.color = new Color(0.08f, 0.09f, 0.12f, 0.85f);
+            var canvasGroup = panelGo.AddComponent<CanvasGroup>();
+
+            var accentGo = new GameObject("Accent");
+            accentGo.transform.SetParent(panelGo.transform, false);
+            var accentRect = accentGo.AddComponent<RectTransform>();
+            accentRect.anchorMin = new Vector2(0f, 0f);
+            accentRect.anchorMax = new Vector2(0f, 1f);
+            accentRect.sizeDelta = new Vector2(6f, 0f);
+            accentRect.anchoredPosition = Vector2.zero;
+            var accentImage = accentGo.AddComponent<Image>();
+
+            var titleGo = new GameObject("Title");
+            titleGo.transform.SetParent(panelGo.transform, false);
+            var titleRect = titleGo.AddComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0f, 1f);
+            titleRect.anchoredPosition = new Vector2(20f, -10f);
+            titleRect.sizeDelta = new Vector2(-30f, 30f);
+            var title = titleGo.AddComponent<Text>();
+            title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            title.color = Color.white;
+            title.fontSize = 18;
+
+            var bodyGo = new GameObject("Body");
+            bodyGo.transform.SetParent(panelGo.transform, false);
+            var bodyRect = bodyGo.AddComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(20f, 10f);
+            bodyRect.offsetMax = new Vector2(-10f, -45f);
+            var body = bodyGo.AddComponent<Text>();
+            body.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            body.color = new Color(0.95f, 0.95f, 0.95f);
+            body.fontSize = 14;
+
+            var panelUi = panelGo.AddComponent<ChatTaskPanelUI>();
+            ApplyChatPanelFields(panelUi, canvasGroup, title, body, accentImage);
+
+            var controllerGo = new GameObject("ChatTaskController");
+            controllerGo.transform.SetParent(canvasTransform, false);
+            var controller = controllerGo.AddComponent<ChatTaskController>();
+            ApplyChatControllerFields(controller, panelUi, workspace);
+            return (controller, panelUi);
+        }
+
+        private static ChatTaskDefinition BuildAlignmentTaskDefinition()
+        {
+            var def = ScriptableObject.CreateInstance<ChatTaskDefinition>();
+            def.taskId = "alignment.right";
+            def.title = "排版任务";
+            def.description = "把右侧三个模块对齐到目标位。";
+            def.initialMessage = "你来看看这版排得行不行？";
+            def.failureMessage = "不对，再调一下。";
+            def.blockedMessage = "你是不是哪里没看清？要不去走两步，换个角度。";
+            def.enhancedMessage = "梦里好像帮你顺过了，再试一次。";
+            def.successMessage = "这次可以了。";
+            return def;
+        }
+
+        private static GameObject CreateWorldQuad(Transform parent, string name, Vector3 position, Vector3 scale, Color color, bool addBox)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = position;
+            go.transform.localScale = scale;
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = BuildSquareSprite();
+            renderer.color = color;
+            if (addBox)
+            {
+                go.AddComponent<BoxCollider2D>();
+            }
+            return go;
+        }
+
+        private static Sprite cachedSquareSprite;
+
+        private static Sprite BuildSquareSprite()
+        {
+            if (cachedSquareSprite != null)
+            {
+                return cachedSquareSprite;
+            }
+
+            var tex = new Texture2D(2, 2);
+            var pixels = new[] { Color.white, Color.white, Color.white, Color.white };
+            tex.SetPixels(pixels);
+            tex.Apply();
+            cachedSquareSprite = Sprite.Create(tex, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f), 2f);
+            return cachedSquareSprite;
+        }
+
+        private static void ApplyDraggableFields(DraggableAlignmentBlock block, RectTransform target)
+        {
+            var type = typeof(DraggableAlignmentBlock);
+            type.GetField("target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(block, target);
+        }
+
+        private static void ApplyAlignmentTaskFields(RealityAlignmentTask task, CanvasGroup group, Button submit, List<DraggableAlignmentBlock> blocks, List<RectTransform> targets)
+        {
+            var t = typeof(RealityAlignmentTask);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("interactionGroup", F)?.SetValue(task, group);
+            t.GetField("submitButton", F)?.SetValue(task, submit);
+            t.GetField("blocks", F)?.SetValue(task, blocks);
+            t.GetField("targetRects", F)?.SetValue(task, targets);
+        }
+
+        private static void ApplyAlignmentFlowFields(AlignmentSubLevelFlow flow, RealityAlignmentTask task, GameObject realityRoot, DreamPushTarget push, GameObject dreamRoot, ChatTaskDefinition def)
+        {
+            var t = typeof(AlignmentSubLevelFlow);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("realityTask", F)?.SetValue(flow, task);
+            t.GetField("realityRoot", F)?.SetValue(flow, realityRoot);
+            t.GetField("pushTarget", F)?.SetValue(flow, push);
+            t.GetField("dreamRoot", F)?.SetValue(flow, dreamRoot);
+            t.GetField("taskDefinition", F)?.SetValue(flow, def);
+            typeof(BaseSubLevelFlow).GetField("subLevelId", F)?.SetValue(flow, "alignment");
+        }
+
+        private static void ApplyBridgeFields(DreamToRealityEnhancer bridge, DualWorldWorkspace ws, RealityAlignmentTask task)
+        {
+            var t = typeof(DreamToRealityEnhancer);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("workspace", F)?.SetValue(bridge, ws);
+            t.GetField("alignmentTask", F)?.SetValue(bridge, task);
+        }
+
+        private static void ApplyBridgeFields(RealityToDreamRepair bridge, DualWorldWorkspace ws, DreamPathOpener opener)
+        {
+            var t = typeof(RealityToDreamRepair);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("workspace", F)?.SetValue(bridge, ws);
+            t.GetField("pathOpener", F)?.SetValue(bridge, opener);
+        }
+
+        private static void ApplyPathOpenerFields(DreamPathOpener opener, GameObject blocked, GameObject open)
+        {
+            var t = typeof(DreamPathOpener);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("blockedPath", F)?.SetValue(opener, blocked);
+            t.GetField("openPath", F)?.SetValue(opener, open);
+        }
+
+        private static void ApplyExitTriggerFields(WorkspaceEventTriggerZone trigger, string id)
+        {
+            var t = typeof(WorkspaceEventTriggerZone);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("eventId", F)?.SetValue(trigger, id);
+        }
+
+        private static void ApplyChatPanelFields(ChatTaskPanelUI panel, CanvasGroup group, Text title, Text body, Image accent)
+        {
+            var t = typeof(ChatTaskPanelUI);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("canvasGroup", F)?.SetValue(panel, group);
+            t.GetField("titleLabel", F)?.SetValue(panel, title);
+            t.GetField("bodyLabel", F)?.SetValue(panel, body);
+            t.GetField("accentBar", F)?.SetValue(panel, accent);
+        }
+
+        private static void ApplyChatControllerFields(ChatTaskController controller, ChatTaskPanelUI panel, DualWorldWorkspace ws)
+        {
+            var t = typeof(ChatTaskController);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("panel", F)?.SetValue(controller, panel);
+            t.GetField("workspace", F)?.SetValue(controller, ws);
+        }
+
+        private static void ApplyFlowControllerSubLevels(LevelInGameFlowController controller, List<BaseSubLevelFlow> subs)
+        {
+            var t = typeof(LevelInGameFlowController);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("subLevels", F)?.SetValue(controller, subs);
+        }
+
+        private static void ApplyWorkspaceFields(DualWorldWorkspace ws, LevelInGameFlowController flow, ChatTaskController chat)
+        {
+            var t = typeof(DualWorldWorkspace);
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            t.GetField("flowController", F)?.SetValue(ws, flow);
+            t.GetField("chatTaskController", F)?.SetValue(ws, chat);
+        }
+    }
+}

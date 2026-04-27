@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,6 +24,9 @@ namespace GameCreate3.DualWorld
         private static void Build()
         {
             var root = new GameObject("DualWorldRoot");
+            // Build inactive so SideScrollWorkspaceBase.Awake/Initialize/Start defers until refs are wired
+            // (otherwise ScanSceneObjects would run before triggers/players exist and they'd never bind).
+            root.SetActive(false);
             var workspace = root.AddComponent<DualWorldWorkspace>();
 
             var flowGo = new GameObject("LevelInGameFlow");
@@ -37,7 +41,16 @@ namespace GameCreate3.DualWorld
             dreamRoot.transform.SetParent(root.transform, false);
             var pushTarget = BuildDreamScene(dreamRoot.transform, out var pathOpener, out var exitTriggerGo);
 
-            var (chatController, chatPanel) = BuildChatPanel(realityCanvas.transform, workspace);
+            // Persistent UI canvas — must NOT live under realityRoot (which gets toggled by AlignmentSubLevelFlow).
+            var persistentUiGo = new GameObject("PersistentUI");
+            persistentUiGo.transform.SetParent(root.transform, false);
+            var persistentCanvas = persistentUiGo.AddComponent<Canvas>();
+            persistentCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            persistentCanvas.sortingOrder = 10;
+            persistentUiGo.AddComponent<CanvasScaler>();
+            persistentUiGo.AddComponent<GraphicRaycaster>();
+
+            var (chatController, chatPanel) = BuildChatPanel(persistentCanvas.transform, workspace);
             var taskDef = BuildAlignmentTaskDefinition();
 
             var subLevelGo = new GameObject("AlignmentSubLevel");
@@ -55,10 +68,21 @@ namespace GameCreate3.DualWorld
             ApplyFlowControllerSubLevels(flowController, new List<BaseSubLevelFlow> { alignmentFlow });
             ApplyWorkspaceFields(workspace, flowController, chatController);
 
-            BuildDebugButton(realityCanvas.transform, "DEBUG: 模拟梦境完成", new Vector2(-20f, 70f), alignmentFlow.OnDreamComplete);
-            BuildDebugButton(realityCanvas.transform, "DEBUG: 模拟走到出口", new Vector2(-20f, 20f), alignmentFlow.OnTraversalReachedExit);
+            // Real SideScroll player + Cinemachine camera so DreamTaskUnlocked / DreamTraversalActive are playable.
+            var playerSpawnPos = new Vector3(-5f, -1.8f, 0f);
+            var player = BuildSideScrollPlayer(root.transform, playerSpawnPos);
+            var confiner = BuildCameraBounds(root.transform);
+            var cameraController = BuildCameraRig(root.transform, player.transform, confiner);
+            ApplyWorkspaceCharacterFields(workspace, player.GetComponent<SideScrollCharacterControllerBase>(), cameraController);
 
-            Debug.Log("[DualWorldTestSceneAutoBuilder] Dual world test scene built. Note: no player is spawned — use the DEBUG buttons to simulate dream completion and traversal.");
+            // Debug buttons retained as offline shortcuts (push-to-target collision can be finicky in auto-built scene).
+            BuildDebugButton(persistentCanvas.transform, "DEBUG: 模拟梦境完成", new Vector2(-20f, 70f), alignmentFlow.OnDreamComplete);
+            BuildDebugButton(persistentCanvas.transform, "DEBUG: 模拟走到出口", new Vector2(-20f, 20f), alignmentFlow.OnTraversalReachedExit);
+
+            // Activate now — Awake → Initialize (resolve refs, scan triggers, bind workspace) → Start → Enter → flow begins.
+            root.SetActive(true);
+
+            Debug.Log("[DualWorldTestSceneAutoBuilder] Dual world test scene built (with SideScroll player + camera). DEBUG buttons remain as fallbacks.");
         }
 
         private static void BuildDebugButton(Transform canvasTransform, string text, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick)
@@ -163,6 +187,7 @@ namespace GameCreate3.DualWorld
         private static DreamPushTarget BuildDreamScene(Transform parent, out DreamPathOpener pathOpener, out GameObject exitTriggerGo)
         {
             var ground = CreateWorldQuad(parent, "Ground", new Vector3(0f, -3.4f, 0f), new Vector3(20f, 1f, 1f), new Color(0.25f, 0.3f, 0.35f), addBox: true);
+            ground.layer = GetLayerOrDefault("Ground", 0);
 
             var pushable = CreateWorldQuad(parent, "PushableBlock", new Vector3(-3f, -2f, 0f), new Vector3(1f, 1f, 1f), new Color(0.85f, 0.55f, 0.3f), addBox: true);
             pushable.AddComponent<DreamPushable>();
@@ -193,6 +218,7 @@ namespace GameCreate3.DualWorld
             exitTriggerGo = new GameObject("ExitTrigger");
             exitTriggerGo.transform.SetParent(parent, false);
             exitTriggerGo.transform.position = new Vector3(9f, -2f, 0f);
+            exitTriggerGo.layer = GetLayerOrDefault("Trigger", 0);
             var exitCollider = exitTriggerGo.AddComponent<BoxCollider2D>();
             exitCollider.isTrigger = true;
             exitCollider.size = new Vector2(1.5f, 3f);
@@ -398,6 +424,118 @@ namespace GameCreate3.DualWorld
             const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
             t.GetField("flowController", F)?.SetValue(ws, flow);
             t.GetField("chatTaskController", F)?.SetValue(ws, chat);
+        }
+
+        private static void ApplyWorkspaceCharacterFields(DualWorldWorkspace ws, SideScrollCharacterControllerBase player, SideScrollCameraController camera)
+        {
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            // playerController / cameraController live on the SideScrollWorkspaceBase ancestor.
+            var baseType = typeof(SideScrollWorkspaceBase);
+            baseType.GetField("playerController", F)?.SetValue(ws, player);
+            baseType.GetField("cameraController", F)?.SetValue(ws, camera);
+            baseType.GetField("groundMask", F)?.SetValue(ws, (LayerMask)LayerMask.GetMask("Ground"));
+        }
+
+        private static GameObject BuildSideScrollPlayer(Transform parent, Vector3 position)
+        {
+            var player = new GameObject("SideScrollPlayer");
+            player.transform.SetParent(parent, false);
+            player.transform.position = position;
+            player.layer = GetLayerOrDefault("Player", 0);
+
+            var renderer = player.AddComponent<SpriteRenderer>();
+            renderer.sprite = BuildSquareSprite();
+            renderer.color = new Color(0.85f, 0.55f, 0.3f);
+            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.size = new Vector2(0.8f, 1.4f);
+
+            var box = player.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(0.8f, 1.4f);
+
+            var body = player.AddComponent<Rigidbody2D>();
+            body.freezeRotation = true;
+            body.gravityScale = 3f;
+
+            var controller = player.AddComponent<SideScrollCharacterControllerBase>();
+            player.AddComponent<CharacterInputProxy>();
+            player.AddComponent<CharacterGroundDetector>();
+            player.AddComponent<CharacterMovementMotor>();
+            player.AddComponent<CharacterJumpMotor>();
+            player.AddComponent<SideScrollInteractionDetector>();
+
+            var groundCheck = new GameObject("GroundCheck");
+            groundCheck.transform.SetParent(player.transform, false);
+            groundCheck.transform.localPosition = new Vector3(0f, -0.75f, 0f);
+
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            typeof(CharacterGroundDetector).GetField("groundCheckPoint", F)?.SetValue(player.GetComponent<CharacterGroundDetector>(), groundCheck.transform);
+            typeof(CharacterGroundDetector).GetField("groundMask", F)?.SetValue(player.GetComponent<CharacterGroundDetector>(), (LayerMask)LayerMask.GetMask("Ground"));
+            typeof(SideScrollInteractionDetector).GetField("interactableMask", F)?.SetValue(player.GetComponent<SideScrollInteractionDetector>(), (LayerMask)LayerMask.GetMask("Interactable"));
+
+            controller.ApplyConfigs(ScriptableObject.CreateInstance<CharacterMoveConfig>(), ScriptableObject.CreateInstance<CharacterJumpConfig>(), (LayerMask)LayerMask.GetMask("Ground"));
+            return player;
+        }
+
+        private static Collider2D BuildCameraBounds(Transform parent)
+        {
+            var bounds = new GameObject("CameraBounds");
+            bounds.transform.SetParent(parent, false);
+            bounds.transform.position = new Vector3(2f, 0f, 0f);
+            var box = bounds.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(22f, 12f);
+            box.isTrigger = true;
+            return box;
+        }
+
+        private static SideScrollCameraController BuildCameraRig(Transform parent, Transform followTarget, Collider2D confinerShape)
+        {
+            var rig = new GameObject("CameraRig");
+            rig.transform.SetParent(parent, false);
+
+            var mainCamera = Camera.main;
+            if (mainCamera == null)
+            {
+                var cameraObject = new GameObject("Main Camera");
+                cameraObject.tag = "MainCamera";
+                cameraObject.transform.position = new Vector3(0f, 0f, -10f);
+                cameraObject.AddComponent<AudioListener>();
+                mainCamera = cameraObject.AddComponent<Camera>();
+                mainCamera.orthographic = true;
+                mainCamera.orthographicSize = 5f;
+            }
+
+            var brain = mainCamera.GetComponent<CinemachineBrain>();
+            if (brain == null)
+            {
+                brain = mainCamera.gameObject.AddComponent<CinemachineBrain>();
+            }
+
+            var vcamGo = new GameObject("CM_VCam");
+            vcamGo.transform.SetParent(rig.transform, false);
+            var vcam = vcamGo.AddComponent<CinemachineVirtualCamera>();
+            vcam.m_Lens.Orthographic = true;
+            vcam.Follow = followTarget;
+            vcam.AddCinemachineComponent<CinemachineFramingTransposer>();
+            var confiner = vcamGo.AddComponent<CinemachineConfiner2D>();
+            confiner.m_BoundingShape2D = confinerShape;
+
+            var controller = rig.AddComponent<SideScrollCameraController>();
+            const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            typeof(SideScrollCameraController).GetField("virtualCamera", F)?.SetValue(controller, vcam);
+            typeof(SideScrollCameraController).GetField("confiner2D", F)?.SetValue(controller, confiner);
+
+            var camConfig = ScriptableObject.CreateInstance<CameraConfig>();
+            camConfig.followOffset = new Vector3(0f, 1.2f, -10f);
+            camConfig.damping = new Vector2(0.2f, 0.2f);
+            camConfig.orthographicSize = 5f;
+            controller.ApplyCameraConfig(camConfig);
+            return controller;
+        }
+
+        private static int GetLayerOrDefault(string layerName, int fallback)
+        {
+            var layer = LayerMask.NameToLayer(layerName);
+            return layer >= 0 ? layer : fallback;
         }
     }
 }

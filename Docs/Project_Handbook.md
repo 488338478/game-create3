@@ -16,14 +16,14 @@
 
 | 模块 | 当前状态 | 主要入口 |
 |---|---|---|
-| 玩家移动（旧） | 已实现基础移动/跳跃/输入锁定 | `SideScrollerPlayerController` |
-| 镜头跟随（旧） | 已实现平滑跟随与边界限制 | `SideScrollCameraFollow` |
+| 玩家移动（旧） | 已实现基础移动/跳跃/输入锁定（已归档至 `Assets/Scripts/Prototype/Player/`） | `SideScrollerPlayerController` |
+| 镜头跟随（旧） | 已实现平滑跟随与边界限制（已归档至 `Assets/Scripts/Prototype/Camera/`） | `SideScrollCameraFollow` |
 | 对话数据结构 | 已实现节点、选项、条件、变量修改 | `DialogueAsset` |
 | 对话运行器 | 已实现进入对话、节点跳转、选项选择、结束对话 | `DialogueController` |
 | 对话 UI 桥接 | 已实现说话人/正文/选项按钮渲染 | `DialoguePanelUI` |
 | 剧情机 | 已实现剧情页播放、转场、页内事件、音频、输入推进、结束回调 | `StoryPlayer` / `StoryPageRenderer` / `StoryFlowBridge` |
 | 剧情变量系统 | 已实现 Bool/Int/String 变量读写与条件判断 | `NarrativeVariableStore` |
-| 可交互系统（旧） | 已实现交互接口、可交互基类、范围检测 | `IInteractable` / `InteractableBase` / `InteractionDetector` |
+| 可交互系统（旧） | 已实现交互接口、可交互基类、范围检测（已归档至 `Assets/Scripts/Prototype/Interaction/`） | `IInteractable` / `InteractableBase` / `InteractionDetector` |
 | 机关系统 | 已实现拉杆、门禁（条件开门） | `LeverSwitch` / `PuzzleGate` |
 | 任务系统 | 已实现目标定义与完成追踪 | `ObjectiveDefinition` / `ObjectiveTracker` |
 | 存档系统 | 已实现 JSON 存档/读档（位置+变量+任务） | `SaveDataModels` / `JsonSaveUtility` / `SaveGameController` |
@@ -33,8 +33,13 @@
 
 ## 3. 迁移策略
 - 采用“并存迁移”
-- 旧 `Prototype / Player / Camera / Interaction` 不删除、不改入口
-- 新横板基础统一放在 `Assets/Scripts/SideScroll`
+- 旧基础组件已统一归档至 `Assets/Scripts/Prototype/`（命名空间不变）：
+  - `Assets/Scripts/Prototype/Player/SideScrollerPlayerController.cs`
+  - `Assets/Scripts/Prototype/Camera/SideScrollCameraFollow.cs`
+  - `Assets/Scripts/Prototype/Interaction/{IInteractable, InteractableBase, InteractionDetector}.cs`
+- 旧入口（`Chapter2Prototype` 等）继续可跑、不改入口
+- 新横板基础统一放在 `Assets/Scripts/SideScroll`，DualWorld/未来工作区只继承 `SideScrollWorkspaceBase`，禁止 `using` 旧 Player/Camera/Interaction 类型
+- `Puzzle/`、`Cutscene/` 等仍依赖旧接口的脚本暂时保留位置不变；旧 Prototype 完全退役时，可与归档目录一并删除
 - 新系统先在独立模板场景和测试场景里验证，再逐步回接正式玩法
 
 ## 4. SideScroll 目录职责
@@ -393,10 +398,16 @@
 
 ### 18.3 入口与测试场景
 - 测试场景：`Assets/Scenes/DW_Test_Workspace.unity`
-- 直接 Play 即可。`DualWorldRuntimeBootstrap` 在 `AfterSceneLoad` 自动调用 `DualWorldTestSceneAutoBuilder.BuildIfNeeded()`，反射注入私有 `[SerializeField]` 字段，运行时构建工作区、对齐任务 UI、左屏推物舒适区、聊天面板。
-- 因当前测试场景未生成横板玩家，自动搭建器还提供两个调试按钮：
-  - `DEBUG: 模拟梦境完成` 直接调用 `AlignmentSubLevelFlow.OnDreamComplete`。
-  - `DEBUG: 模拟走到出口` 直接调用 `OnTraversalReachedExit`，便于离线验收闭环。
+- 直接 Play 即可。`DualWorldRuntimeBootstrap` 在 `AfterSceneLoad` 自动调用 `DualWorldTestSceneAutoBuilder.BuildIfNeeded()`，反射注入私有 `[SerializeField]` 字段，运行时构建：
+  - 工作区根（`DualWorldRoot`，先 `SetActive(false)` 再统一激活，确保 `SideScrollWorkspaceBase.Initialize/ScanSceneObjects` 看到完整子树）
+  - 对齐任务 UI（右屏 `RealityCanvas`，受 `AlignmentSubLevelFlow` 在阶段切换时开关）
+  - 梦境地形 + `DreamPushable` + `DreamPushTarget` + 阻塞/通行路径 + 出口 `WorkspaceEventTriggerZone(eventId="alignment_exit")`
+  - SideScroll 玩家（`SideScrollCharacterControllerBase` + 输入代理 + 移动/跳跃 Motor + 地面检测，`Player` 层）和 `Cinemachine` 相机（`SideScrollCameraController` + `CinemachineVirtualCamera` + `CinemachineConfiner2D`），自动绑定到工作区
+  - 持久 UI 画布（`PersistentUI`，渲染顺序 10），承载聊天面板与调试按钮，避免被 `SetRealityActive(false)` 误隐藏
+- 调试按钮作为离线兜底依然保留：
+  - `DEBUG: 模拟梦境完成` 直接调用 `AlignmentSubLevelFlow.OnDreamComplete`
+  - `DEBUG: 模拟走到出口` 直接调用 `OnTraversalReachedExit`
+- 现在闭环可全部走真实玩法：右屏拖拽失败 → 聊天卡关 → 左屏推方块到舒适区 → 右屏吸附 → 提交成功 → 路径开启 → 角色横版走到出口触发 `alignment_exit`
 
 ### 18.4 与 SideScroll 的关系
 - `DualWorldWorkspace : SideScrollWorkspaceBase`，复用工作区生命周期与玩家/相机绑定。

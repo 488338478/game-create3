@@ -16,9 +16,6 @@ namespace GameCreate3.StoryPlayer
         [Header("Effects")]
         [SerializeField] private Transform effectContainer;
 
-        [Header("Dialogue")]
-        [SerializeField] private DialogueController dialogueController;
-
         private StoryPage currentPage;
         private CancellationTokenSource eventCts;
         private HashSet<int> triggeredEvents;
@@ -267,7 +264,7 @@ namespace GameCreate3.StoryPlayer
             var key = parts[0].Trim();
             var value = parts[1].Trim();
 
-            var variableStore = FindObjectOfType<NarrativeVariableStore>();
+            var variableStore = FindObjectOfType<StoryVariableStore>();
             if (variableStore != null)
             {
                 if (bool.TryParse(value, out var boolValue))

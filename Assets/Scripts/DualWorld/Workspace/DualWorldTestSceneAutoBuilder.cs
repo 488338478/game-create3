@@ -330,7 +330,7 @@ namespace GameCreate3.DualWorld
             var pixels = new[] { Color.white, Color.white, Color.white, Color.white };
             tex.SetPixels(pixels);
             tex.Apply();
-            cachedSquareSprite = Sprite.Create(tex, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f), 2f);
+            cachedSquareSprite = Sprite.Create(tex, new Rect(0f, 0f, 2f, 2f), new Vector2(0.5f, 0.5f), 2f, 0u, SpriteMeshType.FullRect);
             return cachedSquareSprite;
         }
 
@@ -456,7 +456,7 @@ namespace GameCreate3.DualWorld
             body.freezeRotation = true;
             body.gravityScale = 3f;
 
-            var controller = player.AddComponent<SideScrollCharacterControllerBase>();
+            player.AddComponent<SideScrollCharacterControllerBase>();
             player.AddComponent<CharacterInputProxy>();
             player.AddComponent<CharacterGroundDetector>();
             player.AddComponent<CharacterMovementMotor>();
@@ -472,7 +472,11 @@ namespace GameCreate3.DualWorld
             typeof(CharacterGroundDetector).GetField("groundMask", F)?.SetValue(player.GetComponent<CharacterGroundDetector>(), (LayerMask)LayerMask.GetMask("Ground"));
             typeof(SideScrollInteractionDetector).GetField("interactableMask", F)?.SetValue(player.GetComponent<SideScrollInteractionDetector>(), (LayerMask)LayerMask.GetMask("Interactable"));
 
-            controller.ApplyConfigs(ScriptableObject.CreateInstance<CharacterMoveConfig>(), ScriptableObject.CreateInstance<CharacterJumpConfig>(), (LayerMask)LayerMask.GetMask("Ground"));
+            // controller.ApplyConfigs would NRE here: root is inactive, so the controller's Awake hasn't run
+            // and its serialized motor refs are still null. Apply configs to the motors directly — they don't need Awake.
+            player.GetComponent<CharacterMovementMotor>().SetConfig(ScriptableObject.CreateInstance<CharacterMoveConfig>());
+            player.GetComponent<CharacterJumpMotor>().SetConfig(ScriptableObject.CreateInstance<CharacterJumpConfig>());
+            player.GetComponent<CharacterGroundDetector>().SetGroundMask((LayerMask)LayerMask.GetMask("Ground"));
             return player;
         }
 

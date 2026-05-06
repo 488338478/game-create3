@@ -18,28 +18,31 @@
 |---|---|---|
 | 玩家移动（旧） | 已实现基础移动/跳跃/输入锁定（已归档至 `Assets/Scripts/Prototype/Player/`） | `SideScrollerPlayerController` |
 | 镜头跟随（旧） | 已实现平滑跟随与边界限制（已归档至 `Assets/Scripts/Prototype/Camera/`） | `SideScrollCameraFollow` |
-| 对话数据结构 | 已实现节点、选项、条件、变量修改 | `DialogueAsset` |
-| 对话运行器 | 已实现进入对话、节点跳转、选项选择、结束对话 | `DialogueController` |
-| 对话 UI 桥接 | 已实现说话人/正文/选项按钮渲染 | `DialoguePanelUI` |
+| 对话数据结构 | 已实现节点、选项、条件、变量修改（已归档至 `Assets/Scripts/Prototype/Narrative/`） | `DialogueAsset` |
+| 对话运行器 | 已实现进入对话、节点跳转、选项选择、结束对话（已归档至 `Assets/Scripts/Prototype/Narrative/`） | `DialogueController` |
+| 对话 UI 桥接 | 已实现说话人/正文/选项按钮渲染（已归档至 `Assets/Scripts/Prototype/UI/`） | `DialoguePanelUI` |
 | 剧情机 | 已实现剧情页播放、转场、页内事件、音频、输入推进、结束回调 | `StoryPlayer` / `StoryPageRenderer` / `StoryFlowBridge` |
-| 剧情变量系统 | 已实现 Bool/Int/String 变量读写与条件判断 | `NarrativeVariableStore` |
+| 剧情变量系统（旧） | 已实现 Bool/Int/String 变量读写与条件判断（已归档至 `Assets/Scripts/Prototype/Core/`） | `NarrativeVariableStore` |
+| 剧情变量系统（StoryPlayer 内部） | 轻量 Bool/Int/String 存储，仅给 `StoryEventSystem` 用 | `Assets/Scripts/StoryPlayer/State/StoryVariableStore` |
 | 可交互系统（旧） | 已实现交互接口、可交互基类、范围检测（已归档至 `Assets/Scripts/Prototype/Interaction/`） | `IInteractable` / `InteractableBase` / `InteractionDetector` |
-| 机关系统 | 已实现拉杆、门禁（条件开门） | `LeverSwitch` / `PuzzleGate` |
-| 任务系统 | 已实现目标定义与完成追踪 | `ObjectiveDefinition` / `ObjectiveTracker` |
-| 存档系统 | 已实现 JSON 存档/读档（位置+变量+任务） | `SaveDataModels` / `JsonSaveUtility` / `SaveGameController` |
-| 演出触发 | 已实现 Timeline 触发与玩家输入锁定 | `SimpleCutsceneTrigger` |
+| 机关系统 | 已实现拉杆、门禁（条件开门，已归档至 `Assets/Scripts/Prototype/Puzzle/`） | `LeverSwitch` / `PuzzleGate` |
+| 任务系统 | 已实现目标定义与完成追踪（已归档至 `Assets/Scripts/Prototype/Quest/`） | `ObjectiveDefinition` / `ObjectiveTracker` |
+| 存档系统 | 已实现 JSON 存档/读档（位置+变量+任务，已归档至 `Assets/Scripts/Prototype/Save/`） | `SaveDataModels` / `JsonSaveUtility` / `SaveGameController` |
+| 演出触发 | 已实现 Timeline 触发与玩家输入锁定（已归档至 `Assets/Scripts/Prototype/Cutscene/`） | `SimpleCutsceneTrigger` |
 | SideScroll 基础模块（新） | 第一版骨架已建立 | `Assets/Scripts/SideScroll/*` |
 | 双世界关卡模块（DualWorld） | 第一版对齐子关闭环可玩，颜色子关仅占位 | `Assets/Scripts/DualWorld/*` |
 
 ## 3. 迁移策略
 - 采用“并存迁移”
-- 旧基础组件已统一归档至 `Assets/Scripts/Prototype/`（命名空间不变）：
-  - `Assets/Scripts/Prototype/Player/SideScrollerPlayerController.cs`
-  - `Assets/Scripts/Prototype/Camera/SideScrollCameraFollow.cs`
-  - `Assets/Scripts/Prototype/Interaction/{IInteractable, InteractableBase, InteractionDetector}.cs`
+- 严格隔离：新代码（`SideScroll / DualWorld / StoryPlayer`）**不得**引用 `Prototype/` 下任何类型；反之亦然
+- 旧基础组件全部归档至 `Assets/Scripts/Prototype/`（命名空间不变，scene/prefab 引用不破）：
+  - 横板基础：`Prototype/Player/`、`Prototype/Camera/`、`Prototype/Interaction/`
+  - 旧玩法子模块：`Prototype/Cutscene/`、`Prototype/Puzzle/`、`Prototype/Quest/`、`Prototype/Save/`
+  - 旧叙事栈：`Prototype/Core/`（`NarrativeVariableStore` + `NarrativeTypes`）、`Prototype/Narrative/`、`Prototype/UI/`
+- `Assets/Scripts/` 顶层只剩四个目录：`Prototype / SideScroll / DualWorld / StoryPlayer`
+- StoryPlayer 自带轻量变量存储 `StoryPlayer/State/StoryVariableStore`（namespace `GameCreate3.StoryPlayer`），不依赖 `Prototype/Core` 的 `NarrativeVariableStore`
 - 旧入口（`Chapter2Prototype` 等）继续可跑、不改入口
-- 新横板基础统一放在 `Assets/Scripts/SideScroll`，DualWorld/未来工作区只继承 `SideScrollWorkspaceBase`，禁止 `using` 旧 Player/Camera/Interaction 类型
-- `Puzzle/`、`Cutscene/` 等仍依赖旧接口的脚本暂时保留位置不变；旧 Prototype 完全退役时，可与归档目录一并删除
+- 新横板基础统一放在 `Assets/Scripts/SideScroll`，DualWorld/未来工作区只继承 `SideScrollWorkspaceBase`，禁止 `using` 旧 Player/Camera/Interaction/Narrative 类型
 - 新系统先在独立模板场景和测试场景里验证，再逐步回接正式玩法
 
 ## 4. SideScroll 目录职责

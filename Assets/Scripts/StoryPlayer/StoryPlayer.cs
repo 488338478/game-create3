@@ -8,7 +8,7 @@ namespace GameCreate3.StoryPlayer
     public sealed class StoryPlayer : MonoBehaviour
     {
         [Header("Dependencies")]
-        [SerializeField] private NarrativeVariableStore variableStore;
+        [SerializeField] private StoryVariableStore variableStore;
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private StoryAudioAdapter audioAdapter;
         [SerializeField] private StoryEventSystem eventSystem;

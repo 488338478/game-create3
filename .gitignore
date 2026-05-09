@@ -92,3 +92,9 @@ InitTestScene*.unity*
 /[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property Providers.meta
 
 .DS_Store
+
+# Large art source files (use external storage / LFS for these)
+*.psd
+*.psb
+*.tif
+*.tiff

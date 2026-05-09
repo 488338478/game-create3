@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79886533e787414a995dc42e67637344, type: 3}
+  m_Name: DefaultCameraConfig
+  m_EditorClassIdentifier: 
+  followOffset: {x: 0, y: 1.2, z: -10}
+  damping: {x: 0.2, y: 0.2}
+  useConfiner: 1
+  orthographicSize: 5

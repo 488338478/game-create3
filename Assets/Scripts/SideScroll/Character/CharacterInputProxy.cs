@@ -27,10 +27,16 @@ namespace GameCreate3
 
             inputSource.Tick();
             MoveX = inputSource.MoveX;
-            JumpPressed = inputSource.JumpPressed;
             JumpHeld = inputSource.JumpHeld;
-            InteractPressed = inputSource.InteractPressed;
+            // 按下事件采用"或锁存"：Update 抓到 true 就置 true，由 FixedUpdate 消费后清零。
+            // 否则在 Update 频率 > FixedUpdate 频率时，WasPressedThisFrame 这一帧捕获的值
+            // 会被下一次 Tick 立刻刷成 false，跳跃 / 交互按键被丢。
+            if (inputSource.JumpPressed) JumpPressed = true;
+            if (inputSource.InteractPressed) InteractPressed = true;
         }
+
+        public void ConsumeJumpPressed() => JumpPressed = false;
+        public void ConsumeInteractPressed() => InteractPressed = false;
 
         private void ResetState()
         {

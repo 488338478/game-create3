@@ -4,14 +4,23 @@ namespace GameCreate3.DualWorld
 {
     public sealed class DreamToRealityEnhancer : MonoBehaviour
     {
-        [SerializeField] private DualWorldWorkspace workspace;
+        // workspace 改为运行时懒查 —— 让本组件能独立 prefab 化（不依赖 Inspector 拖引用）。
+        // 唯一前提：本 GameObject 必须挂在 DualWorldWorkspace 根的子树下。
         [SerializeField] private RealityAlignmentTask alignmentTask;
+
+        private DualWorldWorkspace workspace;
+        private DualWorldWorkspace Workspace =>
+            workspace != null ? workspace : (workspace = GetComponentInParent<DualWorldWorkspace>());
 
         private void OnEnable()
         {
-            if (workspace != null)
+            if (Workspace != null)
             {
-                workspace.EventBus.EventRaised += HandleEvent;
+                Workspace.EventBus.EventRaised += HandleEvent;
+            }
+            else
+            {
+                Debug.LogWarning("[DreamToRealityEnhancer] No DualWorldWorkspace found in parent hierarchy.");
             }
         }
 

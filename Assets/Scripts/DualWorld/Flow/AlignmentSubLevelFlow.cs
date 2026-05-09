@@ -13,6 +13,11 @@ namespace GameCreate3.DualWorld
         [SerializeField] private DreamPushTarget pushTarget;
         [SerializeField] private GameObject dreamRoot;
 
+        // 暴露为只读属性 —— 双屏布局后两个 root 不再切 SetActive，
+        // 但保留引用便于未来挂"高亮/降亮"视觉表现，也避免 CS0414 警告。
+        public GameObject RealityRoot => realityRoot;
+        public GameObject DreamRoot => dreamRoot;
+
         [Header("Traversal")]
         [SerializeField] private string exitWorkspaceEventId = "alignment_exit";
 
@@ -38,40 +43,46 @@ namespace GameCreate3.DualWorld
 
         protected override void OnPhaseEntered(SubLevelPhase phase)
         {
+            // 设计原则：两侧（左 UI + 右横板）从头到尾都可操作。
+            // 阶段不再代表"输入开关"，而是代表三件真实游戏状态：
+            //   1) realityTask 是否还接受提交（仅 Completed 后关闭）
+            //   2) realityTask 的 assist（吸附 + 严格容差） 开关
+            //   3) 路径是否打开（由 RealityToDreamRepair 桥根据事件决定）
             switch (phase)
             {
                 case SubLevelPhase.RealityTaskActive:
-                    SetRealityActive(true);
-                    SetDreamActive(false);
-                    realityTask?.ResetTask();
-                    realityTask?.SetInteractable(true);
-                    realityTask?.SetAssistEnabled(false);
-                    Workspace?.PlayerController?.SetInputEnabled(false);
+                    pushTarget?.ResetTarget();
+                    realityTask?.ResetTask();          // ResetTask 内部 SetInteractable(true) + SetAssistEnabled(false)
+                    Workspace?.PlayerController?.SetInputEnabled(true);
                     Workspace?.ChatTaskController?.Publish(taskDefinition);
                     break;
 
                 case SubLevelPhase.RealityTaskBlocked:
-                    realityTask?.SetInteractable(false);
+                    // 仅作为"卡关反馈"事件标记；UI 不锁、玩家不锁，1 秒后自然推进。
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityBlocked, SubLevelId, null));
-                    StartCoroutine(DelayThen(blockedToDreamDelaySec, () => EnterPhase(SubLevelPhase.DreamTaskUnlocked)));
+                    StartCoroutine(DelayThen(blockedToDreamDelaySec, () =>
+                    {
+                        if (CurrentPhase == SubLevelPhase.RealityTaskBlocked)
+                        {
+                            EnterPhase(SubLevelPhase.DreamTaskUnlocked);
+                        }
+                    }));
                     break;
 
                 case SubLevelPhase.DreamTaskUnlocked:
-                    SetRealityActive(false);
-                    SetDreamActive(true);
-                    pushTarget?.ResetTarget();
-                    Workspace?.PlayerController?.SetInputEnabled(true);
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.DreamUnlocked, SubLevelId, null));
                     break;
 
                 case SubLevelPhase.RealityTaskEnhanced:
-                    SetRealityActive(true);
-                    Workspace?.PlayerController?.SetInputEnabled(false);
+                    // assist 已由 DreamToRealityEnhancer 桥打开，这里只是事件标记。
                     break;
 
                 case SubLevelPhase.RealityTaskCompleted:
-                    realityTask?.SetInteractable(false);
+                    realityTask?.SetInteractable(false);   // 任务完成，不再接受新提交
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityCompleted, SubLevelId, null));
+                    // RealityToDreamRepair 桥会在同一帧内打开路径并喊出 DreamWorldResolved 事件；
+                    // 流自身也立刻推进到 Resolved → Traversal，避免依赖桥来驱动相位。
+                    EnterPhase(SubLevelPhase.DreamWorldResolved);
                     break;
 
                 case SubLevelPhase.DreamWorldResolved:
@@ -79,9 +90,13 @@ namespace GameCreate3.DualWorld
                     break;
 
                 case SubLevelPhase.DreamTraversalActive:
-                    SetRealityActive(false);
-                    SetDreamActive(true);
-                    Workspace?.PlayerController?.SetInputEnabled(true);
+                    // 玩家全程都可走 —— 处理一种边界情况：玩家在 path 打开之前
+                    // 已经跳过墙走进过出口区（事件已记到 Workspace.raisedEventIds），
+                    // 此时直接判通过，免得用户被迫走出再走入。
+                    if (Workspace != null && Workspace.HasWorkspaceEvent(exitWorkspaceEventId))
+                    {
+                        EnterPhase(SubLevelPhase.SubLevelCompleted);
+                    }
                     break;
 
                 case SubLevelPhase.SubLevelCompleted:
@@ -92,26 +107,28 @@ namespace GameCreate3.DualWorld
 
         public override void OnRealitySubmit(RealitySubmitResult result)
         {
+            // assist 没开（玩家还没把方块推到舒适区）→ 提交注定失败 → 反馈 + 走"卡关动画"
+            // assist 开了 + 全部对齐 → 成功，进 Completed。
             if (result.Success && CurrentPhase == SubLevelPhase.RealityTaskEnhanced)
             {
                 EnterPhase(SubLevelPhase.RealityTaskCompleted);
                 return;
             }
 
+            Workspace?.ChatTaskController?.Raise(ChatTaskController.Event.Failed);
+
+            // 仅"首次失败 + 还在 Active 阶段"时驱动 Blocked → DreamTaskUnlocked 反馈链。
             if (CurrentPhase == SubLevelPhase.RealityTaskActive)
             {
-                Workspace?.ChatTaskController?.Raise(ChatTaskController.Event.Failed);
                 EnterPhase(SubLevelPhase.RealityTaskBlocked);
-            }
-            else if (CurrentPhase == SubLevelPhase.RealityTaskEnhanced)
-            {
-                Workspace?.ChatTaskController?.Raise(ChatTaskController.Event.Failed);
             }
         }
 
         public override void OnDreamComplete()
         {
-            if (CurrentPhase != SubLevelPhase.DreamTaskUnlocked) return;
+            // 玩家可能在任意时刻把方块推到舒适区（即便还没提交过）。
+            // 只要还没进入 Enhanced 阶段，都接受这次"梦境完成"。
+            if ((int)CurrentPhase >= (int)SubLevelPhase.RealityTaskEnhanced) return;
 
             Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.DreamCompleted, SubLevelId, null));
             EnterPhase(SubLevelPhase.RealityTaskEnhanced);
@@ -119,7 +136,9 @@ namespace GameCreate3.DualWorld
 
         public override void OnTraversalReachedExit()
         {
-            if (CurrentPhase != SubLevelPhase.DreamTraversalActive) return;
+            // 出口只有在路径打开后（Completed 之后）才有意义；之前到达忽略。
+            if ((int)CurrentPhase < (int)SubLevelPhase.RealityTaskCompleted) return;
+            if (CurrentPhase == SubLevelPhase.SubLevelCompleted) return;
             EnterPhase(SubLevelPhase.SubLevelCompleted);
         }
 
@@ -129,16 +148,6 @@ namespace GameCreate3.DualWorld
             {
                 OnTraversalReachedExit();
             }
-        }
-
-        private void SetRealityActive(bool active)
-        {
-            if (realityRoot != null) realityRoot.SetActive(active);
-        }
-
-        private void SetDreamActive(bool active)
-        {
-            if (dreamRoot != null) dreamRoot.SetActive(active);
         }
 
         private IEnumerator DelayThen(float seconds, System.Action action)

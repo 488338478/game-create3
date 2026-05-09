@@ -40,8 +40,26 @@ namespace GameCreate3.StoryPlayer
         public event Action OnSequenceSkipped;
         public event Action<StoryPageEvent> OnPageEvent;
 
+        private bool initialized;
+
+        private void Awake()
+        {
+            // Prefab 化 fallback —— 如果 7 个剧情组件都挂在同一 GameObject 上（rig prefab 模式），
+            // Awake 时自动 GetComponent 把 IStoryPageRenderer / ITransitionController 兜起来，
+            // 不需要外部 Bootstrap 串 Initialize 链。
+            if (initialized) return;
+            if (pageRenderer == null) pageRenderer = GetComponent<IStoryPageRenderer>();
+            if (transitionController == null) transitionController = GetComponent<ITransitionController>();
+            if (pageRenderer != null && transitionController != null)
+            {
+                Initialize(pageRenderer, transitionController);
+            }
+        }
+
         public void Initialize(IStoryPageRenderer renderer, ITransitionController transition)
         {
+            if (initialized) return;
+            initialized = true;
             pageRenderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
             transitionController = transition ?? throw new ArgumentNullException(nameof(transition));
 

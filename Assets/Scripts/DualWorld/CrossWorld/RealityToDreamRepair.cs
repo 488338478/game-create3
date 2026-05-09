@@ -4,14 +4,22 @@ namespace GameCreate3.DualWorld
 {
     public sealed class RealityToDreamRepair : MonoBehaviour
     {
-        [SerializeField] private DualWorldWorkspace workspace;
+        // workspace 改为运行时懒查 —— 见 DreamToRealityEnhancer 同款理由。
         [SerializeField] private DreamPathOpener pathOpener;
+
+        private DualWorldWorkspace workspace;
+        private DualWorldWorkspace Workspace =>
+            workspace != null ? workspace : (workspace = GetComponentInParent<DualWorldWorkspace>());
 
         private void OnEnable()
         {
-            if (workspace != null)
+            if (Workspace != null)
             {
-                workspace.EventBus.EventRaised += HandleEvent;
+                Workspace.EventBus.EventRaised += HandleEvent;
+            }
+            else
+            {
+                Debug.LogWarning("[RealityToDreamRepair] No DualWorldWorkspace found in parent hierarchy.");
             }
         }
 

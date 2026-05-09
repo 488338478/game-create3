@@ -3,7 +3,8 @@
 最后更新：2026-04-26  
 适用版本：Unity 2022.3.62f3c1
 
-## 0. 原型 / 实验文档入口
+## 0. 文档入口
+- **关卡搭建必读** —— `Docs/Prefab_Manual.md`（每个 prefab 作用、引用关系、实战搭法）
 - 第二章双世界联动大原型（`Chapter2Prototype.unity` 运行时自动生成版）：`Docs/Chapter2_Demo_Prototype.md`
 - 剧情机（`StoryPlayer` 绘本页 / CG 页 / 章节转场播放器）：`Docs/StoryPlayer_Manual.md`
 
@@ -400,17 +401,30 @@
 8. `SubLevelCompleted`：到达出口，子关结束。
 
 ### 18.3 入口与测试场景
-- 测试场景：`Assets/Scenes/DW_Test_Workspace.unity`
-- 直接 Play 即可。`DualWorldRuntimeBootstrap` 在 `AfterSceneLoad` 自动调用 `DualWorldTestSceneAutoBuilder.BuildIfNeeded()`，反射注入私有 `[SerializeField]` 字段，运行时构建：
-  - 工作区根（`DualWorldRoot`，先 `SetActive(false)` 再统一激活，确保 `SideScrollWorkspaceBase.Initialize/ScanSceneObjects` 看到完整子树）
-  - 对齐任务 UI（右屏 `RealityCanvas`，受 `AlignmentSubLevelFlow` 在阶段切换时开关）
-  - 梦境地形 + `DreamPushable` + `DreamPushTarget` + 阻塞/通行路径 + 出口 `WorkspaceEventTriggerZone(eventId="alignment_exit")`
-  - SideScroll 玩家（`SideScrollCharacterControllerBase` + 输入代理 + 移动/跳跃 Motor + 地面检测，`Player` 层）和 `Cinemachine` 相机（`SideScrollCameraController` + `CinemachineVirtualCamera` + `CinemachineConfiner2D`），自动绑定到工作区
-  - 持久 UI 画布（`PersistentUI`，渲染顺序 10），承载聊天面板与调试按钮，避免被 `SetRealityActive(false)` 误隐藏
-- 调试按钮作为离线兜底依然保留：
-  - `DEBUG: 模拟梦境完成` 直接调用 `AlignmentSubLevelFlow.OnDreamComplete`
-  - `DEBUG: 模拟走到出口` 直接调用 `OnTraversalReachedExit`
-- 现在闭环可全部走真实玩法：右屏拖拽失败 → 聊天卡关 → 左屏推方块到舒适区 → 右屏吸附 → 提交成功 → 路径开启 → 角色横版走到出口触发 `alignment_exit`
+
+测试场景：`Assets/Scenes/DW_Test_Workspace.unity`，直接 Play 即可。
+
+**屏幕布局（左右分屏，两侧始终同时可见）**
+
+| 区域 | 内容 | 输入方式 |
+|---|---|---|
+| 左半屏（Reality） | `RealityPanel` 深色面板 + 排版拼图（3 个目标位、3 个可拖块、提交按钮） | 鼠标拖拽 → 提交按钮 |
+| 右半屏（Dream） | `Cinemachine` 相机（viewport `(0.5,0,0.5,1)`） + 横板地形 + 玩家 + 推方块 + 舒适区 + 出口触发器 | 键盘 A/D 移动、Space 跳跃 |
+| 顶部正中 | `ChatTaskPanel`（聊天/系统反馈面板，跨两屏） | — |
+| 底部正中 | 两个 DEBUG 按钮（模拟梦境完成 / 模拟走到出口，离线兜底） | 鼠标点击 |
+
+`DualWorldRuntimeBootstrap` 在 `AfterSceneLoad` 触发 `DualWorldTestSceneAutoBuilder.BuildIfNeeded()`，运行时由代码搭出整套：
+- 工作区根 `DualWorldRoot` 先 `SetActive(false)` 再统一激活，保证 `SideScrollWorkspaceBase.Initialize/ScanSceneObjects` 看到完整子树
+- `DualWorldScreenLayout` 应用 `SplitDreamFocus` 模式：相机 viewport 切右半，`RealityPanel` 锚到左半（零内边距，避免 viewport 不覆盖区域露出 GBuffer 残留）
+- 持久 UI 画布 `PersistentUI`（sortingOrder=10），承载聊天面板与调试按钮，不属于任何单一世界的 root
+
+**全闭环交互（双屏同时影响）**
+
+1. 玩家用鼠标拖左屏方块尝试对齐 → 点提交 → 第一次必失败（严格容差 4px） → 聊天面板出"卡关"反馈
+2. 1 秒后右屏解锁玩家输入，键盘可控制角色推右屏的方块到舒适区
+3. 方块进入舒适区驻留 0.5s → 触发 `DreamCompleted` 事件 → 左屏自动开启吸附（容差 50px）
+4. 玩家再次提交 → 成功 → 触发 `RealityCompleted` 事件 → 右屏阻塞路径替换为通行路径
+5. 角色继续向右走，进入 `WorkspaceEventTriggerZone(eventId="alignment_exit")` → `SubLevelCompleted`
 
 ### 18.4 与 SideScroll 的关系
 - `DualWorldWorkspace : SideScrollWorkspaceBase`，复用工作区生命周期与玩家/相机绑定。
@@ -423,7 +437,79 @@
 - 真实剧情入口（`StoryFlowBridge.EnterSideScroller("chapter_dual_world")`）
 - 美术、音效、最终演出资产
 
-## 19. 强制规则
+## 19. Prefab 体系
+
+### 19.1 一键生成菜单
+所有 prefab 都通过 Editor 菜单按需生成，**不进 git**（除非显式提交）。源代码改了之后重跑菜单覆盖即可。
+
+| 菜单项 | 产物 | 说明 |
+|---|---|---|
+| `GameCreate3/Generate Default Assets` | `Assets/Settings/Defaults/Default*.asset` + `Assets/Settings/DualWorld/AlignmentChatTask.asset` | 默认 SO 资产 |
+| `GameCreate3/Generate Scene Essentials Prefab` | `Assets/Prefabs/SceneEssentials.prefab` | Main Camera + CinemachineBrain + EventSystem |
+| `GameCreate3/SideScroll/Generate Atom Prefabs` | `Assets/Prefabs/SideScroll/Atoms/*.prefab` | 11 个原子件：交互物 + 5 类触发器 + 地面 + 镜头边界 |
+| `GameCreate3/SideScroll/Generate Workspace Shells` | `Assets/Prefabs/SideScroll/Shells/*.prefab` | Story / Gameplay 工作区壳 |
+| `GameCreate3/DualWorld/Generate Atom Prefabs` | `Assets/Prefabs/DualWorld/Atoms/*.prefab` | 5 个 DualWorld 专用原子件 |
+| `GameCreate3/DualWorld/Generate Workspace Prefab` | `Assets/Prefabs/DualWorld/DualWorldWorkspace.prefab` + 嵌套 5 个组合件 prefab + 5 个 Logic prefab | 完整工作区，运行时 SO 引用全部已替换为持久 .asset |
+| `GameCreate3/StoryPlayer/Generate Atom Prefabs` | `Assets/Prefabs/StoryPlayer/Atoms/*.prefab` | 3 个 UI 原子（背景 / 淡入遮罩 / 输入屏蔽层） |
+| `GameCreate3/StoryPlayer/Generate Trigger Prefabs` | `Assets/Prefabs/StoryPlayer/Triggers/*.prefab` | **生产用**：Zone / Interactable / WorkspaceEvent / AutoPlay 4 个触发器 |
+| `GameCreate3/StoryPlayer/Generate Rig Prefab` | `Assets/Prefabs/StoryPlayer/StoryPlayerRig.prefab` | StoryPlayer 全局单例 rig（兼容旧 Bootstrap 模式） |
+
+每次生成除了存到 `Assets/Prefabs/` 还会复制一份到 `Assets/Resources/Prefabs/`，让 `Resources.Load<GameObject>("Prefabs/...")` 能在运行时找到。
+
+### 19.2 用法
+新场景接 DualWorld：
+1. 拖 `Assets/Prefabs/SceneEssentials.prefab` 进 Hierarchy
+2. 拖 `Assets/Prefabs/DualWorld/DualWorldWorkspace.prefab` 进 Hierarchy
+3. Play
+
+如果场景名是 `DW_Test_Workspace` 且没有手挂工作区，`DualWorldRuntimeBootstrap` 会在 `AfterSceneLoad` 自动 `Resources.Load + Instantiate`。Resources 没找到 prefab 时回退到老的 `DualWorldTestSceneAutoBuilder`（兜底，便于刚 clone 仓库还没跑过菜单的人也能 Play）。
+
+### 19.3 Prefab 嵌套关系
+
+```
+DualWorldWorkspace.prefab            ← 顶层壳：DualWorldWorkspace + LevelInGameFlow + AlignmentSubLevelFlow + CrossWorldBridges + ChatTaskController
+├─ SideScrollPlayer.prefab           ← 玩家（可独立复用到任意 SideScroll 场景）
+├─ CameraRig.prefab                  ← Cinemachine vcam + Confiner + CameraBounds
+├─ RealityCanvas.prefab              ← 左屏 UI（Canvas + 拖块任务 + 3 块 + 3 目标 + 提交按钮）
+├─ DreamWorld.prefab                 ← 右屏地形（地面 + PushableBlock + PushTarget + Path + ExitTrigger）
+└─ ChatTaskPanel.prefab              ← 持久 UI 聊天面板（Canvas + Panel + Title/Body/Accent）
+```
+
+抽出原则：**自包含子树 = 抽 prefab；跨边界引用密集的 = 留外层**。当前留外层的：
+- **AlignmentSubLevelFlow** —— 引用 RealityCanvas / DreamWorld / ChatPanel 的字段都在外层做跨 prefab 引用
+- **CrossWorldBridges**（Enhancer + Repair）—— 引用 workspace、RealityCanvas 内的 task、DreamWorld 内的 PathOpener
+- **ChatTaskController** —— 引用 workspace 和 ChatPanel
+
+要把这三组也抽 prefab 需要先把 `workspace` SerializeField 改成运行时 `GetComponentInParent` —— 是后面一轮的事。
+
+### 19.4 StoryPlayer 生产用接入方式
+
+**关卡里插入剧情**（推荐做法）：
+
+1. 项目里随便一处保留一份 `StoryPlayerRig.prefab`（或者让 `StoryPlayerService` 第一次调用时自动从 `Resources/Prefabs/` 实例化 + DontDestroyOnLoad）
+2. 关卡里需要触发剧情的位置，拖对应的 `Triggers/*.prefab`：
+   - `StoryTriggerZone.prefab`：玩家走入触发器区域
+   - `StoryInteractable.prefab`：按交互键触发
+   - `StoryWorkspaceEventTrigger.prefab`：监听某 workspace event
+   - `StoryAutoPlay.prefab`：场景加载完立刻播放
+3. 触发器组件的 `sequence` 字段挂剧情 `StorySequence` asset
+
+**或代码里直接调**：`StoryPlayerService.Play(sequence, onComplete)`。任何位置任何时机。
+
+`StoryPlayerTestBootstrap` 已标 `[Obsolete]`，仅留给老测试场景兼容；新代码不应使用。
+
+### 19.5 DualWorld 桥 / 控制器的 workspace 引用规则
+
+`DreamToRealityEnhancer`、`RealityToDreamRepair`、`ChatTaskController` 三处的 `workspace` 字段已经改为运行时 `GetComponentInParent` 懒查 —— **必须挂在 `DualWorldWorkspace` 根的子树下才能 work**。
+
+如果是手挂场景：把这些组件放在工作区根下任意层级（不要放到工作区根的兄弟节点）。
+
+### 19.6 重要约束
+- **不要**手动编辑 prefab 里的物体后期望"指挥"运行时；运行时仍以 prefab 为权威。改东西改源代码 + 重跑菜单。
+- 改 SO 默认值：直接改 `Assets/Settings/Defaults/*.asset`，prefab 引用的就是这些资产，立刻生效。
+- 改 Editor 工具不影响已经 baked 的 prefab，**必须重跑菜单**才会重新生成。
+
+## 20. 强制规则
 ### Rule DOC-001：任何变更必须同步更新文档
 - 功能逻辑、项目配置、开发流程变化时，同次提交必须更新 `Docs/Project_Handbook.md`
 - 提交说明中必须写明 `Updated Docs/Project_Handbook.md`

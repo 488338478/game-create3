@@ -6,6 +6,16 @@ using System.Collections.Generic;
 
 namespace GameCreate3.StoryPlayer
 {
+    /// <summary>
+    /// [DEPRECATED] 测试场景一键自搭播放器（Awake 时 new 出 Canvas + 7 个剧情组件 + EventSystem + 主相机）。
+    /// 生产关卡请改用 <see cref="StoryPlayerService"/> 静态门面 + 触发器 prefab：
+    ///   - StoryTriggerZone：玩家走入触发器
+    ///   - StoryInteractable：按交互键触发
+    ///   - StoryWorkspaceEventTrigger：监听工作区事件
+    ///   - StoryAutoPlay：场景加载完立即播放
+    /// 本组件保留仅为兼容旧测试场景。
+    /// </summary>
+    [System.Obsolete("Production code: use StoryPlayerService + Trigger prefabs. This bootstrap is for legacy test scenes only.", false)]
     public sealed class StoryPlayerTestBootstrap : MonoBehaviour
     {
         [Header("Test Sequence")]

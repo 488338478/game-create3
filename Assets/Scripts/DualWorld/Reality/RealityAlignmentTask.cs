@@ -50,9 +50,16 @@ namespace GameCreate3.DualWorld
                 if (block != null) block.SetAssistEnabled(enabled);
             }
 
+            // 目标位始终可见 —— 用透明度区分严格 / 辅助两档，玩家至少知道往哪拖。
+            // 之前的 SetActive 切换会让目标位完全消失，UX 上像"没反应"。
             for (var i = 0; i < targetRects.Count; i++)
             {
-                if (targetRects[i] != null) targetRects[i].gameObject.SetActive(enabled);
+                if (targetRects[i] == null) continue;
+                if (targetRects[i].TryGetComponent<UnityEngine.UI.Image>(out var img))
+                {
+                    var c = img.color;
+                    img.color = new Color(c.r, c.g, c.b, enabled ? 0.7f : 0.3f);
+                }
             }
         }
 

@@ -4,18 +4,33 @@ namespace GameCreate3.DualWorld
 {
     public sealed class ChatTaskController : MonoBehaviour
     {
+        // panel 优先用 Inspector 拖；没拖时 Awake 时 GetComponentInChildren 自查。
+        // workspace 完全去 SerializeField，运行时 GetComponentInParent 懒查 —— 让本组件能独立 prefab。
         [SerializeField] private ChatTaskPanelUI panel;
-        [SerializeField] private DualWorldWorkspace workspace;
 
         public enum Event { Published, Failed, Blocked, Enhanced, Completed }
 
         private ChatTaskDefinition activeTask;
+        private DualWorldWorkspace workspace;
+        private DualWorldWorkspace Workspace =>
+            workspace != null ? workspace : (workspace = GetComponentInParent<DualWorldWorkspace>());
+
+        private void Awake()
+        {
+            // panel 自查：允许把 ChatTaskController 放在 ChatTaskPanel 同一棵子树里，自动找到 panel。
+            if (panel == null) panel = GetComponentInChildren<ChatTaskPanelUI>(true);
+            if (panel == null) panel = GetComponentInParent<Transform>()?.GetComponentInChildren<ChatTaskPanelUI>(true);
+        }
 
         private void OnEnable()
         {
-            if (workspace != null)
+            if (Workspace != null)
             {
-                workspace.EventBus.EventRaised += HandleCrossWorldEvent;
+                Workspace.EventBus.EventRaised += HandleCrossWorldEvent;
+            }
+            else
+            {
+                Debug.LogWarning("[ChatTaskController] No DualWorldWorkspace found in parent hierarchy.");
             }
         }
 

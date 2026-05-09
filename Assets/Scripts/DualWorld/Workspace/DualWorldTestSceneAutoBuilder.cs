@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Cinemachine;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GameCreate3.DualWorld
@@ -11,6 +12,8 @@ namespace GameCreate3.DualWorld
 
         public static void BuildIfNeeded()
         {
+            EnsureEventSystem();
+
             if (hasBuilt || Object.FindObjectOfType<DualWorldWorkspace>() != null)
             {
                 hasBuilt = true;
@@ -19,6 +22,28 @@ namespace GameCreate3.DualWorld
 
             Build();
             hasBuilt = true;
+        }
+
+        /// <summary>
+        /// Editor-only hook：把"已建过"标志清掉，让 Editor 工具能多次重新生成 prefab。
+        /// 不要在运行时调用。
+        /// </summary>
+        public static void ResetForEditor() => hasBuilt = false;
+
+        private static void EnsureEventSystem()
+        {
+            // 没有 EventSystem 时，UI 的 IDragHandler / Button.onClick / GraphicRaycaster 全部不会触发。
+            // 自动搭建场景必须自带，否则即便挂了 GraphicRaycaster 也是死的。
+            if (Object.FindObjectOfType<EventSystem>() != null)
+            {
+                return;
+            }
+
+            var es = new GameObject("EventSystem");
+            es.AddComponent<EventSystem>();
+            // StandaloneInputModule 直接读 legacy Input —— 项目 activeInputHandler = Both，无需 UIActions 资源。
+            // 不用 InputSystemUIInputModule：运行时 AddComponent 不会自动绑默认 actions，会导致鼠标事件丢失。
+            es.AddComponent<StandaloneInputModule>();
         }
 
         private static void Build()
@@ -35,7 +60,7 @@ namespace GameCreate3.DualWorld
 
             var realityRoot = new GameObject("RealityRoot");
             realityRoot.transform.SetParent(root.transform, false);
-            var realityCanvas = BuildRealityCanvas(realityRoot.transform, out var alignmentTask);
+            var realityCanvas = BuildRealityCanvas(realityRoot.transform, out var alignmentTask, out var realityPanel);
 
             var dreamRoot = new GameObject("DreamRoot");
             dreamRoot.transform.SetParent(root.transform, false);
@@ -75,24 +100,34 @@ namespace GameCreate3.DualWorld
             var cameraController = BuildCameraRig(root.transform, player.transform, confiner);
             ApplyWorkspaceCharacterFields(workspace, player.GetComponent<SideScrollCharacterControllerBase>(), cameraController);
 
-            // Debug buttons retained as offline shortcuts (push-to-target collision can be finicky in auto-built scene).
-            BuildDebugButton(persistentCanvas.transform, "DEBUG: 模拟梦境完成", new Vector2(-20f, 70f), alignmentFlow.OnDreamComplete);
-            BuildDebugButton(persistentCanvas.transform, "DEBUG: 模拟走到出口", new Vector2(-20f, 20f), alignmentFlow.OnTraversalReachedExit);
+            // 双屏布局：UI 拼图 → 左半屏，横版世界 → 右半屏（通过 Camera.rect 裁剪）。
+            var screenLayout = root.AddComponent<DualWorldScreenLayout>();
+            screenLayout.Initialize(Camera.main, realityPanel, DualWorldScreenMode.SplitDreamFocus);
+
+            // 调试按钮 —— 移到屏幕底部正中（不挡左侧拼图也不挡右侧玩家路径）。
+            BuildDebugButton(persistentCanvas.transform, "DEBUG: 模拟梦境完成",
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(-120f, 30f), alignmentFlow.OnDreamComplete);
+            BuildDebugButton(persistentCanvas.transform, "DEBUG: 模拟走到出口",
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                new Vector2(120f, 30f), alignmentFlow.OnTraversalReachedExit);
 
             // Activate now — Awake → Initialize (resolve refs, scan triggers, bind workspace) → Start → Enter → flow begins.
             root.SetActive(true);
 
-            Debug.Log("[DualWorldTestSceneAutoBuilder] Dual world test scene built (with SideScroll player + camera). DEBUG buttons remain as fallbacks.");
+            Debug.Log("[DualWorldTestSceneAutoBuilder] Dual world built: 左 UI 拼图 + 右横板。键盘 A/D/Space 控制玩家，鼠标拖拽左侧方块。");
         }
 
-        private static void BuildDebugButton(Transform canvasTransform, string text, Vector2 anchoredPosition, UnityEngine.Events.UnityAction onClick)
+        private static void BuildDebugButton(Transform canvasTransform, string text,
+            Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPosition,
+            UnityEngine.Events.UnityAction onClick)
         {
             var go = new GameObject(text);
             go.transform.SetParent(canvasTransform, false);
             var rect = go.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(1f, 0f);
-            rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(1f, 0f);
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = pivot;
             rect.anchoredPosition = anchoredPosition;
             rect.sizeDelta = new Vector2(220f, 40f);
             var image = go.AddComponent<Image>();
@@ -114,7 +149,7 @@ namespace GameCreate3.DualWorld
             label.color = Color.white;
         }
 
-        private static Canvas BuildRealityCanvas(Transform parent, out RealityAlignmentTask alignmentTask)
+        private static Canvas BuildRealityCanvas(Transform parent, out RealityAlignmentTask alignmentTask, out RectTransform realityPanel)
         {
             var canvasGo = new GameObject("RealityCanvas");
             canvasGo.transform.SetParent(parent, false);
@@ -123,13 +158,41 @@ namespace GameCreate3.DualWorld
             canvasGo.AddComponent<CanvasScaler>();
             canvasGo.AddComponent<GraphicRaycaster>();
 
+            // RealityPanel 会被 DualWorldScreenLayout 锚定到屏幕左半。
+            // 这里给它一个深色底板，既圈住拼图区域，也和右侧横板形成视觉分屏。
+            var panelGo = new GameObject("RealityPanel");
+            panelGo.transform.SetParent(canvasGo.transform, false);
+            realityPanel = panelGo.AddComponent<RectTransform>();
+            realityPanel.anchorMin = Vector2.zero;
+            realityPanel.anchorMax = new Vector2(0.5f, 1f);
+            realityPanel.offsetMin = new Vector2(20f, 20f);
+            realityPanel.offsetMax = new Vector2(-20f, -20f);
+            var panelBg = panelGo.AddComponent<Image>();
+            panelBg.color = new Color(0.10f, 0.12f, 0.18f, 0.96f);
+
+            var panelTitleGo = new GameObject("PanelTitle");
+            panelTitleGo.transform.SetParent(panelGo.transform, false);
+            var panelTitleRect = panelTitleGo.AddComponent<RectTransform>();
+            panelTitleRect.anchorMin = new Vector2(0f, 1f);
+            panelTitleRect.anchorMax = new Vector2(1f, 1f);
+            panelTitleRect.pivot = new Vector2(0.5f, 1f);
+            panelTitleRect.sizeDelta = new Vector2(0f, 36f);
+            panelTitleRect.anchoredPosition = new Vector2(0f, -10f);
+            var panelTitle = panelTitleGo.AddComponent<Text>();
+            panelTitle.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            panelTitle.text = "现实 · 排版任务（鼠标拖拽 → 提交）";
+            panelTitle.alignment = TextAnchor.MiddleCenter;
+            panelTitle.color = new Color(0.9f, 0.9f, 1f);
+            panelTitle.fontSize = 18;
+
+            // AlignmentTask 现在挂在 RealityPanel 内，居中显示。
             var taskGo = new GameObject("AlignmentTask");
-            taskGo.transform.SetParent(canvasGo.transform, false);
+            taskGo.transform.SetParent(panelGo.transform, false);
             var taskRect = taskGo.AddComponent<RectTransform>();
             taskRect.anchorMin = new Vector2(0.5f, 0.5f);
             taskRect.anchorMax = new Vector2(0.5f, 0.5f);
             taskRect.sizeDelta = new Vector2(420f, 320f);
-            taskRect.anchoredPosition = new Vector2(220f, 0f);
+            taskRect.anchoredPosition = Vector2.zero;
 
             var taskGroup = taskGo.AddComponent<CanvasGroup>();
             alignmentTask = taskGo.AddComponent<RealityAlignmentTask>();
@@ -194,6 +257,7 @@ namespace GameCreate3.DualWorld
             var pushBody = pushable.AddComponent<Rigidbody2D>();
             pushBody.gravityScale = 3f;
             pushBody.constraints = RigidbodyConstraints2D.FreezeRotation;
+            pushBody.interpolation = RigidbodyInterpolation2D.Interpolate;
 
             var targetGo = new GameObject("DreamPushTarget");
             targetGo.transform.SetParent(parent, false);
@@ -233,11 +297,12 @@ namespace GameCreate3.DualWorld
             var panelGo = new GameObject("ChatTaskPanel");
             panelGo.transform.SetParent(canvasTransform, false);
             var panelRect = panelGo.AddComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0f, 1f);
-            panelRect.anchorMax = new Vector2(0f, 1f);
-            panelRect.pivot = new Vector2(0f, 1f);
-            panelRect.anchoredPosition = new Vector2(20f, -20f);
-            panelRect.sizeDelta = new Vector2(360f, 140f);
+            // 顶部正中跨左右两屏 —— 系统级反馈，不属于任何单一世界。
+            panelRect.anchorMin = new Vector2(0.5f, 1f);
+            panelRect.anchorMax = new Vector2(0.5f, 1f);
+            panelRect.pivot = new Vector2(0.5f, 1f);
+            panelRect.anchoredPosition = new Vector2(0f, -20f);
+            panelRect.sizeDelta = new Vector2(640f, 110f);
 
             var panelImage = panelGo.AddComponent<Image>();
             panelImage.color = new Color(0.08f, 0.09f, 0.12f, 0.85f);
@@ -455,6 +520,10 @@ namespace GameCreate3.DualWorld
             var body = player.AddComponent<Rigidbody2D>();
             body.freezeRotation = true;
             body.gravityScale = 3f;
+            // Interpolate：让 Rigidbody2D 在两次 FixedUpdate 之间做位置插值，
+            // 否则高 FPS 下渲染只看到 50Hz 物理位置，会出现"走两步顿一下"的视觉断帧。
+            body.interpolation = RigidbodyInterpolation2D.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
             player.AddComponent<SideScrollCharacterControllerBase>();
             player.AddComponent<CharacterInputProxy>();
@@ -507,6 +576,10 @@ namespace GameCreate3.DualWorld
                 mainCamera.orthographic = true;
                 mainCamera.orthographicSize = 5f;
             }
+
+            // 右半屏天空底色（无 skybox 时避免黑屏 / 残影），同时和左侧深色面板形成对比。
+            mainCamera.clearFlags = CameraClearFlags.SolidColor;
+            mainCamera.backgroundColor = new Color(0.65f, 0.78f, 0.88f);
 
             var brain = mainCamera.GetComponent<CinemachineBrain>();
             if (brain == null)

@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a6fc54e1e0a7df41a09d7c2952c149f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testSequence: {fileID: 0}
+  testSequence: {fileID: 11400000, guid: 5f57b0f67bfb14d4b8dda3ab073fca5e, type: 2}
   chineseFontAsset: {fileID: 0}
   storyCanvas: {fileID: 0}
   backgroundImage: {fileID: 0}

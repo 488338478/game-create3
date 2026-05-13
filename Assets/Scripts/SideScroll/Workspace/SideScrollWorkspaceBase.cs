@@ -202,10 +202,15 @@ namespace GameCreate3
                 playerController.ApplyConfigs(config.moveConfig, config.jumpConfig, groundMask == 0 ? ~0 : groundMask);
             }
 
-            if (cameraController != null && config != null)
+            // SetFollowTarget 必须独立于 config 是否为 null —— prefab 化后跨 prefab 引用会被切断，
+            // vcam.Follow 落库时是 null，必须在运行时由 workspace 修复。
+            if (cameraController != null)
             {
-                cameraController.ApplyCameraConfig(config.defaultCameraConfig);
                 cameraController.SetFollowTarget(playerController != null ? playerController.transform : null);
+                if (config != null)
+                {
+                    cameraController.ApplyCameraConfig(config.defaultCameraConfig);
+                }
             }
 
             if (playerController != null && playerSpawn != null)

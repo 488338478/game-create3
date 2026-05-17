@@ -1,7 +1,7 @@
 using System;
+using GameCreate3.Core;
 using GameCreate3.StoryPlayer;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace GameCreate3.UI
 {
@@ -10,6 +10,7 @@ namespace GameCreate3.UI
         Master,
         Bgm,
         Sfx,
+        Ui,
         Voice
     }
 
@@ -19,6 +20,7 @@ namespace GameCreate3.UI
         public float master = 1f;
         public float bgm = 1f;
         public float sfx = 1f;
+        public float ui = 1f;
         public float voice = 1f;
     }
 
@@ -27,6 +29,7 @@ namespace GameCreate3.UI
         private const string MasterVolumeKey = "Master_Volume";
         private const string BgmVolumeKey = "BGM_Volume";
         private const string SfxVolumeKey = "SFX_Volume";
+        private const string UiSfxVolumeKey = "UI_SFX_Volume";
         private const string VoiceVolumeKey = "Voice_Volume";
 
         [SerializeField] private UIVolumeSettings volumeSettings = new UIVolumeSettings();
@@ -65,6 +68,7 @@ namespace GameCreate3.UI
             volumeSettings.master = PlayerPrefs.GetFloat(MasterVolumeKey, 1f);
             volumeSettings.bgm = PlayerPrefs.GetFloat(BgmVolumeKey, 1f);
             volumeSettings.sfx = PlayerPrefs.GetFloat(SfxVolumeKey, 1f);
+            volumeSettings.ui = PlayerPrefs.GetFloat(UiSfxVolumeKey, PlayerPrefs.GetFloat(SfxVolumeKey, 1f));
             volumeSettings.voice = PlayerPrefs.GetFloat(VoiceVolumeKey, 1f);
             ApplyVolumeSettings(false);
         }
@@ -74,6 +78,7 @@ namespace GameCreate3.UI
             PlayerPrefs.SetFloat(MasterVolumeKey, volumeSettings.master);
             PlayerPrefs.SetFloat(BgmVolumeKey, volumeSettings.bgm);
             PlayerPrefs.SetFloat(SfxVolumeKey, volumeSettings.sfx);
+            PlayerPrefs.SetFloat(UiSfxVolumeKey, volumeSettings.ui);
             PlayerPrefs.SetFloat(VoiceVolumeKey, volumeSettings.voice);
             PlayerPrefs.Save();
         }
@@ -83,6 +88,7 @@ namespace GameCreate3.UI
             volumeSettings.master = 1f;
             volumeSettings.bgm = 1f;
             volumeSettings.sfx = 1f;
+            volumeSettings.ui = 1f;
             volumeSettings.voice = 1f;
             ApplyVolumeSettings(true);
         }
@@ -107,6 +113,11 @@ namespace GameCreate3.UI
             SetVolume(UIVolumeChannel.Voice, value);
         }
 
+        public void SetUiVolume(float value)
+        {
+            SetVolume(UIVolumeChannel.Ui, value);
+        }
+
         public float GetVolume(UIVolumeChannel channel)
         {
             switch (channel)
@@ -117,6 +128,8 @@ namespace GameCreate3.UI
                     return volumeSettings.bgm;
                 case UIVolumeChannel.Sfx:
                     return volumeSettings.sfx;
+                case UIVolumeChannel.Ui:
+                    return volumeSettings.ui;
                 case UIVolumeChannel.Voice:
                     return volumeSettings.voice;
                 default:
@@ -138,6 +151,9 @@ namespace GameCreate3.UI
                 case UIVolumeChannel.Sfx:
                     volumeSettings.sfx = value;
                     break;
+                case UIVolumeChannel.Ui:
+                    volumeSettings.ui = value;
+                    break;
                 case UIVolumeChannel.Voice:
                     volumeSettings.voice = value;
                     break;
@@ -158,6 +174,25 @@ namespace GameCreate3.UI
             OnVolumeSettingsChanged?.Invoke(volumeSettings);
         }
 
+        public static GameAudioChannel ToGameAudioChannel(UIVolumeChannel channel)
+        {
+            switch (channel)
+            {
+                case UIVolumeChannel.Master:
+                    return GameAudioChannel.Master;
+                case UIVolumeChannel.Bgm:
+                    return GameAudioChannel.Bgm;
+                case UIVolumeChannel.Sfx:
+                    return GameAudioChannel.Sfx;
+                case UIVolumeChannel.Ui:
+                    return GameAudioChannel.Ui;
+                case UIVolumeChannel.Voice:
+                    return GameAudioChannel.Voice;
+                default:
+                    return GameAudioChannel.Master;
+            }
+        }
+
         private static void RefreshStoryAudioAdapters()
         {
             var adapters = FindObjectsOfType<StoryAudioAdapter>();
@@ -168,59 +203,4 @@ namespace GameCreate3.UI
         }
     }
 
-    public sealed class UIVolumeSliderBinder : MonoBehaviour
-    {
-        [SerializeField] private UIVolumeChannel channel;
-        [SerializeField] private Slider slider;
-        [SerializeField] private UISettingsService settingsService;
-
-        private void Awake()
-        {
-            if (slider == null)
-            {
-                slider = GetComponent<Slider>();
-            }
-        }
-
-        private void OnEnable()
-        {
-            if (settingsService == null)
-            {
-                settingsService = UISettingsService.Instance;
-            }
-
-            if (settingsService != null && slider != null)
-            {
-                slider.SetValueWithoutNotify(settingsService.GetVolume(channel));
-                slider.onValueChanged.AddListener(HandleValueChanged);
-                settingsService.OnVolumeSettingsChanged += HandleSettingsChanged;
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (slider != null)
-            {
-                slider.onValueChanged.RemoveListener(HandleValueChanged);
-            }
-
-            if (settingsService != null)
-            {
-                settingsService.OnVolumeSettingsChanged -= HandleSettingsChanged;
-            }
-        }
-
-        private void HandleValueChanged(float value)
-        {
-            settingsService?.SetVolume(channel, value);
-        }
-
-        private void HandleSettingsChanged(UIVolumeSettings settings)
-        {
-            if (slider != null && settingsService != null)
-            {
-                slider.SetValueWithoutNotify(settingsService.GetVolume(channel));
-            }
-        }
-    }
 }

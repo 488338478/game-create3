@@ -10,6 +10,28 @@
 ```
 Assets/Prefabs/
 ├── SceneEssentials.prefab                          ← 每个新场景先拖
+├── Core/
+│   ├── AudioService.prefab                         ← 全局音频服务
+│   ├── SaveProgressService.prefab                  ← 存档/配置服务
+│   └── GlobalFlowRouter.prefab                     ← 全局流程路由
+├── UI/
+│   ├── System/
+│   │   ├── UIControlSystem.prefab                  ← UI 页面/弹窗层级壳
+│   │   └── UISettingsService.prefab                ← UI 设置服务
+│   ├── Pages/
+│   │   ├── MainMenuPage.prefab                     ← 主入口菜单
+│   │   ├── SettingsPage.prefab                     ← 设置页
+│   │   ├── PausePage.prefab                        ← 暂停菜单
+│   │   ├── InGameHUDPage.prefab                    ← 游戏内 HUD
+│   │   ├── ResultPage.prefab                       ← 结算页
+│   │   ├── GalleryPage.prefab                      ← CG 图鉴页
+│   │   ├── StoryOverlayPage.prefab                 ← 剧情覆盖层
+│   │   └── LoadingPage.prefab                      ← 全局加载遮罩
+│   ├── Popups/
+│   │   └── ConfirmDialogPage.prefab                ← 通用确认弹窗
+│   └── Atoms/
+│       ├── CGGallerySlot.prefab                    ← CG 图鉴格子
+│       └── VolumeSlider.prefab                     ← 音量滑条
 ├── SideScroll/
 │   ├── SideScrollPlayer.prefab                     ← 玩家（横板基础）
 │   ├── CameraRig.prefab                            ← Cinemachine 相机
@@ -78,9 +100,476 @@ Assets/Prefabs/
 
 ---
 
-## 2. SideScroll 模块
+## 2. Core 模块
 
-### 2.1 SideScrollPlayer.prefab
+Core 下面放的是从 `Assets/Scripts/Core` 梳理出的**全局 Logic 单例 prefab**。它们都是最小原子服务：一个 prefab 只承担一种全局职责，场景里最多一份。
+
+### 2.1 AudioService.prefab
+
+**全局音频服务**。裸 GameObject 上挂 `GameAudioService`。
+
+#### 能力
+- 播放 BGM：`PlayBGM(bgmId)`
+- 播放环境音：`PlayAmbient(ambientId)`
+- 播放音效：`PlaySFX(sfxId, channel)`
+- 设置音量：`SetVolume(GameAudioChannel, value01)`
+- 淡入淡出：`FadeIn` / `FadeOut`
+
+#### 资源约定
+| 类型 | Resources 路径 |
+|---|---|
+| BGM | `Resources/Audio/BGM/{bgmId}` |
+| Ambient | `Resources/Audio/Ambient/{ambientId}` |
+| SFX / UI SFX | `Resources/Audio/SFX/{sfxId}` |
+
+#### 内部引用
+`bgmSource`、`ambientSource`、`sfxSource`、`uiSource`、`voiceSource` 可以 prefab 内预配；如果为空，运行时会自动创建 `Core_BGM`、`Core_Ambient`、`Core_SFX`、`Core_UI`、`Core_Voice` 子节点并挂 `AudioSource`。
+
+#### 注意
+- 场景里**最多一份**。默认 `dontDestroyOnLoad = true`
+- 和 `UISettingsService` 使用同一套 PlayerPrefs 音量 key，会自动同步设置页音量
+
+---
+
+### 2.2 SaveProgressService.prefab
+
+**存档 / 配置服务**。裸 GameObject 上挂 `GameSaveProgressService`。
+
+#### 能力
+- `SetConfig` / `GetConfig`：保存全局配置
+- `SetProgress` / `GetProgress`：保存进度标记
+- `Save()` / `Load()`：写入和读取 JSON 存档
+- `DeleteSaveFile()`：删除当前存档
+
+#### 可调字段
+| 字段 | 默认值 | 用途 |
+|---|---|---|
+| `saveFileName` | `game_persistence.json` | 存档文件名 |
+| `loadOnAwake` | true | Awake 时自动读档 |
+| `dontDestroyOnLoad` | true | 跨场景保留 |
+
+#### 注意
+场景里**最多一份**。如果只是某个关卡内的临时状态，不要写进这里，优先放工作区自己的运行时字段。
+
+---
+
+### 2.3 GlobalFlowRouter.prefab
+
+**全局流程路由**。裸 GameObject 上挂 `GlobalFlowRouter`。
+
+#### 能力
+- `GoTo(nodeId, payload)`：进入某个流程节点
+- `Back()`：回到上一个节点
+- `ResetToMainMenu()`：清空返回栈并回主菜单
+- `OnNavigation`：广播流程跳转事件
+
+#### 用法
+适合菜单、暂停页、结算页、关卡入口等 UI 统一监听：
+
+```csharp
+GlobalFlowRouter.Instance.GoTo("LevelSelect");
+GlobalFlowRouter.Instance.Back();
+GlobalFlowRouter.Instance.ResetToMainMenu();
+```
+
+#### 注意
+场景里**最多一份**。它只负责流程节点和 payload，不直接加载场景、不直接开关 UI。
+
+---
+
+### 2.4 不做 prefab 的 Core 服务
+
+| 服务 | 原因 |
+|---|---|
+| `GameEventBus` | 纯 static 事件总线，没有场景对象 |
+| `ResourceConfigService` | 纯 static Resources 加载服务，没有可挂组件 |
+
+---
+
+## 3. UI 模块
+
+UI 下面按最小职责拆成 System / Pages / Popups / Atoms。System 是 UI 层级和设置服务，Pages / Popups 是可被 `UIControlSystem` 创建的界面，Atoms 是页面内部复用件。
+
+### 3.1 System/UIControlSystem.prefab
+
+**UI 页面 / 弹窗层级壳**。根节点挂 `UIControlSystem`。
+
+#### 子结构
+```
+UIControlSystem
+├── MainRoot
+├── HudRoot
+├── MenuRoot
+├── PopupRoot
+└── OverlayRoot
+```
+
+#### 包含
+- Canvas (ScreenSpaceOverlay) + GraphicRaycaster
+- `UIControlSystem`
+- 5 个页面层级根节点
+- 可选 `HUD CanvasGroup`（绑定到 `hudGroup`）
+
+#### 引用要求
+| 字段 | 来源 | 是否需手挂 |
+|---|---|---|
+| `mainRoot` | 子节点 MainRoot | prefab 内已配 ✓ |
+| `hudRoot` | 子节点 HudRoot | prefab 内已配 ✓ |
+| `menuRoot` | 子节点 MenuRoot | prefab 内已配 ✓ |
+| `popupRoot` | 子节点 PopupRoot | prefab 内已配 ✓ |
+| `overlayRoot` | 子节点 OverlayRoot | prefab 内已配 ✓ |
+| `pagePrefabs` | Pages 下的页面 prefab | 按项目需要配置 |
+| `popupPrefabs` | Popups 下的弹窗 prefab | 按项目需要配置 |
+
+#### 用法
+拖到使用菜单 / HUD / 弹窗的场景中。打开页面时：
+
+```csharp
+UIControlSystem.Instance.OpenPage(UIPageIds.CGGallery, galleryData);
+UIControlSystem.Instance.PushPopup(UIPageIds.ConfirmPopup, promptData);
+```
+
+#### 注意
+- 场景里**最多一份**。默认 `dontDestroyOnLoad = true`
+- `ensureEventSystem = true` 时，如果场景里没有 EventSystem，会自动创建一个
+- 如果已经使用 `SceneEssentials.prefab`，EventSystem 通常已经存在
+
+---
+
+### 3.2 System/UISettingsService.prefab
+
+**UI 设置服务**。裸 GameObject 上挂 `UISettingsService`。
+
+#### 能力
+- 读取 / 保存 Master、BGM、SFX、Voice 音量
+- 音量变化时广播 `OnVolumeSettingsChanged`
+- 刷新 StoryPlayer 的音频适配器
+
+#### 配套
+和 `Atoms/VolumeSlider.prefab` 搭配使用。`VolumeSlider` 会自动找 `UISettingsService.Instance` 并同步滑条值。
+
+#### 注意
+- 场景里**最多一份**
+- 它只管理 UI 设置状态；真正播放 BGM/SFX 的服务是 `AudioService.prefab`
+
+---
+
+### 3.3 Pages 页面 prefab
+
+Pages 下放**可被 `UIControlSystem.OpenPage` 打开的完整页面**。所有页面根节点都应该继承 / 挂 `UIPageController`，并配置好 `pageId`、`layer`、`CanvasGroup`。
+
+#### 页面一览
+| Prefab | pageId | 建议 Layer | 当前脚本状态 | 职责 |
+|---|---|---|---|---|
+| `MainMenuPage` | `UIPageIds.MainMenu` | Menu | 需补 `UIMainMenuPageController` | 新游戏、继续游戏、设置、画廊、退出 |
+| `SettingsPage` | `UIPageIds.Settings` | Menu / Popup | 需补 `UISettingsPageController` | 全局设置入口，重点是音量 |
+| `PausePage` | `UIPageIds.PauseMenu` | Popup | 需补 `UIPausePageController` | 继续、重开、设置、回主菜单 |
+| `InGameHUDPage` | `UIPageIds.InGameHud` | HUD | 需补 `UIInGameHUDPageController` | 任务、交互提示、暂停按钮、临时消息 |
+| `ResultPage` | `UIPageIds.VictorySettlement` / `UIPageIds.FailureRetry` | Menu | 需补 `UIResultPageController` | 关卡 / 阶段完成后的结算展示 |
+| `GalleryPage` | `UIPageIds.CGGallery` | Menu | 已有 `UICGGalleryPageController` 可承接 | CG 网格、解锁状态、大图预览 |
+| `StoryOverlayPage` | 可新增 `story_overlay` | Overlay | 需补 `UIStoryOverlayPageController` | 剧情继续 / 跳过提示 |
+| `LoadingPage` | 可新增 `loading` | Overlay | 需补 `UILoadingPageController` | 场景 / 流程切换遮罩 |
+
+#### MainMenuPage.prefab
+
+**主入口页面**。
+
+推荐结构：
+```
+MainMenuPage
+├── BackgroundRoot
+├── LogoRoot
+├── MenuButtonRoot
+│   ├── StartButton
+│   ├── ContinueButton
+│   ├── SettingsButton
+│   ├── GalleryButton
+│   └── ExitButton
+└── FooterRoot
+    ├── VersionText
+    └── CopyrightText
+```
+
+脚本职责：
+- 初始化按钮事件
+- 根据 `GameSaveProgressService` / 存档接口判断 Continue 是否可点
+- 调用 `GlobalFlowRouter` 进入新游戏或继续游戏
+- 调用 `UIControlSystem.OpenPage` 打开 Settings / Gallery
+
+不负责：
+- 不直接加载场景
+- 不直接读写复杂存档内容
+- 不直接播放剧情
+
+---
+
+#### SettingsPage.prefab
+
+**全局设置页面**。
+
+推荐结构：
+```
+SettingsPage
+└── Panel
+    ├── TitleText
+    ├── AudioGroup
+    │   ├── MasterSliderItem
+    │   ├── MusicSliderItem
+    │   ├── SFXSliderItem
+    │   └── UISliderItem
+    └── ButtonsGroup
+        ├── ResetButton
+        └── BackButton
+```
+
+每个 SliderItem 推荐结构：
+```
+SliderItem
+├── LabelText
+├── Slider
+└── ValueText
+```
+
+脚本职责：
+- 页面打开时读取当前设置
+- 初始化 slider 值
+- 监听 slider 改动
+- 改动时实时同步到音频服务
+- 返回 / 关闭时保存设置
+
+注意：
+- 当前 `UIVolumeChannel` 只有 Master / Bgm / Sfx / Voice；如果要单独支持 UI 音量，需要补 `UIVolumeChannel.Ui` 并接到 `GameAudioChannel.Ui`
+- UI 页不要直接写 PlayerPrefs，统一走 `UISettingsService` / `GameAudioService`
+- 不直接操作 AudioSource
+
+---
+
+#### PausePage.prefab
+
+**游戏中断时的暂停菜单**。
+
+推荐结构：
+```
+PausePage
+├── DimMask
+└── Panel
+    ├── TitleText
+    ├── ResumeButton
+    ├── RestartButton
+    ├── SettingsButton
+    └── MainMenuButton
+```
+
+脚本职责：
+- 打开时通知暂停控制器暂停游戏
+- 关闭时恢复游戏
+- Resume 关闭自己
+- Restart 通知流程路由重载当前段
+- Settings 打开 SettingsPage
+- MainMenu 先弹 ConfirmDialog，再走流程路由返回主菜单
+
+注意：暂停建议由统一的 `GamePauseController` 负责，不要只依赖 `Time.timeScale = 0`，后续剧情、UI 动画、音频都可能需要更细的暂停规则。
+
+---
+
+#### InGameHUDPage.prefab
+
+**游戏中常驻 HUD**。
+
+推荐结构：
+```
+InGameHUDPage
+├── TopRoot
+│   ├── TaskText
+│   └── PhaseText
+├── CenterHintRoot
+│   └── InteractionHintText
+├── TemporaryMessageRoot
+└── PauseButton
+```
+
+推荐模式：
+```csharp
+public enum HUDMode
+{
+    Gameplay,
+    Dream,
+    Story,
+    Hidden
+}
+```
+
+脚本职责：
+- 提供外部接口刷新文案
+- 支持 Gameplay / Dream / Story / Hidden 显示模式
+- 不直接决定什么时候显示什么，由关卡流程系统调用
+
+推荐接口：
+- `SetMode(HUDMode mode)`
+- `SetTaskText(string text)`
+- `SetPhaseText(string text)`
+- `ShowInteractionHint(string text)`
+- `HideInteractionHint()`
+- `ShowTemporaryMessage(string text, float duration)`
+
+---
+
+#### ResultPage.prefab
+
+**关卡或阶段完成后的结算页**。
+
+推荐结构：
+```
+ResultPage
+└── ResultPanel
+    ├── TitleText
+    ├── StageNameText
+    ├── UnlockRoot
+    │   ├── UnlockTitle
+    │   └── UnlockPreview
+    └── ButtonRoot
+        ├── NextButton
+        └── MainMenuButton
+```
+
+数据建议：
+```csharp
+public sealed class UIResultPageData
+{
+    public string title;
+    public string stageName;
+    public bool hasUnlockedCG;
+    public string unlockedCGId;
+    public bool hasNextStage;
+}
+```
+
+脚本职责：
+- `OnOpened` 时接收 `UIResultPageData`
+- 根据数据刷新标题、关卡名、解锁内容
+- NextButton 走流程路由进入下一段
+- MainMenuButton 返回主菜单
+
+---
+
+#### GalleryPage.prefab
+
+**CG 图鉴页面**。当前已有 `UICGGalleryPageController` 可作为第一版页面脚本。
+
+推荐结构：
+```
+GalleryPage
+├── ListRoot
+│   └── ScrollView
+│       └── Content
+├── PreviewRoot
+│   ├── FullImage
+│   ├── TitleText
+│   └── ClosePreviewButton
+└── BackButton
+```
+
+当前已支持：
+- 打开页面时传入 `UICGGalleryData`
+- 动态生成 `Atoms/CGGallerySlot.prefab`
+- 未解锁 CG 显示 `???` 并禁用点击
+
+还建议补：
+- `FullImage` 大图预览
+- `BackButton`
+- `CGConfig` ScriptableObject 配置表
+- 存档里的 `UnlockedCGIds`
+
+---
+
+#### StoryOverlayPage.prefab
+
+**剧情机 UI 覆盖层**。
+
+推荐结构：
+```
+StoryOverlayPage
+├── ContinueHint
+└── SkipHint
+```
+
+脚本职责：
+- 只负责显示，不负责剧情推进
+- 接收剧情机下发的数据
+- 根据剧情机指令更新继续 / 跳过提示
+
+推荐接口：
+- `ShowContinueHint(bool show)`
+- `ShowSkipHint(bool show)`
+
+---
+
+#### LoadingPage.prefab
+
+**场景切换或流程切换时的全局遮罩**。
+
+推荐结构：
+```
+LoadingPage
+├── BackgroundMask
+├── Spinner
+└── LoadingText
+```
+
+注意：
+- 应挂在 OverlayLayer
+- 优先级高于绝大多数 UI
+- 可以支持黑屏淡入淡出，但不要在这里直接决定加载哪个场景
+
+---
+
+### 3.4 Popups/ConfirmDialogPage.prefab
+
+**通用确认弹窗**。当前可直接用 `UIPromptPopup`（继承 `UIPageController`）承接。
+
+#### 包含
+- 标题文本 `titleLabel`
+- 正文文本 `messageLabel`
+- 确认按钮 `confirmButton`
+- 取消按钮 `cancelButton`
+- 两个按钮文本 `confirmLabel` / `cancelLabel`
+
+#### 数据
+打开时传入 `UIPromptPopupData`，等价于确认框数据：
+
+```csharp
+var data = new UIPromptPopupData
+{
+    title = "提示",
+    message = "确认继续？",
+    confirmText = "确定",
+    cancelText = "取消",
+    showCancel = true,
+    onConfirm = () => Debug.Log("confirm")
+};
+
+UIControlSystem.Instance.PushPopup(UIPageIds.ConfirmPopup, data);
+```
+
+#### 注意
+- `showCancel = false` 时会隐藏取消按钮
+- 关闭时会优先走 `UIControlSystem.Instance.ClosePage(PageId)`
+- Action 直接传对象可以，但跨场景或缓存弹窗时要注意引用时机；担心引用失效时可改成 eventId 模式
+
+---
+
+### 3.5 Atoms 单组件件
+
+| Prefab | 组件 | 必填字段 | 行为 |
+|---|---|---|---|
+| `CGGallerySlot` | UICGGallerySlotView | titleLabel, thumbnailImage, lockedGroup, button | CG 图鉴单格；由 CGGalleryPage 动态生成 |
+| `VolumeSlider` | UIVolumeSliderBinder + Slider | channel, slider | 设置页音量滑条；channel 可设 Master / Bgm / Sfx / Voice |
+
+---
+
+## 4. SideScroll 模块
+
+### 4.1 SideScrollPlayer.prefab
 
 **横板玩家本体**。鼠键直接控（A/D 走、Space 跳、E 交互）。
 
@@ -112,7 +601,7 @@ Assets/Prefabs/
 
 ---
 
-### 2.2 CameraRig.prefab
+### 4.2 CameraRig.prefab
 
 **Cinemachine 虚拟相机 + 限制框**。
 
@@ -131,7 +620,7 @@ CameraRig (SideScrollCameraController)
 
 ---
 
-### 2.3 Shells/SideScrollStoryWorkspace.prefab
+### 4.3 Shells/SideScrollStoryWorkspace.prefab
 
 **剧情型工作区壳**。空 GameObject 上挂 `SideScrollStoryWorkspace`（继承 `SideScrollWorkspaceBase`）。
 
@@ -143,7 +632,7 @@ CameraRig (SideScrollCameraController)
 
 ---
 
-### 2.4 Shells/SideScrollGameplayWorkspace.prefab
+### 4.4 Shells/SideScrollGameplayWorkspace.prefab
 
 **解谜型工作区壳**。挂 `SideScrollGameplayWorkspace`。
 
@@ -156,7 +645,7 @@ CameraRig (SideScrollCameraController)
 
 ---
 
-### 2.5 Atoms 单组件件
+### 4.5 Atoms 单组件件
 
 下面 11 个都是**单 GameObject + 单组件**的 prefab，**拖到工作区任意子节点**即可生效（工作区 ScanSceneObjects 会自动绑）。
 
@@ -176,9 +665,9 @@ CameraRig (SideScrollCameraController)
 
 ---
 
-## 3. DualWorld 模块
+## 5. DualWorld 模块
 
-### 3.1 DualWorldWorkspace.prefab
+### 5.1 DualWorldWorkspace.prefab
 
 **完整双世界工作区**。继承 `SideScrollWorkspaceBase`。
 
@@ -200,7 +689,7 @@ DualWorldWorkspace
 
 ---
 
-### 3.2 RealityCanvas.prefab
+### 5.2 RealityCanvas.prefab
 
 **左屏拖块 UI 全套**。
 
@@ -219,7 +708,7 @@ DualWorldWorkspace
 
 ---
 
-### 3.3 DreamWorld.prefab
+### 5.3 DreamWorld.prefab
 
 **右屏梦境地形**。
 
@@ -237,7 +726,7 @@ DualWorldWorkspace
 
 ---
 
-### 3.4 ChatTaskPanel.prefab
+### 5.4 ChatTaskPanel.prefab
 
 **持久 UI 聊天面板**。
 
@@ -253,7 +742,7 @@ DualWorldWorkspace
 
 ---
 
-### 3.5 Logic 单例 prefab
+### 5.5 Logic 单例 prefab
 
 下面 5 个都是**裸 GameObject + 单组件**。直接拖会"看起来是空的"，但**挂到 DualWorldWorkspace 子树下**会通过 `GetComponentInParent` 找到 workspace。
 
@@ -267,7 +756,7 @@ DualWorldWorkspace
 
 ---
 
-### 3.6 Atoms 单组件件
+### 5.6 Atoms 单组件件
 
 | Prefab | 用途 |
 |---|---|
@@ -279,9 +768,9 @@ DualWorldWorkspace
 
 ---
 
-## 4. StoryPlayer 模块
+## 6. StoryPlayer 模块
 
-### 4.1 StoryPlayerRig.prefab
+### 6.1 StoryPlayerRig.prefab
 
 **全局剧情播放器**。
 
@@ -298,7 +787,7 @@ DualWorldWorkspace
 
 ---
 
-### 4.2 Triggers 触发器 prefab（生产用，**关卡里直接拖**）
+### 6.2 Triggers 触发器 prefab（生产用，**关卡里直接拖**）
 
 #### StoryTriggerZone.prefab
 
@@ -340,7 +829,7 @@ DualWorldWorkspace
 
 ---
 
-### 4.3 Atoms
+### 6.3 Atoms
 
 | Prefab | 用途 |
 |---|---|
@@ -352,7 +841,7 @@ DualWorldWorkspace
 
 ---
 
-## 5. ScriptableObject 资产
+## 7. ScriptableObject 资产
 
 | 资产路径 | 类型 | 修改影响 |
 |---|---|---|
@@ -366,7 +855,7 @@ DualWorldWorkspace
 
 ---
 
-## 6. 实际关卡搭建场景
+## 8. 实际关卡搭建场景
 
 ### 场景类型 A：纯横板探索关（没剧情、没双世界）
 
@@ -428,9 +917,9 @@ DualWorldWorkspace
 
 ---
 
-## 7. 常见操作模板
+## 9. 常见操作模板
 
-### 7.1 在某个位置插一段剧情
+### 9.1 在某个位置插一段剧情
 
 ```
 方案 A：拖 StoryAutoPlay.prefab，sequence 字段挂剧情 → 场景加载即播
@@ -440,7 +929,7 @@ DualWorldWorkspace
 方案 E：拖 StoryWorkspaceEventTrigger.prefab，eventId 填 "puzzle.solved" → 解谜后播
 ```
 
-### 7.2 让玩家拾取物品
+### 9.2 让玩家拾取物品
 
 ```
 1. 拖 Atoms/PickupObject.prefab
@@ -449,7 +938,7 @@ DualWorldWorkspace
 4. 后续门禁可用 ConditionTriggerZone 检查 pickupId 是否已收集
 ```
 
-### 7.3 设置关卡出口
+### 9.3 设置关卡出口
 
 ```
 1. 拖 Atoms/ExitPoint.prefab
@@ -458,7 +947,7 @@ DualWorldWorkspace
 4. 监听处理：Workspace.WorkspaceEventRaised += (id) => { if(id=="workspace.exit") ... }
 ```
 
-### 7.4 配置镜头跟随范围
+### 9.4 配置镜头跟随范围
 
 ```
 1. 选中 CameraRig.prefab 实例下的 CameraBounds 子节点
@@ -466,7 +955,7 @@ DualWorldWorkspace
 3. （可选）拖 Atoms/CameraTriggerZone.prefab 在路径上某点 → 切镜头到不同 config
 ```
 
-### 7.5 剧情结束做某件事
+### 9.5 剧情结束做某件事
 
 ```csharp
 StoryPlayerService.Play(sequence, onComplete: () => {
@@ -477,7 +966,7 @@ StoryPlayerService.Play(sequence, onComplete: () => {
 
 ---
 
-## 8. 引用关系图（关键的）
+## 10. 引用关系图（关键的）
 
 ```
 StoryPlayerService (静态)
@@ -505,7 +994,7 @@ DualWorldWorkspace
 
 ---
 
-## 9. 故障排查
+## 11. 故障排查
 
 ### 问题 1：UI 拖不动 / 按钮点不响应
 - 检查场景里有没有 EventSystem（拖 SceneEssentials.prefab）
@@ -537,7 +1026,7 @@ DualWorldWorkspace
 
 ---
 
-## 10. 自定义你自己的 prefab
+## 12. 自定义你自己的 prefab
 
 如果自动生成的不够用：
 

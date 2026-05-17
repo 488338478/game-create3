@@ -294,16 +294,29 @@ namespace GameCreate3.StoryPlayer
             }
 
             var playbackMode = currentSequence.DefaultPlaybackMode;
-            var shouldWaitForInput = nextPage.WaitForInput;
-            var autoAdvanceDelay = nextPage.DisplayDuration > 0
-                ? nextPage.DisplayDuration
-                : currentSequence.AutoAdvanceDelay;
+            bool shouldAutoAdvance;
+            float autoAdvanceDelay;
 
-            if (playbackMode == StoryPlaybackMode.AutoAdvance && !shouldWaitForInput)
+            if (playbackMode == StoryPlaybackMode.ClickToAdvance)
+            {
+                // 默认等点击；若某页显式给了 DisplayDuration > 0，则该页按秒自动翻
+                shouldAutoAdvance = nextPage.DisplayDuration > 0f;
+                autoAdvanceDelay = nextPage.DisplayDuration;
+            }
+            else
+            {
+                // AutoAdvance：默认按秒自动翻；某页 WaitForInput=true 时强制等点击
+                shouldAutoAdvance = !nextPage.WaitForInput;
+                autoAdvanceDelay = nextPage.DisplayDuration > 0f
+                    ? nextPage.DisplayDuration
+                    : currentSequence.AutoAdvanceDelay;
+            }
+
+            if (shouldAutoAdvance)
             {
                 await Task.Delay(TimeSpan.FromSeconds(autoAdvanceDelay / playbackSpeed), ct);
             }
-            else if (shouldWaitForInput)
+            else
             {
                 SetState(StoryPlayerState.WaitingInput);
                 pageRenderer.RequestInput();

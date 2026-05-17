@@ -11,6 +11,8 @@ namespace GameCreate3.UI
         public const string VictorySettlement = "victory_settlement";
         public const string FailureRetry = "failure_retry";
         public const string CGGallery = "cg_gallery";
+        public const string StoryOverlay = "story_overlay";
+        public const string Loading = "loading";
         public const string ConfirmPopup = "confirm_popup";
         public const string SkipPrompt = "skip_prompt";
     }

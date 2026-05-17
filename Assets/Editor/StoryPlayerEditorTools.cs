@@ -1,8 +1,10 @@
 using System.IO;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using GameCreate3.StoryPlayer;
+using StoryPlayerComp = GameCreate3.StoryPlayer.StoryPlayer;
 
 namespace GameCreate3.EditorTools
 {
@@ -10,9 +12,10 @@ namespace GameCreate3.EditorTools
     /// StoryPlayer 模块 prefab 一键生成。
     ///
     /// 菜单：
-    ///   GameCreate3 → StoryPlayer → Generate Rig Prefab          兼容旧测试 Bootstrap 模式（保留）
-    ///   GameCreate3 → StoryPlayer → Generate Trigger Prefabs     生产用 4 个触发器 prefab
-    ///   GameCreate3 → StoryPlayer → Generate Atom Prefabs        Tier 1 UI 原子件
+    ///   GameCreate3 → StoryPlayer → Generate Rig Prefab                  兼容旧测试 Bootstrap 模式（保留）
+    ///   GameCreate3 → StoryPlayer → Generate Production Rig Prefab       生产用 Rig（无 Bootstrap，由 StoryRigBootstrap 引导）
+    ///   GameCreate3 → StoryPlayer → Generate Trigger Prefabs             生产用 4 个触发器 prefab
+    ///   GameCreate3 → StoryPlayer → Generate Atom Prefabs                Tier 1 UI 原子件
     /// </summary>
     public static class StoryPlayerEditorTools
     {
@@ -22,6 +25,7 @@ namespace GameCreate3.EditorTools
         private const string ResourcesPrefabRoot = "Assets/Resources/Prefabs";
         private const string RigPrefabPath = PrefabRoot + "/StoryPlayerRig.prefab";
         private const string RigPrefabResourcesPath = ResourcesPrefabRoot + "/StoryPlayerRig.prefab";
+        private const string ProductionRigPrefabPath = PrefabRoot + "/StoryPlayerProductionRig.prefab";
 
         // ------------------------------------------------------------
         // Rig prefab —— 旧 Bootstrap 模式封装
@@ -56,6 +60,178 @@ namespace GameCreate3.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[StoryPlayerEditorTools] Saved " + RigPrefabPath + " (mirrored to Resources/Prefabs/).");
+        }
+
+        // ------------------------------------------------------------
+        // Production Rig prefab —— 生产用，不含废弃 Bootstrap，由 StoryRigBootstrap 引导
+        // ------------------------------------------------------------
+
+        [MenuItem("GameCreate3/StoryPlayer/Generate Production Rig Prefab")]
+        public static void GenerateProductionRigPrefab()
+        {
+            if (Application.isPlaying)
+            {
+                Debug.LogError("[StoryPlayerEditorTools] Cannot generate prefab while in Play mode.");
+                return;
+            }
+
+            EnsureFolder(PrefabRoot);
+            EnsureFolder(ResourcesPrefabRoot);
+
+            // -------- Root + Canvas --------
+            var root = new GameObject("StoryPlayerRig");
+            root.SetActive(false);
+
+            var canvasGO = new GameObject("StoryCanvas", typeof(RectTransform));
+            canvasGO.transform.SetParent(root.transform, false);
+            var canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 0;
+            var scaler = canvasGO.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 0.5f;
+            canvasGO.AddComponent<GraphicRaycaster>();
+
+            // EventSystem 由场景的 SceneEssentials.prefab 提供，Rig 不自带（手册 §1, §6.1）
+
+            // -------- Background --------
+            var bgImage = CreateFullScreenImage(canvasGO.transform, "BackgroundImage", Color.black);
+
+            // -------- TextContainer + Speaker + Content --------
+            var textContainer = new GameObject("TextContainer", typeof(RectTransform));
+            textContainer.transform.SetParent(canvasGO.transform, false);
+            var textRect = textContainer.GetComponent<RectTransform>();
+            textRect.anchorMin = new Vector2(0f, 0f);
+            textRect.anchorMax = new Vector2(1f, 0.3f);
+            textRect.offsetMin = new Vector2(50f, 20f);
+            textRect.offsetMax = new Vector2(-50f, -20f);
+
+            var speakerGO = new GameObject("SpeakerLabel", typeof(RectTransform));
+            speakerGO.transform.SetParent(textContainer.transform, false);
+            var speakerLabel = speakerGO.AddComponent<TextMeshProUGUI>();
+            speakerLabel.fontSize = 24;
+            speakerLabel.color = Color.white;
+            speakerLabel.alignment = TextAlignmentOptions.Left;
+            var speakerRect = speakerGO.GetComponent<RectTransform>();
+            speakerRect.anchorMin = new Vector2(0f, 1f);
+            speakerRect.anchorMax = new Vector2(1f, 1f);
+            speakerRect.pivot = new Vector2(0.5f, 1f);
+            speakerRect.sizeDelta = new Vector2(0f, 40f);
+
+            var contentGO = new GameObject("ContentLabel", typeof(RectTransform));
+            contentGO.transform.SetParent(textContainer.transform, false);
+            var contentLabel = contentGO.AddComponent<TextMeshProUGUI>();
+            contentLabel.fontSize = 32;
+            contentLabel.color = Color.white;
+            contentLabel.alignment = TextAlignmentOptions.TopLeft;
+            var contentRect = contentGO.GetComponent<RectTransform>();
+            contentRect.anchorMin = Vector2.zero;
+            contentRect.anchorMax = Vector2.one;
+            contentRect.offsetMin = Vector2.zero;
+            contentRect.offsetMax = new Vector2(0f, -50f);
+
+            // -------- FadeOverlay --------
+            var fadeGO = new GameObject("FadeOverlay", typeof(RectTransform));
+            fadeGO.transform.SetParent(canvasGO.transform, false);
+            var fadeImage = fadeGO.AddComponent<Image>();
+            fadeImage.color = Color.black;
+            fadeImage.raycastTarget = false;
+            var fadeGroup = fadeGO.AddComponent<CanvasGroup>();
+            fadeGroup.alpha = 0f;
+            fadeGroup.blocksRaycasts = false;
+            var fadeRect = fadeGO.GetComponent<RectTransform>();
+            fadeRect.anchorMin = Vector2.zero;
+            fadeRect.anchorMax = Vector2.one;
+            fadeRect.offsetMin = Vector2.zero;
+            fadeRect.offsetMax = Vector2.zero;
+
+            // -------- InputBlocker (click to advance) --------
+            // StoryInputController 挂在这里：它实现了 IPointerClickHandler/Down/Up，必须放在被 raycast 命中的 UI 上才能收到鼠标事件。
+            var blockerGO = new GameObject("InputBlocker", typeof(RectTransform));
+            blockerGO.transform.SetParent(canvasGO.transform, false);
+            var blockerImage = blockerGO.AddComponent<Image>();
+            blockerImage.color = new Color(0f, 0f, 0f, 0f);
+            blockerImage.raycastTarget = true;
+            var input = blockerGO.AddComponent<StoryInputController>();
+            var blockerRect = blockerGO.GetComponent<RectTransform>();
+            blockerRect.anchorMin = Vector2.zero;
+            blockerRect.anchorMax = Vector2.one;
+            blockerRect.offsetMin = Vector2.zero;
+            blockerRect.offsetMax = Vector2.zero;
+
+            // -------- StoryPlayerSystem (logic components) --------
+            var sysGO = new GameObject("StoryPlayerSystem");
+            sysGO.transform.SetParent(root.transform, false);
+            var player = sysGO.AddComponent<StoryPlayerComp>();
+            var renderer = sysGO.AddComponent<StoryPageRenderer>();
+            var transition = sysGO.AddComponent<SimpleTransitionController>();
+            var audio = sysGO.AddComponent<StoryAudioAdapter>();
+            var evt = sysGO.AddComponent<StoryEventSystem>();
+            var flow = sysGO.AddComponent<StoryFlowBridge>();
+
+            // -------- Wire private SerializeFields --------
+            SetField(renderer, "backgroundImage", bgImage);
+            SetField(renderer, "speakerLabel", speakerLabel);
+            SetField(renderer, "contentLabel", contentLabel);
+            SetField(renderer, "textContainer", textRect);
+            SetField(renderer, "fadeOverlay", fadeGroup);
+
+            // 不接 transitionCanvas —— 它会被 SimpleTransitionController.Awake 主动 SetActive(false)，
+            // 我们没有独立 transition canvas，淡入淡出靠 fadeOverlay 的 CanvasGroup.alpha。
+            SetField(transition, "canvasGroup", fadeGroup);
+            SetField(transition, "transitionImage", fadeImage);
+            SetField(transition, "transitionRect", fadeRect);
+
+            // -------- StoryRigBootstrap on root --------
+            var bootstrap = root.AddComponent<StoryRigBootstrap>();
+            SetField(bootstrap, "storyPlayer", player);
+            SetField(bootstrap, "pageRenderer", renderer);
+            SetField(bootstrap, "transitionController", transition);
+            SetField(bootstrap, "inputController", input);
+            SetField(bootstrap, "flowBridge", flow);
+            SetField(bootstrap, "canvasRoot", canvasGO);
+
+            // -------- Save --------
+            PrefabUtility.SaveAsPrefabAsset(root, ProductionRigPrefabPath);
+            Object.DestroyImmediate(root);
+
+            FlipPrefabActive(ProductionRigPrefabPath, true);
+            AssetDatabase.SaveAssets();
+            CopyAsset(ProductionRigPrefabPath, RigPrefabResourcesPath);
+            FlipPrefabActive(RigPrefabResourcesPath, true);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[StoryPlayerEditorTools] Saved production rig to " + ProductionRigPrefabPath +
+                      " and mirrored to " + RigPrefabResourcesPath);
+        }
+
+        private static Image CreateFullScreenImage(Transform parent, string name, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            var img = go.AddComponent<Image>();
+            img.color = color;
+            return img;
+        }
+
+        private static void SetField(Object target, string name, object value)
+        {
+            var so = new SerializedObject(target);
+            var prop = so.FindProperty(name);
+            if (prop == null)
+            {
+                Debug.LogWarning("[StoryPlayerEditorTools] Field not found: " + target.GetType().Name + "." + name);
+                return;
+            }
+            prop.objectReferenceValue = value as Object;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ------------------------------------------------------------

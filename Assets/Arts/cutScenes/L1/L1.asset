@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4724615f41664449907aeafff938500, type: 3}
+  m_Name: L1
+  m_EditorClassIdentifier: 
+  sequenceId: L1
+  pages:
+  - pageId: 1
+    pageType: 0
+    backgroundImage: {fileID: 21300000, guid: ca3d110f2b4c23a4b8b4b79ec7f278c7, type: 3}
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 0
+    waitForInput: 0
+    elements: []
+    transitionIn: 0
+    transitionOut: 0
+    transitionDuration: 0
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
+  - pageId: 2
+    pageType: 0
+    backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 0
+    waitForInput: 0
+    elements: []
+    transitionIn: 0
+    transitionOut: 0
+    transitionDuration: 0
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
+  - pageId: 3
+    pageType: 0
+    backgroundImage: {fileID: 21300000, guid: 062d8aaf738bf004a99d254aecd8c37e, type: 3}
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 0
+    waitForInput: 0
+    elements: []
+    transitionIn: 0
+    transitionOut: 0
+    transitionDuration: 0
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
+  - pageId: 4
+    pageType: 0
+    backgroundImage: {fileID: 21300000, guid: 1683e775d1c7dec4697190e2c673bf6a, type: 3}
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 0
+    waitForInput: 0
+    elements: []
+    transitionIn: 0
+    transitionOut: 0
+    transitionDuration: 0
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
+  defaultPlaybackMode: 0
+  allowSkip: 0
+  autoAdvanceDelay: 3
+  endCallbackType: 0
+  endCallbackParameter: 

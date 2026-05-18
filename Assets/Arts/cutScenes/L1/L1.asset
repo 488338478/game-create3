@@ -86,6 +86,24 @@ MonoBehaviour:
       bgmVolume: 0
       voiceOver: {fileID: 0}
       soundEffects: []
+  - pageId: 5
+    pageType: 0
+    backgroundImage: {fileID: 21300000, guid: 622725cc44995fe43aee6fb7f63c97c4, type: 3}
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 0
+    waitForInput: 0
+    elements: []
+    transitionIn: 0
+    transitionOut: 0
+    transitionDuration: 0
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
   defaultPlaybackMode: 0
   allowSkip: 0
   autoAdvanceDelay: 3

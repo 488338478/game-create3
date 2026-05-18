@@ -1,4 +1,5 @@
 using GameCreate3.Core;
+using GameCreate3.Core.SceneRouting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -46,12 +47,12 @@ namespace GameCreate3.UI
 
         private static void HandleStart()
         {
-            GlobalFlowRouter.Instance?.GoTo("StartNewGame");
+            SceneRouter.Go("start_new_game");
         }
 
         private static void HandleContinue()
         {
-            GlobalFlowRouter.Instance?.GoTo("ContinueGame");
+            SceneRouter.Go("continue_game");
         }
 
         private static void HandleSettings()

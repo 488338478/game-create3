@@ -13,7 +13,8 @@ Assets/Prefabs/
 ├── Core/
 │   ├── AudioService.prefab                         ← 全局音频服务
 │   ├── SaveProgressService.prefab                  ← 存档/配置服务
-│   └── GlobalFlowRouter.prefab                     ← 全局流程路由
+│   └── SceneRouterHooks.prefab                     ← SceneRouter 的可选 Hook 容器
+│   (SceneRouter 本身是 static class 无 prefab — 见 §2.3)
 ├── UI/
 │   ├── System/
 │   │   ├── UIControlSystem.prefab                  ← UI 页面/弹窗层级壳
@@ -153,27 +154,60 @@ Core 下面放的是从 `Assets/Scripts/Core` 梳理出的**全局 Logic 单例 
 
 ---
 
-### 2.3 GlobalFlowRouter.prefab
+### 2.3 SceneRouter（无 prefab，static 门面）
 
-**全局流程路由**。裸 GameObject 上挂 `GlobalFlowRouter`。
+**全局场景切换**。`SceneRouter` 是 static class，**不需要拖任何 prefab**，任何代码任何地方直接调。
 
 #### 能力
-- `GoTo(nodeId, payload)`：进入某个流程节点
-- `Back()`：回到上一个节点
-- `ResetToMainMenu()`：清空返回栈并回主菜单
-- `OnNavigation`：广播流程跳转事件
+- `Go(routeId, payload?)` / `GoAsync(...)`：按语义 ID 切场景，从 catalog 查 sceneName
+- `GoScene(sceneName, payload?)` / `GoSceneAsync(...)`：直接按场景名切（调试 / 临时场景）
+- `Reload()` / `ReloadAsync()`：重载当前场景
+- `OnBeforeChange` / `OnAfterChange`：切换前 / 后回调，下发 `SceneRouteContext`
+  - 上下文里有 `FromScene / ToRouteId / ToScene / Payload / UseLoading`
+  - 存档、音频淡出、Loading 遮罩等系统都做成订阅者，SceneRouter 自己不直接依赖
+
+#### 配置：`Assets/Resources/SceneRoutes.asset`
+ScriptableObject，列表里每条 = `{ routeId, sceneName, useLoading }`。`SceneRouter` 第一次被调用时自动从 `Resources/SceneRoutes` 加载。要换 catalog 调 `SceneRouter.SetCatalog(other)`。
 
 #### 用法
-适合菜单、暂停页、结算页、关卡入口等 UI 统一监听：
-
 ```csharp
-GlobalFlowRouter.Instance.GoTo("LevelSelect");
-GlobalFlowRouter.Instance.Back();
-GlobalFlowRouter.Instance.ResetToMainMenu();
+// UI 按钮 / 剧情结束 / 任何 MonoBehaviour
+SceneRouter.Go("level1_intro");                          // 走 catalog
+SceneRouter.Go("level1_intro", payload: stats);          // 带数据
+SceneRouter.GoScene("DebugSandbox");                     // 不进 catalog
+SceneRouter.Reload();                                    // 重载当前场景
+await SceneRouter.GoAsync("level1_dream");               // 等加载完
+```
+
+挂 loading 遮罩 / 存档 / BGM 淡出，写一个组件订阅事件即可（**SceneRouter 自己不引这些模块**）：
+```csharp
+SceneRouter.OnBeforeChange += ctx => {
+    if (ctx.UseLoading) UIControlSystem.Instance?.OpenPage("loading");
+    GameSaveProgressService.Instance?.Save();
+};
+SceneRouter.OnAfterChange += ctx => {
+    UIControlSystem.Instance?.ClosePage("loading");
+};
 ```
 
 #### 注意
-场景里**最多一份**。它只负责流程节点和 payload，不直接加载场景、不直接开关 UI。
+- 未注册的 routeId → `Debug.LogError` 不切场景（避免拼错静默失败）
+- 当前已在切换中 → 后续请求被丢弃 + warning
+- 场景名必须在 Build Settings 里
+- SceneRouter 自动在首次使用时创建一个 DontDestroyOnLoad 的 `[SceneRouterRunner]` 跑协程，无需配置
+
+#### 配套 Hook：`Assets/Prefabs/Core/SceneRouterHooks.prefab`
+三个独立 MonoBehaviour，挂在子节点上，订阅 SceneRouter 事件实现常见副作用：
+
+| Hook | 行为 | 关键字段 |
+|---|---|---|
+| `SceneRouterLoadingHook` | `UseLoading=true` 的路由切换前打开 `loading` 页，切换后关闭 | `loadingPageId`(默认 `loading`) |
+| `SceneRouterSaveHook` | 切场景前自动 `GameSaveProgressService.Save()` | `excludeRouteIds`(调试场景排除) |
+| `SceneRouterAudioHook` | 切场景前淡出 BGM；切完后按 routeId → bgmId 映射表 `PlayBGM` | `routeBgm`(列表), `fadeOutOnLeave` |
+
+**用法**：把 `SceneRouterHooks.prefab` 拖进**首场景**（推荐主菜单或 Bootstrap 场景），因 SceneRouter 是 static、事件订阅持续到游戏退出，**只拖一次即全局生效**。不需要的 Hook 直接 disable 子节点即可。
+
+> 完全不拖也能跑：Router 本身不依赖 Hook。Hook 缺席时切场景就没有 loading / 自动存档 / BGM 处理，需要的地方自己写。
 
 ---
 
@@ -293,7 +327,7 @@ MainMenuPage
 脚本职责：
 - 初始化按钮事件
 - 根据 `GameSaveProgressService` / 存档接口判断 Continue 是否可点
-- 调用 `GlobalFlowRouter` 进入新游戏或继续游戏
+- 调用 `SceneRouter.Go("start_new_game")` / `Go("continue_game")` 进入游戏
 - 调用 `UIControlSystem.OpenPage` 打开 Settings / Gallery
 
 不负责：
@@ -364,9 +398,9 @@ PausePage
 - 打开时通知暂停控制器暂停游戏
 - 关闭时恢复游戏
 - Resume 关闭自己
-- Restart 通知流程路由重载当前段
+- Restart 调 `SceneRouter.Reload()`
 - Settings 打开 SettingsPage
-- MainMenu 先弹 ConfirmDialog，再走流程路由返回主菜单
+- MainMenu 先弹 ConfirmDialog，再调 `SceneRouter.Go("main_menu")` 返回主菜单
 
 注意：暂停建议由统一的 `GamePauseController` 负责，不要只依赖 `Time.timeScale = 0`，后续剧情、UI 动画、音频都可能需要更细的暂停规则。
 
@@ -447,7 +481,7 @@ public sealed class UIResultPageData
 脚本职责：
 - `OnOpened` 时接收 `UIResultPageData`
 - 根据数据刷新标题、关卡名、解锁内容
-- NextButton 走流程路由进入下一段
+- NextButton 调 `SceneRouter.Go("next_stage")` 进入下一段
 - MainMenuButton 返回主菜单
 
 ---

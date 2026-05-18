@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using GameCreate3.Core.SceneRouting;
 
 namespace GameCreate3.StoryPlayer
 {
@@ -255,7 +256,7 @@ namespace GameCreate3.StoryPlayer
                 return;
             }
 
-            SceneManager.LoadScene(sceneName);
+            SceneRouter.GoScene(sceneName);
         }
     }
 
@@ -280,7 +281,7 @@ namespace GameCreate3.StoryPlayer
         {
             SaveState();
             currentState = $"Level_{levelSceneName}";
-            SceneManager.LoadScene(levelSceneName);
+            SceneRouter.GoScene(levelSceneName);
         }
 
         public void EnterSideScroller(string sideScrollerId)
@@ -294,7 +295,7 @@ namespace GameCreate3.StoryPlayer
         {
             SaveState();
             currentState = "MainMenu";
-            SceneManager.LoadScene("MainMenu");
+            SceneRouter.Go("main_menu");
         }
 
         public void EnterDialogue(string dialogueId)
@@ -308,7 +309,7 @@ namespace GameCreate3.StoryPlayer
         {
             SaveState();
             currentState = "CGGallery";
-            SceneManager.LoadScene("CGGallery");
+            SceneRouter.GoScene("CGGallery");
         }
 
         public void UnlockCG(string cgId)

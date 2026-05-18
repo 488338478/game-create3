@@ -26,7 +26,6 @@ namespace GameCreate3.EditorTools
 
         private const string AudioServicePath = CoreRoot + "/AudioService.prefab";
         private const string SaveProgressServicePath = CoreRoot + "/SaveProgressService.prefab";
-        private const string GlobalFlowRouterPath = CoreRoot + "/GlobalFlowRouter.prefab";
         private const string UIControlSystemPath = UiSystemRoot + "/UIControlSystem.prefab";
         private const string UISettingsServicePath = UiSystemRoot + "/UISettingsService.prefab";
         private const string CGGalleryPagePath = UiPagesRoot + "/CGGalleryPage.prefab";
@@ -53,7 +52,6 @@ namespace GameCreate3.EditorTools
             EnsureFolder(CoreRoot);
             BuildAudioService();
             BuildSingleComponentPrefab<GameSaveProgressService>("SaveProgressService", SaveProgressServicePath);
-            BuildSingleComponentPrefab<GlobalFlowRouter>("GlobalFlowRouter", GlobalFlowRouterPath);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

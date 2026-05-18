@@ -6,18 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Templates/Level1.unity
+    path: Assets/Scenes/Level/Level1.unity
     guid: c6dba66230bad9d4885dee9987d28032
   - enabled: 1
-    path: Assets/Scenes/Templates/SampleScene.unity
+    path: "Assets/Scenes/Templates\uFF08abandoned\uFF09/SampleScene.unity"
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
-    path: Assets/Scenes/Templates/SS_Test_Workspace.unity
+    path: "Assets/Scenes/Templates\uFF08abandoned\uFF09/SS_Test_Workspace.unity"
     guid: 3f7c82b45ae5436b97cb7448c0a64888
   - enabled: 1
-    path: Assets/Scenes/Templates/SS_Story_Template.unity
+    path: "Assets/Scenes/Templates\uFF08abandoned\uFF09/SS_Story_Template.unity"
     guid: 110e5c3ddc244e14ab265fb4e77cc12b
   - enabled: 1
-    path: Assets/Scenes/Templates/SS_Gameplay_Template.unity
+    path: "Assets/Scenes/Templates\uFF08abandoned\uFF09/SS_Gameplay_Template.unity"
     guid: a47069ca0386480f90377e415eaac720
   m_configObjects: {}

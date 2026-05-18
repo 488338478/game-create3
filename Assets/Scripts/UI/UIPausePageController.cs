@@ -1,4 +1,5 @@
 using GameCreate3.Core;
+using GameCreate3.Core.SceneRouting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,7 +35,7 @@ namespace GameCreate3.UI
 
         private static void HandleRestart()
         {
-            GlobalFlowRouter.Instance?.GoTo("RestartCurrent");
+            SceneRouter.Reload();
         }
 
         private static void HandleSettings()
@@ -51,7 +52,7 @@ namespace GameCreate3.UI
                 confirmText = "OK",
                 cancelText = "Cancel",
                 showCancel = true,
-                onConfirm = () => GlobalFlowRouter.Instance?.ResetToMainMenu()
+                onConfirm = () => SceneRouter.Go("main_menu")
             };
 
             UIControlSystem.Instance?.PushPopup(UIPageIds.ConfirmPopup, data);

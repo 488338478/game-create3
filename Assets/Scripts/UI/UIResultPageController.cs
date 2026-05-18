@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using GameCreate3.Core;
+using GameCreate3.Core.SceneRouting;
 
 namespace GameCreate3.UI
 {
@@ -98,12 +99,12 @@ namespace GameCreate3.UI
 
         private static void HandleNext()
         {
-            GlobalFlowRouter.Instance?.GoTo("NextStage");
+            SceneRouter.Go("next_stage");
         }
 
         private static void HandleMainMenu()
         {
-            GlobalFlowRouter.Instance?.ResetToMainMenu();
+            SceneRouter.Go("main_menu");
         }
     }
 }

@@ -4,26 +4,28 @@ namespace GameCreate3.DualWorld
 {
     public sealed class ChatTaskController : MonoBehaviour
     {
-        // panel 优先用 Inspector 拖；没拖时 Awake 时 GetComponentInChildren 自查。
-        // workspace 完全去 SerializeField，运行时 GetComponentInParent 懒查 —— 让本组件能独立 prefab。
-        [SerializeField] private ChatTaskPanelUI panel;
-
         public enum Event { Published, Failed, Blocked, Enhanced, Completed }
 
         private ChatTaskDefinition activeTask;
         private DualWorldWorkspace workspace;
+        private ChatBoxUI chatBox;
+        private int playerSubmitCount;
+
+        public ChatBoxUI ChatBox => chatBox;
+
         private DualWorldWorkspace Workspace =>
             workspace != null ? workspace : (workspace = GetComponentInParent<DualWorldWorkspace>());
 
-        private void Awake()
+        private ChatBoxUI EnsureChatBox()
         {
-            // panel 自查：允许把 ChatTaskController 放在 ChatTaskPanel 同一棵子树里，自动找到 panel。
-            if (panel == null) panel = GetComponentInChildren<ChatTaskPanelUI>(true);
-            if (panel == null) panel = GetComponentInParent<Transform>()?.GetComponentInChildren<ChatTaskPanelUI>(true);
+            if (chatBox == null) chatBox = FindObjectOfType<ChatBoxUI>(true);
+            return chatBox;
         }
 
         private void OnEnable()
         {
+            EnsureChatBox();
+
             if (Workspace != null)
             {
                 Workspace.EventBus.EventRaised += HandleCrossWorldEvent;
@@ -31,6 +33,11 @@ namespace GameCreate3.DualWorld
             else
             {
                 Debug.LogWarning("[ChatTaskController] No DualWorldWorkspace found in parent hierarchy.");
+            }
+
+            if (chatBox == null)
+            {
+                Debug.LogWarning("[ChatTaskController] No ChatBoxUI found in scene.");
             }
         }
 
@@ -45,39 +52,58 @@ namespace GameCreate3.DualWorld
         public void Publish(ChatTaskDefinition task)
         {
             activeTask = task;
+            playerSubmitCount = 0;
+
+            if (EnsureChatBox() != null) chatBox.SetTaskHeader(task);
+
             Raise(Event.Published);
         }
 
         public void Raise(Event evt)
         {
-            if (activeTask == null || panel == null)
-            {
-                return;
-            }
+            if (activeTask == null || EnsureChatBox() == null) return;
 
             switch (evt)
             {
                 case Event.Published:
-                    panel.Show(activeTask.title, activeTask.initialMessage, ChatTaskPanelUI.Mood.Neutral);
+                    AppendNpc(activeTask.initialMessage, ChatTaskPanelUI.Mood.Neutral, activeTask.highlightInitial);
                     Debug.Log($"[ChatTask] Published: {activeTask.taskId}");
                     break;
                 case Event.Failed:
-                    panel.Show(activeTask.title, activeTask.failureMessage, ChatTaskPanelUI.Mood.Reject);
+                    AppendNpc(activeTask.failureMessage, ChatTaskPanelUI.Mood.Reject, activeTask.highlightFailure);
                     Debug.Log($"[ChatTask] Failed: {activeTask.taskId}");
                     break;
                 case Event.Blocked:
-                    panel.Show(activeTask.title, activeTask.blockedMessage, ChatTaskPanelUI.Mood.Reject);
+                    AppendNpc(activeTask.blockedMessage, ChatTaskPanelUI.Mood.Reject, activeTask.highlightBlocked);
                     Debug.Log($"[ChatTask] Blocked: {activeTask.taskId}");
                     break;
                 case Event.Enhanced:
-                    panel.Show(activeTask.title, activeTask.enhancedMessage, ChatTaskPanelUI.Mood.Enhance);
+                    AppendNpc(activeTask.enhancedMessage, ChatTaskPanelUI.Mood.Enhance, activeTask.highlightEnhanced);
                     Debug.Log($"[ChatTask] Enhanced: {activeTask.taskId}");
                     break;
                 case Event.Completed:
-                    panel.Show(activeTask.title, activeTask.successMessage, ChatTaskPanelUI.Mood.Approve);
+                    AppendNpc(activeTask.successMessage, ChatTaskPanelUI.Mood.Approve, activeTask.highlightSuccess);
                     Debug.Log($"[ChatTask] Completed: {activeTask.taskId}");
                     break;
             }
+        }
+
+        /// <summary>玩家点 submit 时调一次，append 一条玩家语料到 log 并 advance 轮换 index。</summary>
+        public void AppendPlayerSubmit()
+        {
+            if (activeTask == null || EnsureChatBox() == null) return;
+            var line = activeTask.PickPlayerLine(playerSubmitCount);
+            playerSubmitCount++;
+            if (!string.IsNullOrEmpty(line))
+            {
+                chatBox.Append(new ChatLogEntry(ChatSpeaker.Player, line));
+            }
+        }
+
+        private void AppendNpc(string body, ChatTaskPanelUI.Mood mood, bool highlight)
+        {
+            if (string.IsNullOrEmpty(body)) return;
+            chatBox.Append(new ChatLogEntry(ChatSpeaker.Npc, body, mood, null, highlight));
         }
 
         private void HandleCrossWorldEvent(CrossWorldEvent evt)

@@ -16,6 +16,7 @@ namespace GameCreate3.StoryPlayer
 
         Task RenderPageAsync(StoryPage page);
         Task HidePageAsync(StoryPage page, StoryTransitionType transitionType, float duration);
+        void PrepareBackground(StoryPage page);
 
         void RequestInput();
         void SkipCurrentAnimation();

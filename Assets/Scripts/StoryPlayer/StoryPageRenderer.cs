@@ -118,6 +118,22 @@ namespace GameCreate3.StoryPlayer
             }
         }
 
+        public void PrepareBackground(StoryPage page)
+        {
+            if (backgroundImage != null)
+            {
+                backgroundImage.sprite = page.BackgroundImage;
+                backgroundImage.color = page.BackgroundImage != null ? Color.white : Color.black;
+            }
+
+            if (backgroundContainer != null)
+            {
+                var cg = backgroundContainer.GetComponent<CanvasGroup>();
+                if (cg == null) cg = backgroundContainer.gameObject.AddComponent<CanvasGroup>();
+                cg.alpha = 1f;
+            }
+        }
+
         public async Task HidePageAsync(StoryPage page, StoryTransitionType transitionType, float duration)
         {
             if (!isReady)
@@ -183,7 +199,10 @@ namespace GameCreate3.StoryPlayer
 
             if (backgroundContainer != null)
             {
-                await FadeInAsync(backgroundContainer, page.TransitionDuration, ct);
+                var cg = backgroundContainer.GetComponent<CanvasGroup>();
+                // Skip fade-in if PrepareBackground already made it visible
+                if (cg == null || cg.alpha < 1f)
+                    await FadeInAsync(backgroundContainer, page.TransitionDuration, ct);
             }
         }
 

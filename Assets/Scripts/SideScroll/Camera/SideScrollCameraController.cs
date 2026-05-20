@@ -27,7 +27,7 @@ namespace GameCreate3
 
         public void SetFollowTarget(Transform target)
         {
-            if (virtualCamera != null)
+            if (virtualCamera != null && virtualCamera.Follow == null)
             {
                 virtualCamera.Follow = target;
             }

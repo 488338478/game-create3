@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace GameCreate3.DualWorld
 {
@@ -9,7 +8,6 @@ namespace GameCreate3.DualWorld
     {
         [SerializeField] private string taskId = "alignment.right";
         [SerializeField] private CanvasGroup interactionGroup;
-        [SerializeField] private Button submitButton;
         [SerializeField] private List<DraggableAlignmentBlock> blocks = new List<DraggableAlignmentBlock>();
         [SerializeField] private List<RectTransform> targetRects = new List<RectTransform>();
         [SerializeField] private float strictTolerance = 4f;
@@ -23,22 +21,11 @@ namespace GameCreate3.DualWorld
 
         public event Action<RealitySubmitResult> SubmitAttempted;
 
+        public bool IsInteractable => interactable;
+
         private void Awake()
         {
-            if (submitButton != null)
-            {
-                submitButton.onClick.AddListener(HandleSubmitClicked);
-            }
-
             taskStartTime = Time.time;
-        }
-
-        private void OnDestroy()
-        {
-            if (submitButton != null)
-            {
-                submitButton.onClick.RemoveListener(HandleSubmitClicked);
-            }
         }
 
         public void SetAssistEnabled(bool enabled)
@@ -74,11 +61,6 @@ namespace GameCreate3.DualWorld
                 interactionGroup.alpha = enabled ? 1f : disabledAlpha;
             }
 
-            if (submitButton != null)
-            {
-                submitButton.interactable = enabled;
-            }
-
             foreach (var block in blocks)
             {
                 if (block != null) block.SetInteractable(enabled);
@@ -97,7 +79,8 @@ namespace GameCreate3.DualWorld
             }
         }
 
-        private void HandleSubmitClicked()
+        /// <summary>外部（ChatBoxUI.SubmitRequested → AlignmentSubLevelFlow）调用，触发一次提交评估。</summary>
+        public void Submit()
         {
             if (!interactable) return;
 

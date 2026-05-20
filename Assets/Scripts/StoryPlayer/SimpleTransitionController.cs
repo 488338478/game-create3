@@ -81,6 +81,7 @@ namespace GameCreate3.StoryPlayer
         {
             if (transitionType == StoryTransitionType.None || duration <= 0)
             {
+                if (isIn) DisableTransitionCanvas();
                 return;
             }
 
@@ -93,12 +94,23 @@ namespace GameCreate3.StoryPlayer
 
             try
             {
-                EnableTransitionCanvas();
+                if (!isIn)
+                {
+                    // TransitionOut: start transparent, fade to black
+                    EnableTransitionCanvas();
+                }
+                else
+                {
+                    // TransitionIn: start from black (left by TransitionOut), fade to transparent
+                    if (transitionCanvas != null) transitionCanvas.gameObject.SetActive(true);
+                    if (canvasGroup != null) canvasGroup.alpha = 1f;
+                }
+
                 SetupTransition(transitionType, isIn);
 
                 await AnimateTransitionAsync(transitionType, duration, isIn, transitionCts.Token);
 
-                if (!isIn)
+                if (isIn)
                 {
                     DisableTransitionCanvas();
                 }
@@ -207,7 +219,7 @@ namespace GameCreate3.StoryPlayer
 
         private void ApplyTransitionEffect(StoryTransitionType transitionType, float progress, bool isIn)
         {
-            var effectiveProgress = isIn ? progress : 1f - progress;
+            var effectiveProgress = isIn ? 1f - progress : progress;
 
             switch (transitionType)
             {

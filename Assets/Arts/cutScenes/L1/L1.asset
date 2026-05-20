@@ -22,10 +22,13 @@ MonoBehaviour:
     displayDuration: 0
     waitForInput: 0
     elements: []
-    transitionIn: 0
-    transitionOut: 0
-    transitionDuration: 0
-    pageEvents: []
+    transitionIn: 1
+    transitionOut: 1
+    transitionDuration: 0.5
+    pageEvents:
+    - eventType: 0
+      triggerTime: 0
+      eventData: 
     audioConfig:
       bgm: {fileID: 0}
       loopBgm: 0
@@ -40,10 +43,13 @@ MonoBehaviour:
     displayDuration: 0
     waitForInput: 0
     elements: []
-    transitionIn: 0
-    transitionOut: 0
-    transitionDuration: 0
-    pageEvents: []
+    transitionIn: 1
+    transitionOut: 1
+    transitionDuration: 0.5
+    pageEvents:
+    - eventType: 6
+      triggerTime: 0
+      eventData: L1Strobe
     audioConfig:
       bgm: {fileID: 0}
       loopBgm: 0
@@ -58,9 +64,9 @@ MonoBehaviour:
     displayDuration: 0
     waitForInput: 0
     elements: []
-    transitionIn: 0
-    transitionOut: 0
-    transitionDuration: 0
+    transitionIn: 1
+    transitionOut: 1
+    transitionDuration: 0.5
     pageEvents: []
     audioConfig:
       bgm: {fileID: 0}
@@ -76,9 +82,9 @@ MonoBehaviour:
     displayDuration: 0
     waitForInput: 0
     elements: []
-    transitionIn: 0
-    transitionOut: 0
-    transitionDuration: 0
+    transitionIn: 1
+    transitionOut: 1
+    transitionDuration: 0.5
     pageEvents: []
     audioConfig:
       bgm: {fileID: 0}
@@ -94,9 +100,9 @@ MonoBehaviour:
     displayDuration: 0
     waitForInput: 0
     elements: []
-    transitionIn: 0
-    transitionOut: 0
-    transitionDuration: 0
+    transitionIn: 1
+    transitionOut: 1
+    transitionDuration: 0.5
     pageEvents: []
     audioConfig:
       bgm: {fileID: 0}

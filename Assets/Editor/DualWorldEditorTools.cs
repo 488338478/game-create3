@@ -32,6 +32,8 @@ namespace GameCreate3.EditorTools
         private const string RealityCanvasPrefabPath = PrefabRoot + "/RealityCanvas.prefab";
         private const string DreamWorldPrefabPath = PrefabRoot + "/DreamWorld.prefab";
         private const string ChatTaskPanelPrefabPath = PrefabRoot + "/ChatTaskPanel.prefab";
+        private const string ChatBoxPrefabPath = PrefabRoot + "/ChatBox.prefab";
+        private const string ChatLogEntryPrefabPath = PrefabRoot + "/Atoms/ChatLogEntry.prefab";
 
         // Tier 1 atoms（双世界）
         private const string AtomsRoot = PrefabRoot + "/Atoms";
@@ -206,6 +208,310 @@ namespace GameCreate3.EditorTools
         // ------------------------------------------------------------
         // Atoms（Tier 1 单组件可复用件）—— 独立菜单一键生成
         // ------------------------------------------------------------
+
+        // ------------------------------------------------------------
+        // ChatBox（scene 根驻留的右屏聊天框 prefab + 日志条目 atom）
+        // ------------------------------------------------------------
+
+        [MenuItem("GameCreate3/DualWorld/Generate ChatBox Prefabs")]
+        public static void GenerateChatBoxPrefabs()
+        {
+            if (Application.isPlaying)
+            {
+                Debug.LogError("[DualWorldEditorTools] Cannot generate prefab while in Play mode.");
+                return;
+            }
+
+            EnsureFolder(PrefabRoot);
+            EnsureFolder(AtomsRoot);
+
+            // 1) ChatLogEntry atom（先建，ChatBox 要把它指给 ChatTaskPanelUI.entryPrefab）
+            var entryAsset = BuildChatLogEntryPrefab(ChatLogEntryPrefabPath);
+
+            // 2) ChatBox 主 prefab
+            BuildChatBoxPrefab(ChatBoxPrefabPath, entryAsset);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("[DualWorldEditorTools] Generated ChatBox.prefab + ChatLogEntry.prefab under " + PrefabRoot);
+        }
+
+        // ChatLogEntry：水平 layout，NpcRoot 在左、PlayerRoot 在右，二选一激活。
+        // 每个 root 内：Avatar + Bubble(MoodAccent + Body) + HighlightGlow。
+        private static GameObject BuildChatLogEntryPrefab(string path)
+        {
+            var root = new GameObject("ChatLogEntry");
+            root.SetActive(false);
+            var rootRect = root.AddComponent<RectTransform>();
+            rootRect.sizeDelta = new Vector2(0f, 80f);
+
+            var rootLayout = root.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            rootLayout.childForceExpandWidth = true;
+            rootLayout.childForceExpandHeight = false;
+            rootLayout.childControlWidth = true;
+            rootLayout.childControlHeight = true;
+            rootLayout.spacing = 4f;
+            var rootFitter = root.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+            rootFitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+
+            var npcRoot = BuildEntrySide(root.transform, "NpcRoot", isPlayer: false,
+                bubbleColor: new Color(0.18f, 0.20f, 0.28f, 0.9f),
+                bodyColor: new Color(0.95f, 0.95f, 0.95f),
+                out var npcBody, out var npcAvatar, out var npcAccent, out var npcGlow);
+
+            var playerRoot = BuildEntrySide(root.transform, "PlayerRoot", isPlayer: true,
+                bubbleColor: new Color(0.42f, 0.55f, 0.85f, 0.9f),
+                bodyColor: Color.white,
+                out var playerBody, out var playerAvatar, out var playerAccent, out var playerGlow);
+
+            // View 组件 —— 默认绑 NPC 侧字段（最常见），渲染时按 speaker 在 NpcRoot/PlayerRoot 二选一激活。
+            var view = root.AddComponent<ChatLogEntryView>();
+            SetPrivateField(view, "bodyLabel", npcBody);
+            SetPrivateField(view, "avatarImage", npcAvatar);
+            SetPrivateField(view, "moodAccent", npcAccent);
+            SetPrivateField(view, "highlightGlow", npcGlow);
+            SetPrivateField(view, "npcRoot", npcRoot);
+            SetPrivateField(view, "playerRoot", playerRoot);
+
+            // 默认两侧都 active；运行时 Bind 会按 speaker 二选一
+            npcRoot.SetActive(true);
+            playerRoot.SetActive(false);
+
+            SaveActivePrefab(root, path);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        }
+
+        private static GameObject BuildEntrySide(Transform parent, string name, bool isPlayer,
+            Color bubbleColor, Color bodyColor,
+            out UnityEngine.UI.Text bodyOut, out UnityEngine.UI.Image avatarOut,
+            out UnityEngine.UI.Image accentOut, out GameObject glowOut)
+        {
+            var side = new GameObject(name);
+            side.transform.SetParent(parent, false);
+            var sideRect = side.AddComponent<RectTransform>();
+            var layout = side.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            layout.childAlignment = isPlayer ? TextAnchor.UpperRight : TextAnchor.UpperLeft;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.spacing = 6f;
+            var sideFitter = side.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+            sideFitter.horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+            sideFitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+            _ = sideRect;
+
+            // Avatar（占位 Image，运行时 Bind 时填 sprite；无 sprite 时由 Bind 自动 disable）
+            var avatarGo = new GameObject("Avatar");
+            avatarGo.transform.SetParent(side.transform, false);
+            var avatarLE = avatarGo.AddComponent<UnityEngine.UI.LayoutElement>();
+            avatarLE.preferredWidth = 48f;
+            avatarLE.preferredHeight = 48f;
+            avatarOut = avatarGo.AddComponent<UnityEngine.UI.Image>();
+            avatarOut.color = Color.white;
+
+            // Bubble（VerticalLayout：Accent 条 + Body 文本）
+            var bubble = new GameObject("Bubble");
+            bubble.transform.SetParent(side.transform, false);
+            var bubbleImg = bubble.AddComponent<UnityEngine.UI.Image>();
+            bubbleImg.color = bubbleColor;
+            var bubbleLayout = bubble.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+            bubbleLayout.padding = new RectOffset(8, 8, 6, 6);
+            bubbleLayout.spacing = 4f;
+            bubbleLayout.childForceExpandWidth = true;
+            bubbleLayout.childForceExpandHeight = false;
+            bubbleLayout.childControlWidth = true;
+            bubbleLayout.childControlHeight = true;
+            var bubbleFitter = bubble.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+            bubbleFitter.horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+            bubbleFitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+            var bubbleLE = bubble.AddComponent<UnityEngine.UI.LayoutElement>();
+            bubbleLE.preferredWidth = 280f;
+            bubbleLE.flexibleWidth = 0f;
+
+            var accentGo = new GameObject("MoodAccent");
+            accentGo.transform.SetParent(bubble.transform, false);
+            var accentLE = accentGo.AddComponent<UnityEngine.UI.LayoutElement>();
+            accentLE.preferredHeight = 3f;
+            accentOut = accentGo.AddComponent<UnityEngine.UI.Image>();
+            accentOut.color = Color.gray;
+
+            var bodyGo = new GameObject("Body");
+            bodyGo.transform.SetParent(bubble.transform, false);
+            bodyOut = bodyGo.AddComponent<UnityEngine.UI.Text>();
+            bodyOut.color = bodyColor;
+            bodyOut.fontSize = 14;
+            bodyOut.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            bodyOut.horizontalOverflow = HorizontalWrapMode.Wrap;
+            bodyOut.verticalOverflow = VerticalWrapMode.Overflow;
+
+            // HighlightGlow（默认 inactive；Bind 时 SetActive(entry.highlight)）
+            glowOut = new GameObject("HighlightGlow");
+            glowOut.transform.SetParent(bubble.transform, false);
+            var glowImg = glowOut.AddComponent<UnityEngine.UI.Image>();
+            glowImg.color = new Color(1f, 0.95f, 0.5f, 0.5f);
+            var glowLE = glowOut.AddComponent<UnityEngine.UI.LayoutElement>();
+            glowLE.preferredHeight = 2f;
+            glowOut.SetActive(false);
+
+            // Player 侧把 Avatar 拍到 Bubble 后面 —— 自然成"气泡在左，头像在右"。
+            if (isPlayer)
+            {
+                avatarGo.transform.SetSiblingIndex(1);
+            }
+
+            return side;
+        }
+
+        // ChatBox：右屏整个聊天框 —— Panel（背景 Image）+ TitleHeader + ScrollRect + Submit。
+        private static void BuildChatBoxPrefab(string path, GameObject entryPrefabAsset)
+        {
+            var root = new GameObject("ChatBox");
+            root.SetActive(false);
+            var rootRect = root.AddComponent<RectTransform>();
+            rootRect.sizeDelta = new Vector2(447f, 847f);    // 对齐 Level2.unity 现有 ChatBox 尺寸
+            rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+            rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+
+            var rootImg = root.AddComponent<UnityEngine.UI.Image>();
+            rootImg.color = new Color(0.78f, 0.88f, 0.95f, 1f);  // 蓝色底，配合截图风格
+
+            // —— LogPanel（持 ChatTaskPanelUI）
+            var logPanelGo = new GameObject("LogPanel");
+            logPanelGo.transform.SetParent(root.transform, false);
+            var logPanelRect = logPanelGo.AddComponent<RectTransform>();
+            logPanelRect.anchorMin = new Vector2(0f, 0f);
+            logPanelRect.anchorMax = new Vector2(1f, 1f);
+            logPanelRect.offsetMin = new Vector2(12f, 80f);     // 留出底部给 SubmitButton
+            logPanelRect.offsetMax = new Vector2(-12f, -12f);
+            var logCanvasGroup = logPanelGo.AddComponent<CanvasGroup>();
+
+            // TitleHeader
+            var titleGo = new GameObject("TitleHeader");
+            titleGo.transform.SetParent(logPanelGo.transform, false);
+            var titleRect = titleGo.AddComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.sizeDelta = new Vector2(0f, 28f);
+            titleRect.anchoredPosition = new Vector2(0f, 0f);
+            var titleText = titleGo.AddComponent<UnityEngine.UI.Text>();
+            titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            titleText.color = new Color(0.15f, 0.2f, 0.3f);
+            titleText.fontSize = 18;
+            titleText.alignment = TextAnchor.MiddleCenter;
+            titleText.text = "";
+
+            // ScrollRect（占 Title 以下整块）
+            var scrollGo = new GameObject("ScrollRect");
+            scrollGo.transform.SetParent(logPanelGo.transform, false);
+            var scrollRect = scrollGo.AddComponent<RectTransform>();
+            scrollRect.anchorMin = new Vector2(0f, 0f);
+            scrollRect.anchorMax = new Vector2(1f, 1f);
+            scrollRect.offsetMin = new Vector2(0f, 0f);
+            scrollRect.offsetMax = new Vector2(0f, -32f);       // 给 TitleHeader 让位
+            scrollGo.AddComponent<UnityEngine.UI.Image>().color = new Color(1f, 1f, 1f, 0.2f);
+            var scroll = scrollGo.AddComponent<UnityEngine.UI.ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = UnityEngine.UI.ScrollRect.MovementType.Clamped;
+
+            // Viewport
+            var viewportGo = new GameObject("Viewport");
+            viewportGo.transform.SetParent(scrollGo.transform, false);
+            var viewportRect = viewportGo.AddComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = Vector2.zero;
+            viewportGo.AddComponent<UnityEngine.UI.Image>().color = new Color(1f, 1f, 1f, 0.01f);
+            viewportGo.AddComponent<UnityEngine.UI.Mask>().showMaskGraphic = false;
+
+            // Content
+            var contentGo = new GameObject("Content");
+            contentGo.transform.SetParent(viewportGo.transform, false);
+            var contentRect = contentGo.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(0.5f, 1f);
+            contentRect.sizeDelta = new Vector2(0f, 0f);
+            var contentLayout = contentGo.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+            contentLayout.padding = new RectOffset(6, 6, 6, 6);
+            contentLayout.spacing = 6f;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = false;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            var contentFitter = contentGo.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+            contentFitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.viewport = viewportRect;
+            scroll.content = contentRect;
+
+            // ChatTaskPanelUI 组件 + 引用拼线
+            var panelUi = logPanelGo.AddComponent<ChatTaskPanelUI>();
+            SetPrivateField(panelUi, "canvasGroup", logCanvasGroup);
+            SetPrivateField(panelUi, "titleHeader", titleText);
+            SetPrivateField(panelUi, "scrollRect", scroll);
+            SetPrivateField(panelUi, "contentRoot", contentRect);
+            // entryPrefab：把 atom prefab 资产指过来（运行时 Instantiate 它）
+            if (entryPrefabAsset != null)
+            {
+                var entryViewOnAsset = entryPrefabAsset.GetComponent<ChatLogEntryView>();
+                SetPrivateField(panelUi, "entryPrefab", entryViewOnAsset);
+            }
+
+            // —— SubmitButton（贴底）
+            var btnGo = new GameObject("SubmitButton");
+            btnGo.transform.SetParent(root.transform, false);
+            var btnRect = btnGo.AddComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(0.5f, 0f);
+            btnRect.anchorMax = new Vector2(0.5f, 0f);
+            btnRect.pivot = new Vector2(0.5f, 0f);
+            btnRect.sizeDelta = new Vector2(200f, 56f);
+            btnRect.anchoredPosition = new Vector2(0f, 12f);
+            var btnImg = btnGo.AddComponent<UnityEngine.UI.Image>();
+            btnImg.color = new Color(0.3f, 0.45f, 0.7f);
+            var btn = btnGo.AddComponent<UnityEngine.UI.Button>();
+
+            var btnLabelGo = new GameObject("Label");
+            btnLabelGo.transform.SetParent(btnGo.transform, false);
+            var btnLabelRect = btnLabelGo.AddComponent<RectTransform>();
+            btnLabelRect.anchorMin = Vector2.zero;
+            btnLabelRect.anchorMax = Vector2.one;
+            btnLabelRect.offsetMin = Vector2.zero;
+            btnLabelRect.offsetMax = Vector2.zero;
+            var btnLabel = btnLabelGo.AddComponent<UnityEngine.UI.Text>();
+            btnLabel.text = "提交";
+            btnLabel.alignment = TextAnchor.MiddleCenter;
+            btnLabel.color = Color.white;
+            btnLabel.fontSize = 18;
+            btnLabel.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+            // ChatBoxUI 组件 + 引用拼线
+            var box = root.AddComponent<ChatBoxUI>();
+            SetPrivateField(box, "logPanel", panelUi);
+            SetPrivateField(box, "submitButton", btn);
+
+            SaveActivePrefab(root, path);
+        }
+
+        // 反射设私有 SerializeField（避免每次写 new SerializedObject 长链）
+        private static void SetPrivateField(Component target, string fieldName, Object value)
+        {
+            var so = new SerializedObject(target);
+            var prop = so.FindProperty(fieldName);
+            if (prop != null)
+            {
+                prop.objectReferenceValue = value;
+                so.ApplyModifiedProperties();
+            }
+            else
+            {
+                Debug.LogWarning($"[DualWorldEditorTools] Field '{fieldName}' not found on {target.GetType().Name}");
+            }
+        }
 
         [MenuItem("GameCreate3/DualWorld/Generate Atom Prefabs")]
         public static void GenerateAtomPrefabs()

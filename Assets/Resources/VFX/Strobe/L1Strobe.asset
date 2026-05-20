@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5202bc7e3a8f2247b5c522fdab3c4fc, type: 3}
+  m_Name: L1Strobe
+  m_EditorClassIdentifier: 
+  duration: 2.5
+  fadeIn: 0.05
+  fadeOut: 0.4
+  intensity: 0.449
+  flickerStrength: 0.7
+  flickerFrequency: 18
+  noiseDensity: 0.491
+  rgbShiftAmount: 6
+  scanlineIntensity: 0.724
+  scanlineFrequency: 200
+  tearAmount: 1
+  tearFrequency: 8
+  colorShift: {r: 0.3207547, g: 0.10590954, b: 0.10590954, a: 0}

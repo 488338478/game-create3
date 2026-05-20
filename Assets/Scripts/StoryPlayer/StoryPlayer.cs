@@ -275,6 +275,9 @@ namespace GameCreate3.StoryPlayer
                     false);
             }
 
+            // Screen is black — prepare new page content instantly before revealing
+            pageRenderer.PrepareBackground(nextPage);
+
             SetState(StoryPlayerState.Transitioning);
             await transitionController.PlayTransitionAsync(
                 nextPage.TransitionIn,

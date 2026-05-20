@@ -27,11 +27,21 @@ namespace GameCreate3.DualWorld
         [Header("Tuning")]
         [SerializeField] private float blockedToDreamDelaySec = 1f;
 
+        private ChatBoxUI chatBox;
+
+        private ChatBoxUI EnsureChatBox()
+        {
+            if (chatBox == null) chatBox = Workspace?.ChatTaskController?.ChatBox ?? FindObjectOfType<ChatBoxUI>(true);
+            return chatBox;
+        }
+
         protected override void OnInitialized()
         {
             if (realityTask != null) realityTask.SubmitAttempted += OnRealitySubmit;
             if (pushTarget != null) pushTarget.Completed += OnDreamComplete;
             if (Workspace != null) Workspace.WorkspaceEventRaised += HandleWorkspaceEvent;
+
+            if (EnsureChatBox() != null) chatBox.SubmitRequested += HandleSubmitRequested;
         }
 
         private void OnDestroy()
@@ -39,6 +49,14 @@ namespace GameCreate3.DualWorld
             if (realityTask != null) realityTask.SubmitAttempted -= OnRealitySubmit;
             if (pushTarget != null) pushTarget.Completed -= OnDreamComplete;
             if (Workspace != null) Workspace.WorkspaceEventRaised -= HandleWorkspaceEvent;
+            if (chatBox != null) chatBox.SubmitRequested -= HandleSubmitRequested;
+        }
+
+        private void HandleSubmitRequested()
+        {
+            if (realityTask == null || !realityTask.IsInteractable) return;
+            Workspace?.ChatTaskController?.AppendPlayerSubmit();
+            realityTask.Submit();
         }
 
         protected override void OnPhaseEntered(SubLevelPhase phase)
@@ -55,6 +73,7 @@ namespace GameCreate3.DualWorld
                     realityTask?.ResetTask();          // ResetTask 内部 SetInteractable(true) + SetAssistEnabled(false)
                     Workspace?.PlayerController?.SetInputEnabled(true);
                     Workspace?.ChatTaskController?.Publish(taskDefinition);
+                    if (EnsureChatBox() != null) chatBox.SetSubmitInteractable(true);
                     break;
 
                 case SubLevelPhase.RealityTaskBlocked:
@@ -79,6 +98,7 @@ namespace GameCreate3.DualWorld
 
                 case SubLevelPhase.RealityTaskCompleted:
                     realityTask?.SetInteractable(false);   // 任务完成，不再接受新提交
+                    if (EnsureChatBox() != null) chatBox.SetSubmitInteractable(false);
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityCompleted, SubLevelId, null));
                     // RealityToDreamRepair 桥会在同一帧内打开路径并喊出 DreamWorldResolved 事件；
                     // 流自身也立刻推进到 Resolved → Traversal，避免依赖桥来驱动相位。

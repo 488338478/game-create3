@@ -1,0 +1,6 @@
+这个目录放 StrobeConfig 预设资产。
+
+右键 → Create > Game > VFX > Strobe Preset 在这里创建，
+然后通过资产文件名（不含 .asset）从 StoryPlayer 的 EventData 引用。
+
+参考 ../../../Scripts/Rendering/README_StrobeEffect.md

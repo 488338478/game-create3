@@ -407,10 +407,12 @@ namespace GameCreate3.DualWorld
 
         private static void ApplyAlignmentTaskFields(RealityAlignmentTask task, CanvasGroup group, Button submit, List<DraggableAlignmentBlock> blocks, List<RectTransform> targets)
         {
+            // submit 按钮已从 RealityAlignmentTask 移除，改由 ChatBoxUI 持有并通过 SubmitRequested 事件外抛。
+            // builder 生成的 submit 按钮目前是孤儿 —— 测试场景需手动把它移到 ChatBox 下，或用 prefab 流程。
+            _ = submit;
             var t = typeof(RealityAlignmentTask);
             const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
             t.GetField("interactionGroup", F)?.SetValue(task, group);
-            t.GetField("submitButton", F)?.SetValue(task, submit);
             t.GetField("blocks", F)?.SetValue(task, blocks);
             t.GetField("targetRects", F)?.SetValue(task, targets);
         }
@@ -460,19 +462,22 @@ namespace GameCreate3.DualWorld
 
         private static void ApplyChatPanelFields(ChatTaskPanelUI panel, CanvasGroup group, Text title, Text body, Image accent)
         {
+            // ChatTaskPanelUI 已重构为 log 模式（ScrollRect + entryPrefab），builder 无法在运行时合成 ScrollRect/EntryPrefab。
+            // 老字段（titleLabel/bodyLabel/accentBar）不再存在；这里只兜底挂 canvasGroup + titleHeader 让面板不至于完全裸。
+            // 完整 log 体验请走 scene-authored ChatBox prefab，不要依赖 test builder。
+            _ = body; _ = accent;
             var t = typeof(ChatTaskPanelUI);
             const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
             t.GetField("canvasGroup", F)?.SetValue(panel, group);
-            t.GetField("titleLabel", F)?.SetValue(panel, title);
-            t.GetField("bodyLabel", F)?.SetValue(panel, body);
-            t.GetField("accentBar", F)?.SetValue(panel, accent);
+            t.GetField("titleHeader", F)?.SetValue(panel, title);
+            Debug.LogWarning("[DualWorldTestSceneAutoBuilder] ChatTaskPanelUI 已升级为 log 模式；builder 生成的面板仅占位，请改用 ChatBox prefab。");
         }
 
         private static void ApplyChatControllerFields(ChatTaskController controller, ChatTaskPanelUI panel, DualWorldWorkspace ws)
         {
+            _ = panel;  // 不再持 panel 引用，运行时通过 FindObjectOfType<ChatBoxUI> 查
             var t = typeof(ChatTaskController);
             const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
-            t.GetField("panel", F)?.SetValue(controller, panel);
             t.GetField("workspace", F)?.SetValue(controller, ws);
         }
 

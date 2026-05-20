@@ -224,6 +224,7 @@ namespace GameCreate3.StoryPlayer
         StopMusic,
         TriggerEffect,
         SetVariable,
-        Branch
+        Branch,
+        PostProcessEffect
     }
 }

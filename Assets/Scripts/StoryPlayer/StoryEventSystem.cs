@@ -29,6 +29,10 @@ namespace GameCreate3.StoryPlayer
         public event Action<string> OnEffectRequested;
         public event Action OnVariableChanged;
 
+        // 跨实例的全局事件 — StoryEventSystem 由 StoryPlayer 动态创建，
+        // 用静态事件让外部服务（如 StrobeEffectController）无需绑定具体实例就能监听。
+        public static event Action<string> OnPostProcessEffectRequested;
+
         private void Awake()
         {
             Initialize();
@@ -167,6 +171,10 @@ namespace GameCreate3.StoryPlayer
 
                 case StoryEventType.Branch:
                     TriggerBranch(evt.EventData);
+                    break;
+
+                case StoryEventType.PostProcessEffect:
+                    OnPostProcessEffectRequested?.Invoke(evt.EventData);
                     break;
             }
         }

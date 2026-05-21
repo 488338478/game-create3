@@ -8,6 +8,11 @@ namespace GameCreate3
         [SerializeField] private CinemachineVirtualCamera virtualCamera;
         [SerializeField] private CinemachineConfiner2D confiner2D;
         [SerializeField] private CameraConfig defaultConfig;
+        [Header("Edge-adaptive follow")]
+        [SerializeField, Range(0f, 0.4f)] private float deadZoneWidth = 0.18f;
+        [SerializeField, Range(0f, 0.4f)] private float deadZoneHeight = 0.12f;
+        [SerializeField, Range(0.4f, 1f)] private float softZoneWidth = 0.82f;
+        [SerializeField, Range(0.4f, 1f)] private float softZoneHeight = 0.82f;
 
         private CameraConfig currentZoneConfig;
         public CameraConfig CurrentConfig => currentZoneConfig != null ? currentZoneConfig : defaultConfig;
@@ -114,6 +119,14 @@ namespace GameCreate3
                 framing.m_TrackedObjectOffset = config.followOffset;
                 framing.m_XDamping = config.damping.x;
                 framing.m_YDamping = config.damping.y;
+                // Avoid hard-centering the player near map edges. Let the target drift within
+                // dead/soft zones so the confiner can take control cleanly at bounds.
+                framing.m_DeadZoneWidth = deadZoneWidth;
+                framing.m_DeadZoneHeight = deadZoneHeight;
+                framing.m_UnlimitedSoftZone = false;
+                framing.m_SoftZoneWidth = softZoneWidth;
+                framing.m_SoftZoneHeight = softZoneHeight;
+                framing.m_CenterOnActivate = false;
             }
 
             if (confiner2D != null)

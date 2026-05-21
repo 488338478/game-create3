@@ -20,6 +20,7 @@ namespace GameCreate3.UI
             Add(settingsButton, HandleSettings);
             Add(galleryButton, HandleGallery);
             Add(exitButton, HandleExit);
+            UpdateContinueButtonState();
         }
 
         private void OnDisable()
@@ -33,6 +34,11 @@ namespace GameCreate3.UI
 
         protected override void OnOpened(object data)
         {
+            UpdateContinueButtonState();
+        }
+
+        private void UpdateContinueButtonState()
+        {
             if (continueButton != null)
             {
                 continueButton.interactable = HasProgress();
@@ -42,17 +48,25 @@ namespace GameCreate3.UI
         private static bool HasProgress()
         {
             var save = GameSaveProgressService.Instance;
-            return save != null && save.TryGetProgressBool("has_progress", false);
+            return save != null && save.TryGetProgressBool(UIProgressKeys.HasProgress, false);
         }
 
         private static void HandleStart()
         {
-            SceneRouter.Go("start_new_game");
+            UIControlSystem.Instance?.OpenPage(UIPageIds.LevelSelect);
         }
 
         private static void HandleContinue()
         {
-            SceneRouter.Go("continue_game");
+            var save = GameSaveProgressService.Instance;
+            var routeId = save != null ? save.GetProgress(UIProgressKeys.LastRouteId, string.Empty) : string.Empty;
+            if (!string.IsNullOrWhiteSpace(routeId))
+            {
+                SceneRouter.Go(routeId);
+                return;
+            }
+
+            UIControlSystem.Instance?.OpenPage(UIPageIds.LevelSelect);
         }
 
         private static void HandleSettings()

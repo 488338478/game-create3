@@ -5,6 +5,7 @@ namespace GameCreate3.UI
     public static class UIPageIds
     {
         public const string MainMenu = "main_menu";
+        public const string LevelSelect = "level_select";
         public const string Settings = "settings";
         public const string InGameHud = "in_game_hud";
         public const string PauseMenu = "pause_menu";
@@ -15,6 +16,13 @@ namespace GameCreate3.UI
         public const string Loading = "loading";
         public const string ConfirmPopup = "confirm_popup";
         public const string SkipPrompt = "skip_prompt";
+    }
+
+    public static class UIProgressKeys
+    {
+        public const string HasProgress = "has_progress";
+        public const string LastRouteId = "last_route_id";
+        public const string UnlockedMaxLevelIndex = "unlocked_max_level_index";
     }
 
     [Serializable]

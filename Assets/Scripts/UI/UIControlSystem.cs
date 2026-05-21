@@ -44,6 +44,10 @@ namespace GameCreate3.UI
         [Header("Input")]
         [SerializeField] private bool ensureEventSystem = true;
 
+        [Header("Startup")]
+        [Tooltip("进入 Play 后自动打开的页面，例如主菜单场景填 main_menu。")]
+        [SerializeField] private string startupPageId;
+
         private readonly Dictionary<string, UIPageController> pages = new Dictionary<string, UIPageController>();
         private readonly Dictionary<string, PagePrefabEntry> pagePrefabMap = new Dictionary<string, PagePrefabEntry>();
         private readonly Dictionary<string, PopupPrefabEntry> popupPrefabMap = new Dictionary<string, PopupPrefabEntry>();
@@ -81,6 +85,11 @@ namespace GameCreate3.UI
             RegisterScenePages();
         }
 
+        private void Start()
+        {
+            TryOpenStartupPage();
+        }
+
         private void OnDestroy()
         {
             if (Instance == this)
@@ -92,6 +101,23 @@ namespace GameCreate3.UI
         public UIPageController OpenPage(string pageId)
         {
             return OpenPage(pageId, null);
+        }
+
+        public void TryOpenStartupPage()
+        {
+            var pageId = ResolveStartupPageId();
+            if (string.IsNullOrWhiteSpace(pageId))
+            {
+                return;
+            }
+
+            var page = OpenPage(pageId);
+            if (page == null)
+            {
+                Debug.LogError(
+                    $"[UIControlSystem] Startup page '{pageId}' failed to open. " +
+                    "Put MainMenuPage under MenuRoot and add it to Scene Pages, or run GameCreate3/Setup MainMenu Scene.");
+            }
         }
 
         public UIPageController OpenPage(string pageId, object data)
@@ -271,6 +297,19 @@ namespace GameCreate3.UI
             }
 
             pages[page.PageId] = page;
+        }
+
+        private string ResolveStartupPageId()
+        {
+            if (!string.IsNullOrWhiteSpace(startupPageId))
+            {
+                return startupPageId;
+            }
+
+            // Main menu scenes should still show even if the instance forgot to
+            // serialize Startup Page Id. This keeps Play mode from showing an
+            // invisible UIControlSystem with all pages hidden by Hide On Awake.
+            return pages.ContainsKey(UIPageIds.MainMenu) ? UIPageIds.MainMenu : string.Empty;
         }
 
         private bool TryGetOrCreatePage(string pageId, out UIPageController page)

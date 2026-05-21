@@ -27,10 +27,6 @@ namespace GameCreate3.DualWorld
             "你再看看？"
         };
 
-        [Header("Avatars (fallback)")]
-        public Sprite npcAvatar;
-        public Sprite playerAvatar;
-
         [Header("Highlight per NPC event")]
         public bool highlightInitial = false;
         public bool highlightFailure = false;

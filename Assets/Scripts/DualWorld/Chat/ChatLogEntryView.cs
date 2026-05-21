@@ -5,34 +5,40 @@ namespace GameCreate3.DualWorld
 {
     public sealed class ChatLogEntryView : MonoBehaviour
     {
-        [SerializeField] private Text bodyLabel;
-        [SerializeField] private Image avatarImage;
-        [SerializeField] private Image moodAccent;
-        [SerializeField] private GameObject highlightGlow;
-        [SerializeField] private GameObject npcRoot;     // 可选：NPC 气泡布局
-        [SerializeField] private GameObject playerRoot;  // 可选：Player 气泡布局
+        [Header("Roots (二选一激活)")]
+        [SerializeField] private GameObject npcRoot;
+        [SerializeField] private GameObject playerRoot;
+
+        [Header("NPC 侧")]
+        [SerializeField] private Text npcBody;
+        [SerializeField] private Image npcMoodAccent;
+        [SerializeField] private GameObject npcHighlightGlow;
+
+        [Header("Player 侧")]
+        [SerializeField] private Text playerBody;
+        [SerializeField] private Image playerMoodAccent;
+        [SerializeField] private GameObject playerHighlightGlow;
 
         public void Bind(ChatLogEntry entry, ChatTaskDefinition def, Color moodColor)
         {
-            if (bodyLabel != null) bodyLabel.text = entry.body;
-            if (moodAccent != null) moodAccent.color = moodColor;
+            _ = def;
+            var isNpc = entry.speaker == ChatSpeaker.Npc;
 
-            var avatar = entry.avatar;
-            if (avatar == null && def != null)
+            if (npcRoot != null) npcRoot.SetActive(isNpc);
+            if (playerRoot != null) playerRoot.SetActive(!isNpc);
+
+            if (isNpc)
             {
-                avatar = entry.speaker == ChatSpeaker.Npc ? def.npcAvatar : def.playerAvatar;
+                if (npcBody != null) npcBody.text = entry.body;
+                if (npcMoodAccent != null) npcMoodAccent.color = moodColor;
+                if (npcHighlightGlow != null) npcHighlightGlow.SetActive(entry.highlight);
             }
-            if (avatarImage != null)
+            else
             {
-                avatarImage.sprite = avatar;
-                avatarImage.enabled = avatar != null;
+                if (playerBody != null) playerBody.text = entry.body;
+                if (playerMoodAccent != null) playerMoodAccent.color = moodColor;
+                if (playerHighlightGlow != null) playerHighlightGlow.SetActive(entry.highlight);
             }
-
-            if (highlightGlow != null) highlightGlow.SetActive(entry.highlight);
-
-            // 左右气泡：speaker 不同 -> 不同 root 激活
-            if (npcRoot != null) npcRoot.SetActive(entry.speaker == ChatSpeaker.Npc);
-            if (playerRoot != null) playerRoot.SetActive(entry.speaker == ChatSpeaker.Player);
         }
     }
 }

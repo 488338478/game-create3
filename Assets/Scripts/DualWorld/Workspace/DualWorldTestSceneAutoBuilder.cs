@@ -559,10 +559,22 @@ namespace GameCreate3.DualWorld
             var bounds = new GameObject("CameraBounds");
             bounds.transform.SetParent(parent, false);
             bounds.transform.position = new Vector3(2f, 0f, 0f);
-            var box = bounds.AddComponent<BoxCollider2D>();
-            box.size = new Vector2(22f, 12f);
-            box.isTrigger = true;
-            return box;
+            var collider2D = bounds.AddComponent<PolygonCollider2D>();
+            collider2D.SetPath(0, CreateRectPath(new Vector2(22f, 12f)));
+            collider2D.isTrigger = true;
+            return collider2D;
+        }
+
+        private static Vector2[] CreateRectPath(Vector2 size)
+        {
+            var half = size * 0.5f;
+            return new[]
+            {
+                new Vector2(-half.x, -half.y),
+                new Vector2(-half.x, half.y),
+                new Vector2(half.x, half.y),
+                new Vector2(half.x, -half.y)
+            };
         }
 
         private static SideScrollCameraController BuildCameraRig(Transform parent, Transform followTarget, Collider2D confinerShape)

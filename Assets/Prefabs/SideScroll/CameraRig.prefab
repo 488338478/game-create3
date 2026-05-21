@@ -257,8 +257,8 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3670384905059504614}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!61 &2486136112614057054
-BoxCollider2D:
+--- !u!60 &2486136112614057054
+PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -300,5 +300,10 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 22, y: 12}
-  m_EdgeRadius: 0
+  m_UseDelaunayMesh: 0
+  m_Points:
+    m_Paths:
+    - - {x: -11, y: -6}
+      - {x: -11, y: 6}
+      - {x: 11, y: 6}
+      - {x: 11, y: -6}

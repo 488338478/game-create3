@@ -237,7 +237,7 @@ namespace GameCreate3.EditorTools
         }
 
         // ChatLogEntry：水平 layout，NpcRoot 在左、PlayerRoot 在右，二选一激活。
-        // 每个 root 内：Avatar + Bubble(MoodAccent + Body) + HighlightGlow。
+        // 每个 root 内：Bubble(MoodAccent + Body) + HighlightGlow。
         private static GameObject BuildChatLogEntryPrefab(string path)
         {
             var root = new GameObject("ChatLogEntry");
@@ -257,21 +257,23 @@ namespace GameCreate3.EditorTools
             var npcRoot = BuildEntrySide(root.transform, "NpcRoot", isPlayer: false,
                 bubbleColor: new Color(0.18f, 0.20f, 0.28f, 0.9f),
                 bodyColor: new Color(0.95f, 0.95f, 0.95f),
-                out var npcBody, out var npcAvatar, out var npcAccent, out var npcGlow);
+                out var npcBody, out var npcAccent, out var npcGlow);
 
             var playerRoot = BuildEntrySide(root.transform, "PlayerRoot", isPlayer: true,
                 bubbleColor: new Color(0.42f, 0.55f, 0.85f, 0.9f),
                 bodyColor: Color.white,
-                out var playerBody, out var playerAvatar, out var playerAccent, out var playerGlow);
+                out var playerBody, out var playerAccent, out var playerGlow);
 
-            // View 组件 —— 默认绑 NPC 侧字段（最常见），渲染时按 speaker 在 NpcRoot/PlayerRoot 二选一激活。
+            // View 组件 —— 两套字段，按 speaker 在 NpcRoot/PlayerRoot 二选一激活并写对应那套。
             var view = root.AddComponent<ChatLogEntryView>();
-            SetPrivateField(view, "bodyLabel", npcBody);
-            SetPrivateField(view, "avatarImage", npcAvatar);
-            SetPrivateField(view, "moodAccent", npcAccent);
-            SetPrivateField(view, "highlightGlow", npcGlow);
             SetPrivateField(view, "npcRoot", npcRoot);
             SetPrivateField(view, "playerRoot", playerRoot);
+            SetPrivateField(view, "npcBody", npcBody);
+            SetPrivateField(view, "npcMoodAccent", npcAccent);
+            SetPrivateField(view, "npcHighlightGlow", npcGlow);
+            SetPrivateField(view, "playerBody", playerBody);
+            SetPrivateField(view, "playerMoodAccent", playerAccent);
+            SetPrivateField(view, "playerHighlightGlow", playerGlow);
 
             // 默认两侧都 active；运行时 Bind 会按 speaker 二选一
             npcRoot.SetActive(true);
@@ -283,7 +285,7 @@ namespace GameCreate3.EditorTools
 
         private static GameObject BuildEntrySide(Transform parent, string name, bool isPlayer,
             Color bubbleColor, Color bodyColor,
-            out UnityEngine.UI.Text bodyOut, out UnityEngine.UI.Image avatarOut,
+            out UnityEngine.UI.Text bodyOut,
             out UnityEngine.UI.Image accentOut, out GameObject glowOut)
         {
             var side = new GameObject(name);
@@ -300,15 +302,6 @@ namespace GameCreate3.EditorTools
             sideFitter.horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
             sideFitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
             _ = sideRect;
-
-            // Avatar（占位 Image，运行时 Bind 时填 sprite；无 sprite 时由 Bind 自动 disable）
-            var avatarGo = new GameObject("Avatar");
-            avatarGo.transform.SetParent(side.transform, false);
-            var avatarLE = avatarGo.AddComponent<UnityEngine.UI.LayoutElement>();
-            avatarLE.preferredWidth = 48f;
-            avatarLE.preferredHeight = 48f;
-            avatarOut = avatarGo.AddComponent<UnityEngine.UI.Image>();
-            avatarOut.color = Color.white;
 
             // Bubble（VerticalLayout：Accent 条 + Body 文本）
             var bubble = new GameObject("Bubble");
@@ -353,12 +346,6 @@ namespace GameCreate3.EditorTools
             var glowLE = glowOut.AddComponent<UnityEngine.UI.LayoutElement>();
             glowLE.preferredHeight = 2f;
             glowOut.SetActive(false);
-
-            // Player 侧把 Avatar 拍到 Bubble 后面 —— 自然成"气泡在左，头像在右"。
-            if (isPlayer)
-            {
-                avatarGo.transform.SetSiblingIndex(1);
-            }
 
             return side;
         }

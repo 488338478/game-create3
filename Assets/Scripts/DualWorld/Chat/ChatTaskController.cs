@@ -103,7 +103,7 @@ namespace GameCreate3.DualWorld
         private void AppendNpc(string body, ChatTaskPanelUI.Mood mood, bool highlight)
         {
             if (string.IsNullOrEmpty(body)) return;
-            chatBox.Append(new ChatLogEntry(ChatSpeaker.Npc, body, mood, null, highlight));
+            chatBox.Append(new ChatLogEntry(ChatSpeaker.Npc, body, mood, highlight));
         }
 
         private void HandleCrossWorldEvent(CrossWorldEvent evt)

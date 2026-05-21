@@ -26,8 +26,6 @@ MonoBehaviour:
   - "再调了一下，看看？"
   - "这样行不行？"
   - "你再看看？"
-  npcAvatar: {fileID: 0}
-  playerAvatar: {fileID: 0}
   highlightInitial: 0
   highlightFailure: 0
   highlightBlocked: 0

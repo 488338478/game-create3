@@ -207,9 +207,14 @@ namespace GameCreate3
             if (cameraController != null)
             {
                 cameraController.SetFollowTarget(playerController != null ? playerController.transform : null);
-                if (config != null)
+                cameraController.EnsureConfinerBinding();
+                if (config != null && config.defaultCameraConfig != null)
                 {
                     cameraController.ApplyCameraConfig(config.defaultCameraConfig);
+                }
+                else
+                {
+                    cameraController.ResetToDefault();
                 }
             }
 

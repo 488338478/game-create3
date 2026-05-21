@@ -433,6 +433,22 @@ PrefabInstance:
       propertyPath: m_Transitions.m_OnCameraLive.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7046923448598377421, guid: 27c3bcfb2fa244a48f6be1edc9314019, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 13.1599
+      objectReference: {fileID: 0}
+    - target: {fileID: 7046923448598377421, guid: 27c3bcfb2fa244a48f6be1edc9314019, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.26
+      objectReference: {fileID: 0}
+    - target: {fileID: 2486136112614057054, guid: 27c3bcfb2fa244a48f6be1edc9314019, type: 3}
+      propertyPath: m_Size.x
+      value: 38.67653
+      objectReference: {fileID: 0}
+    - target: {fileID: 2486136112614057054, guid: 27c3bcfb2fa244a48f6be1edc9314019, type: 3}
+      propertyPath: m_Size.y
+      value: 8.87437
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

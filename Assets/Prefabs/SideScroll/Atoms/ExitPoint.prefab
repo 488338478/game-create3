@@ -146,4 +146,7 @@ MonoBehaviour:
   prompt: Interact
   exitId: default
   requireGameplayCompletion: 0
-  requirements: []
+  requirements:
+  - kind: 0
+    id: 
+    invert: 0

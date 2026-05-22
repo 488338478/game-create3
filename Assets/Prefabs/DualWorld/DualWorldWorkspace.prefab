@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 84192732787207424}
   - component: {fileID: 3720477914132559601}
   - component: {fileID: 3105981417460390570}
+  - component: {fileID: 114000040000000001}
+  - component: {fileID: 114000040000000002}
   m_Layer: 0
   m_Name: DualWorldWorkspace
   m_TagString: Untagged
@@ -64,6 +66,32 @@ MonoBehaviour:
     m_Bits: 0
   flowController: {fileID: 6136125704647704504}
   chatTaskController: {fileID: 1910181225909423602}
+--- !u!114 &114000040000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1369456389126690034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e686cafd1e7354d4ba8ceae651ed409f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  workspace: {fileID: 0}
+  bindings: []
+--- !u!114 &114000040000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1369456389126690034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4082f72d002e03c42bc59217adeb44d4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!114 &3105981417460390570
 MonoBehaviour:
   m_ObjectHideFlags: 0

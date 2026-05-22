@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6708445750220644816}
   - component: {fileID: 3100223451163330508}
+  - component: {fileID: 114000030000000001}
+  - component: {fileID: 114000030000000002}
   m_Layer: 0
   m_Name: SideScrollStoryWorkspace
   m_TagString: Untagged
@@ -54,3 +56,29 @@ MonoBehaviour:
   interactableMask:
     serializedVersion: 2
     m_Bits: 0
+--- !u!114 &114000030000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7280006633923150861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e686cafd1e7354d4ba8ceae651ed409f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  workspace: {fileID: 0}
+  bindings: []
+--- !u!114 &114000030000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7280006633923150861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4082f72d002e03c42bc59217adeb44d4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:

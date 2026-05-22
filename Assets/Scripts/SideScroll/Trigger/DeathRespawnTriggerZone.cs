@@ -36,6 +36,7 @@ namespace GameCreate3
 
         private Coroutine activeRoutine;
         private Coroutine activeCameraBlend;
+        private bool catCarWasInactive;
         private Collider2D cameraBounds;
         private CinemachineVirtualCamera activeCamera;
         private Transform originalCameraFollow;
@@ -78,6 +79,10 @@ namespace GameCreate3
                 : catCar != null
                     ? catCar.position
                     : Vector3.zero;
+
+            catCarWasInactive = catCar != null && !catCar.gameObject.activeSelf;
+            if (catCarWasInactive)
+                catCar.gameObject.SetActive(true);
 
             for (var i = 0; i < colliders.Length; i++)
             {
@@ -142,10 +147,12 @@ namespace GameCreate3
 
         private void RestoreCatCar(Vector3 homePosition)
         {
-            if (catCar != null)
-            {
-                catCar.position = homePosition;
-            }
+            if (catCar == null) return;
+
+            catCar.position = homePosition;
+
+            if (catCarWasInactive)
+                catCar.gameObject.SetActive(false);
         }
 
         private CinemachineVirtualCamera ResolveVirtualCamera()

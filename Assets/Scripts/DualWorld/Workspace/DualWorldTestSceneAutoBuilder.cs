@@ -612,6 +612,7 @@ namespace GameCreate3.DualWorld
             vcam.AddCinemachineComponent<CinemachineFramingTransposer>();
             var confiner = vcamGo.AddComponent<CinemachineConfiner2D>();
             confiner.m_BoundingShape2D = confinerShape;
+            vcamGo.AddComponent<CinemachineAxisLock2D>();
 
             var controller = rig.AddComponent<SideScrollCameraController>();
             const System.Reflection.BindingFlags F = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;

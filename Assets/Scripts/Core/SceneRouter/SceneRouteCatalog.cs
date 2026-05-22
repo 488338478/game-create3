@@ -8,7 +8,7 @@ namespace GameCreate3.Core.SceneRouting
     /// 路由表配置。一条路由 = 一个语义 ID + 对应的场景名 + 是否走 loading 遮罩。
     /// 默认从 Resources/SceneRoutes 加载，如要自定义可调用 <see cref="SceneRouter.SetCatalog"/>。
     /// </summary>
-    [CreateAssetMenu(fileName = "SceneRoutes", menuName = "Game/Core/Scene Route Catalog")]
+    [CreateAssetMenu(fileName = "SceneRoutes", menuName = "GameCreate3/Core/Scene Route Catalog")]
     public sealed class SceneRouteCatalog : ScriptableObject
     {
         [SerializeField] private List<SceneRoute> routes = new List<SceneRoute>();

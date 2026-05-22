@@ -5,7 +5,7 @@ namespace GameCreate3.SideScroll.VFX
     /// <summary>
     /// 频闪效果预设。放在 Resources/VFX/Strobe/ 下以便 StoryPlayer 通过名字查找。
     /// </summary>
-    [CreateAssetMenu(fileName = "StrobePreset_", menuName = "Game/VFX/Strobe Preset")]
+    [CreateAssetMenu(fileName = "StrobePreset_", menuName = "GameCreate3/VFX/Strobe Preset")]
     public sealed class StrobeConfig : ScriptableObject
     {
         [Header("时长")]

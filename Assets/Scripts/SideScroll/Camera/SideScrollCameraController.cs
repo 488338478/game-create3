@@ -16,6 +16,22 @@ namespace GameCreate3
 
         private CameraConfig currentZoneConfig;
         public CameraConfig CurrentConfig => currentZoneConfig != null ? currentZoneConfig : defaultConfig;
+        public CinemachineVirtualCamera VirtualCamera
+        {
+            get
+            {
+                ResolveVirtualCamera();
+                return virtualCamera;
+            }
+        }
+        public Collider2D BoundingShape
+        {
+            get
+            {
+                EnsureConfinerBinding();
+                return confiner2D != null ? confiner2D.m_BoundingShape2D : null;
+            }
+        }
 
         private void Awake()
         {
@@ -34,7 +50,7 @@ namespace GameCreate3
 
         public void SetFollowTarget(Transform target)
         {
-            if (virtualCamera != null && target != null)
+            if (virtualCamera != null && virtualCamera.Follow == null)
             {
                 virtualCamera.Follow = target;
             }
@@ -149,12 +165,12 @@ namespace GameCreate3
 
         private static float ClampOrthographicSizeToBounds(Collider2D bounds, float requestedSize)
         {
-            if (bounds is not BoxCollider2D box)
+            if (bounds == null)
             {
                 return requestedSize;
             }
 
-            var worldSize = Vector2.Scale(box.size, bounds.transform.lossyScale);
+            var worldSize = bounds.bounds.size;
             var aspect = Camera.main != null ? Camera.main.aspect : 16f / 9f;
             var maxOrtho = Mathf.Min(worldSize.y * 0.5f, worldSize.x * 0.5f / aspect) * 0.98f;
             return Mathf.Min(requestedSize, maxOrtho);

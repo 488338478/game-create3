@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GameCreate3
 {
-    [CreateAssetMenu(fileName = "Dialogue_", menuName = "Game/Narrative/Dialogue Asset")]
+    [CreateAssetMenu(fileName = "Dialogue_", menuName = "GameCreate3/Narrative/Dialogue Asset")]
     public sealed class DialogueAsset : ScriptableObject
     {
         [SerializeField] private string startNodeId = "start";

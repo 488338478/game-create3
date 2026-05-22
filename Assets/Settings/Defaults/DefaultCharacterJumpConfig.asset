@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cd5b84f1d234dbf845a5346223739a5, type: 3}
   m_Name: DefaultCharacterJumpConfig
   m_EditorClassIdentifier: 
-  jumpForce: 9
-  fallGravityMultiplier: 2.2
+  jumpForce: 12
+  fallGravityMultiplier: 2
   coyoteTime: 0.1
   jumpBuffer: 0.12
   maxFallSpeed: 16

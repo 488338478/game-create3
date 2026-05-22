@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5559937407298340266}
   - component: {fileID: 8868194971810599307}
   - component: {fileID: 6801256317474338085}
+  - component: {fileID: 3482701401946621379}
   m_Layer: 0
   m_Name: CM_VCam
   m_TagString: Untagged
@@ -88,6 +89,21 @@ MonoBehaviour:
   m_BoundingShape2D: {fileID: 2486136112614057054}
   m_Damping: 0.5
   m_MaxWindowSize: -1
+--- !u!114 &3482701401946621379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4233051087825366809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e20b859f8d24d4c9ad796172bfcbcf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lockX: 0
+  lockY: 0
+  lockedPosition: {x: 0, y: 0}
 --- !u!1 &7478988373384151159
 GameObject:
   m_ObjectHideFlags: 0
@@ -225,6 +241,10 @@ MonoBehaviour:
   virtualCamera: {fileID: 8868194971810599307}
   confiner2D: {fileID: 6801256317474338085}
   defaultConfig: {fileID: 11400000, guid: 562f93a38c0b53e4a85940ba927b1e24, type: 2}
+  deadZoneWidth: 0.18
+  deadZoneHeight: 0.12
+  softZoneWidth: 0.82
+  softZoneHeight: 0.82
 --- !u!1 &8795862323686779754
 GameObject:
   m_ObjectHideFlags: 0
@@ -299,11 +319,10 @@ PolygonCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  serializedVersion: 2
-  m_UseDelaunayMesh: 0
   m_Points:
     m_Paths:
     - - {x: -11, y: -6}
       - {x: -11, y: 6}
       - {x: 11, y: 6}
       - {x: 11, y: -6}
+  m_UseDelaunayMesh: 0

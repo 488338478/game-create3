@@ -98,6 +98,7 @@ namespace GameCreate3
             vcam.AddCinemachineComponent<Cinemachine.CinemachineFramingTransposer>();
             var confiner = vcamObject.AddComponent<Cinemachine.CinemachineConfiner2D>();
             confiner.m_BoundingShape2D = bounds;
+            vcamObject.AddComponent<CinemachineAxisLock2D>();
             var controller = rig.AddComponent<SideScrollCameraController>();
             SetPrivateField(controller, "virtualCamera", vcam);
             SetPrivateField(controller, "confiner2D", confiner);

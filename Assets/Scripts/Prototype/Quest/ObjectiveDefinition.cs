@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace GameCreate3
 {
-    [CreateAssetMenu(fileName = "Objective_", menuName = "Game/Quest/Objective Definition")]
+    [CreateAssetMenu(fileName = "Objective_", menuName = "GameCreate3/Quest/Objective Definition")]
     public sealed class ObjectiveDefinition : ScriptableObject
     {
         public string objectiveId = "objective.intro";

@@ -25,6 +25,7 @@ namespace GameCreate3
         public event Action<string> WorkspaceEventRaised;
 
         public SideScrollCharacterControllerBase PlayerController => playerController;
+        public Transform PlayerSpawn => playerSpawn;
         public SideScrollCameraController CameraController => cameraController;
         public bool IsEntered { get; private set; }
 

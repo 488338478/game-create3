@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GameCreate3.StoryPlayer
 {
-    [CreateAssetMenu(fileName = "StorySequence_", menuName = "Game/StoryPlayer/Story Sequence")]
+    [CreateAssetMenu(fileName = "StorySequence_", menuName = "GameCreate3/StoryPlayer/Story Sequence")]
     public sealed class StorySequence : ScriptableObject
     {
         [SerializeField] private string sequenceId;

@@ -25,6 +25,7 @@ namespace GameCreate3
         private bool inputEnabled = true;
 
         public bool IsGrounded { get; private set; }
+        public bool InputEnabled => inputEnabled;
 
         private void Awake()
         {

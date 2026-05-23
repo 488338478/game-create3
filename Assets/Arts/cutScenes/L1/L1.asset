@@ -75,17 +75,20 @@ MonoBehaviour:
       voiceOver: {fileID: 0}
       soundEffects: []
   - pageId: 4
-    pageType: 0
+    pageType: 3
     backgroundImage: {fileID: 21300000, guid: 1683e775d1c7dec4697190e2c673bf6a, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks: []
-    displayDuration: 0
+    displayDuration: 6.8
     waitForInput: 0
     elements: []
     transitionIn: 1
     transitionOut: 1
     transitionDuration: 0.5
-    pageEvents: []
+    pageEvents:
+    - eventType: 3
+      triggerTime: 0
+      eventData: Page4_LihuiAnim
     audioConfig:
       bgm: {fileID: 0}
       loopBgm: 0

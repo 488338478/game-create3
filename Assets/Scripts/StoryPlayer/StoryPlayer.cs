@@ -273,6 +273,8 @@ namespace GameCreate3.StoryPlayer
                     previousPage.TransitionOut,
                     previousPage.TransitionDuration / playbackSpeed,
                     false);
+
+                eventSystem?.StopEventTracking();
             }
 
             // Screen is black — prepare new page content instantly before revealing

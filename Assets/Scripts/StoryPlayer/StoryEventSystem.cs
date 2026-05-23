@@ -59,6 +59,7 @@ namespace GameCreate3.StoryPlayer
         public void StartEventTracking(StoryPage page)
         {
             Cleanup();
+            ClearActiveEffects();
 
             currentPage = page;
             triggeredEvents.Clear();
@@ -73,6 +74,7 @@ namespace GameCreate3.StoryPlayer
         public void StopEventTracking()
         {
             eventCts?.Cancel();
+            ClearActiveEffects();
             isRunning = false;
             currentPage = null;
         }
@@ -252,6 +254,23 @@ namespace GameCreate3.StoryPlayer
             else
             {
                 Debug.LogWarning($"[StoryEventSystem] Effect not found: {effectName}");
+            }
+        }
+
+        private void ClearActiveEffects()
+        {
+            if (effectContainer == null)
+            {
+                return;
+            }
+
+            for (int i = effectContainer.childCount - 1; i >= 0; i--)
+            {
+                var child = effectContainer.GetChild(i);
+                if (child != null)
+                {
+                    Destroy(child.gameObject);
+                }
             }
         }
 

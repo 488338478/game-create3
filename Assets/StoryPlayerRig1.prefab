@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7909116897185043068}
   - component: {fileID: 1599951016469589001}
   m_Layer: 0
-  m_Name: StoryPlayerRig
+  m_Name: StoryPlayerRig1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

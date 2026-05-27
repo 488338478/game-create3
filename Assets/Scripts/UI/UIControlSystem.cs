@@ -122,6 +122,11 @@ namespace GameCreate3.UI
 
         public UIPageController OpenPage(string pageId, object data)
         {
+            if (ensureEventSystem)
+            {
+                EnsureEventSystem();
+            }
+
             if (!TryGetOrCreatePage(pageId, out var page))
             {
                 Debug.LogWarning($"[UIControlSystem] Page not found: {pageId}");

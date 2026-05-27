@@ -159,6 +159,7 @@ namespace GameCreate3.UI
             }
 
             MarkProgress(routeId, levelIndex);
+            UIControlSystem.Instance?.ClosePage(PageId);
             SceneRouter.Go(routeId);
         }
 

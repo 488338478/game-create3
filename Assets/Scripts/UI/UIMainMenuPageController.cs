@@ -1,15 +1,16 @@
-using GameCreate3.Core;
 using GameCreate3.Core.SceneRouting;
-using UnityEngine.EventSystems;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GameCreate3.UI
 {
-    public sealed class UIMainMenuPageController : UIPageController
+    public sealed class UIMainMenuPageController : UIPageController, IPointerClickHandler
     {
         [Header("Landing")]
+        [SerializeField] private Image screenClickTarget;
         [SerializeField] private Image backgroundImage;
+        [SerializeField] private GameObject[] mainMenuObjects;
         [SerializeField] private Color normalBackgroundColor = Color.white;
         [SerializeField] private Color menuOpenBackgroundColor = new Color(0.35f, 0.35f, 0.35f, 1f);
         [SerializeField] private Button enterButton;
@@ -26,6 +27,7 @@ namespace GameCreate3.UI
         [SerializeField] private bool closeMenuAfterStart;
 
         private bool isMenuOpen;
+        private bool isMainMenuVisible = true;
 
         private void OnEnable()
         {
@@ -37,8 +39,9 @@ namespace GameCreate3.UI
             AddSelectionEvents(startButton);
             AddSelectionEvents(continueButton);
             AddSelectionEvents(exitButton);
+            SceneRouter.OnAfterChange += HandleSceneChanged;
             UpdateContinueButtonState();
-            SetMenuOpen(false);
+            SetMainMenuVisible(true);
         }
 
         private void OnDisable()
@@ -51,26 +54,29 @@ namespace GameCreate3.UI
             RemoveSelectionEvents(startButton);
             RemoveSelectionEvents(continueButton);
             RemoveSelectionEvents(exitButton);
+            SceneRouter.OnAfterChange -= HandleSceneChanged;
         }
 
         protected override void OnOpened(object data)
         {
             UpdateContinueButtonState();
-            SetMenuOpen(false);
+            SetMainMenuVisible(true);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (isMainMenuVisible && !isMenuOpen)
+            {
+                HandleStart();
+            }
         }
 
         private void UpdateContinueButtonState()
         {
             if (continueButton != null)
             {
-                continueButton.interactable = HasProgress();
+                continueButton.interactable = true;
             }
-        }
-
-        private static bool HasProgress()
-        {
-            var save = GameSaveProgressService.Instance;
-            return save != null && save.TryGetProgressBool(UIProgressKeys.HasProgress, false);
         }
 
         private void HandleMenu()
@@ -80,25 +86,20 @@ namespace GameCreate3.UI
 
         private void HandleStart()
         {
-            if (closeMenuAfterStart)
+            SetMainMenuVisible(false);
+            if (closeMenuAfterStart || isMenuOpen)
             {
                 SetMenuOpen(false);
             }
 
+            transform.SetAsLastSibling();
             UIControlSystem.Instance?.OpenPage(UIPageIds.LevelSelect);
+            transform.SetAsLastSibling();
         }
 
         private void HandleContinue()
         {
-            var save = GameSaveProgressService.Instance;
-            var routeId = save != null ? save.GetProgress(UIProgressKeys.LastRouteId, string.Empty) : string.Empty;
-            if (!string.IsNullOrWhiteSpace(routeId))
-            {
-                SceneRouter.Go(routeId);
-                return;
-            }
-
-            UIControlSystem.Instance?.OpenPage(UIPageIds.LevelSelect);
+            SetMenuOpen(false);
         }
 
         private void SetMenuOpen(bool open)
@@ -123,7 +124,7 @@ namespace GameCreate3.UI
 
             if (backgroundImage != null)
             {
-                backgroundImage.color = open ? menuOpenBackgroundColor : normalBackgroundColor;
+                backgroundImage.color = open && !isMainMenuVisible ? menuOpenBackgroundColor : normalBackgroundColor;
             }
 
             if (selectionMarker != null)
@@ -137,9 +138,60 @@ namespace GameCreate3.UI
             }
         }
 
-        private static void HandleExit()
+        private void HandleExit()
         {
-            Application.Quit();
+            SetMainMenuVisible(true);
+            UIControlSystem.Instance?.ClosePage(UIPageIds.LevelSelect);
+            SceneRouter.Go("main_menu");
+        }
+
+        private void HandleSceneChanged(SceneRouteContext context)
+        {
+            if (context.ToRouteId == "main_menu")
+            {
+                UIControlSystem.Instance?.OpenPage(UIPageIds.MainMenu);
+                UIControlSystem.Instance?.SetInputFocus(gameObject);
+                SetMainMenuVisible(true);
+            }
+        }
+
+        private void SetMainMenuVisible(bool visible)
+        {
+            isMainMenuVisible = visible;
+            SetMenuOpen(false);
+
+            if (mainMenuObjects != null)
+            {
+                for (var i = 0; i < mainMenuObjects.Length; i++)
+                {
+                    if (mainMenuObjects[i] != null)
+                    {
+                        mainMenuObjects[i].SetActive(visible);
+                    }
+                }
+            }
+
+            if (backgroundImage != null)
+            {
+                backgroundImage.gameObject.SetActive(visible);
+                backgroundImage.color = normalBackgroundColor;
+            }
+
+            if (enterButton != null)
+            {
+                enterButton.gameObject.SetActive(false);
+            }
+
+            if (menuButton != null)
+            {
+                menuButton.gameObject.SetActive(!visible);
+            }
+
+            var clickTarget = screenClickTarget != null ? screenClickTarget : GetComponent<Image>();
+            if (clickTarget != null)
+            {
+                clickTarget.raycastTarget = visible;
+            }
         }
 
         private void AddSelectionEvents(Button button)

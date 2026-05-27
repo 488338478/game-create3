@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace GameCreate3.StoryPlayer
@@ -12,6 +13,7 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private StoryPlaybackMode defaultPlaybackMode = StoryPlaybackMode.ClickToAdvance;
         [SerializeField] private bool allowSkip = true;
         [SerializeField] private float autoAdvanceDelay = 3f;
+        [SerializeField] private TMP_FontAsset sequenceFont;
         [SerializeField] private StoryEndCallbackType endCallbackType = StoryEndCallbackType.None;
         [SerializeField] private string endCallbackParameter;
 
@@ -20,6 +22,7 @@ namespace GameCreate3.StoryPlayer
         public StoryPlaybackMode DefaultPlaybackMode => defaultPlaybackMode;
         public bool AllowSkip => allowSkip;
         public float AutoAdvanceDelay => autoAdvanceDelay;
+        public TMP_FontAsset SequenceFont => sequenceFont;
         public StoryEndCallbackType EndCallbackType => endCallbackType;
         public string EndCallbackParameter => endCallbackParameter;
 
@@ -35,6 +38,14 @@ namespace GameCreate3.StoryPlayer
         }
 
         public int PageCount => pages.Count;
+
+        private void OnValidate()
+        {
+            foreach (var page in pages)
+            {
+                page?.NormalizeTextBlockDefaults();
+            }
+        }
     }
 
     public enum StoryEndCallbackType
@@ -83,6 +94,14 @@ namespace GameCreate3.StoryPlayer
         public float TransitionDuration => transitionDuration;
         public IReadOnlyList<StoryPageEvent> PageEvents => pageEvents;
         public StoryAudioConfig AudioConfig => audioConfig;
+
+        public void NormalizeTextBlockDefaults()
+        {
+            foreach (var textBlock in textBlocks)
+            {
+                textBlock?.NormalizeStyleDefaults();
+            }
+        }
     }
 
     public enum StoryPageType
@@ -104,6 +123,20 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private float typewriterSpeed = 0.05f;
         [SerializeField] private float delayBeforeShow;
         [SerializeField] private float duration = -1f;
+        [SerializeField] private bool overrideTextContainer;
+        [SerializeField] private Vector2 textAnchorMin;
+        [SerializeField] private Vector2 textAnchorMax = Vector2.one;
+        [SerializeField] private Vector2 textPivot = new Vector2(0.5f, 0.5f);
+        [SerializeField] private Vector2 textAnchoredPosition;
+        [SerializeField] private Vector2 textSizeDelta;
+        [SerializeField] private bool overrideContentStyle;
+        [SerializeField] private float contentFontSize = 32f;
+        [SerializeField] private Color contentColor = Color.white;
+        [SerializeField] private TextAlignmentOptions contentAlignment = TextAlignmentOptions.TopLeft;
+        [SerializeField] private bool overrideSpeakerStyle;
+        [SerializeField] private float speakerFontSize = 24f;
+        [SerializeField] private Color speakerColor = Color.white;
+        [SerializeField] private TextAlignmentOptions speakerAlignment = TextAlignmentOptions.Left;
 
         public string TextId { get => textId; set => textId = value; }
         public string Speaker { get => speaker; set => speaker = value; }
@@ -112,6 +145,33 @@ namespace GameCreate3.StoryPlayer
         public float TypewriterSpeed { get => typewriterSpeed; set => typewriterSpeed = value; }
         public float DelayBeforeShow { get => delayBeforeShow; set => delayBeforeShow = value; }
         public float Duration { get => duration; set => duration = value; }
+        public bool OverrideTextContainer { get => overrideTextContainer; set => overrideTextContainer = value; }
+        public Vector2 TextAnchorMin { get => textAnchorMin; set => textAnchorMin = value; }
+        public Vector2 TextAnchorMax { get => textAnchorMax; set => textAnchorMax = value; }
+        public Vector2 TextPivot { get => textPivot; set => textPivot = value; }
+        public Vector2 TextAnchoredPosition { get => textAnchoredPosition; set => textAnchoredPosition = value; }
+        public Vector2 TextSizeDelta { get => textSizeDelta; set => textSizeDelta = value; }
+        public bool OverrideContentStyle { get => overrideContentStyle; set => overrideContentStyle = value; }
+        public float ContentFontSize { get => contentFontSize; set => contentFontSize = value; }
+        public Color ContentColor { get => contentColor; set => contentColor = value; }
+        public TextAlignmentOptions ContentAlignment { get => contentAlignment; set => contentAlignment = value; }
+        public bool OverrideSpeakerStyle { get => overrideSpeakerStyle; set => overrideSpeakerStyle = value; }
+        public float SpeakerFontSize { get => speakerFontSize; set => speakerFontSize = value; }
+        public Color SpeakerColor { get => speakerColor; set => speakerColor = value; }
+        public TextAlignmentOptions SpeakerAlignment { get => speakerAlignment; set => speakerAlignment = value; }
+
+        public void NormalizeStyleDefaults()
+        {
+            if (overrideContentStyle && contentColor.a <= 0f)
+            {
+                contentColor.a = 1f;
+            }
+
+            if (overrideSpeakerStyle && speakerColor.a <= 0f)
+            {
+                speakerColor.a = 1f;
+            }
+        }
     }
 
     public enum TextDisplayMode

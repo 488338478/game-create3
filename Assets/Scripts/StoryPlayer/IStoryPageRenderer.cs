@@ -18,9 +18,10 @@ namespace GameCreate3.StoryPlayer
         Task HidePageAsync(StoryPage page, StoryTransitionType transitionType, float duration);
         void PrepareBackground(StoryPage page);
 
-        void RequestInput();
+        bool RequestInput();
         void SkipCurrentAnimation();
 
+        void SetSequenceFont(TMPro.TMP_FontAsset fontAsset);
         void SetPlaybackSpeed(float speed);
     }
 }

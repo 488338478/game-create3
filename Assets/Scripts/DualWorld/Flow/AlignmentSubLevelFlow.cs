@@ -127,9 +127,9 @@ namespace GameCreate3.DualWorld
 
         public override void OnRealitySubmit(RealitySubmitResult result)
         {
-            // assist 没开（玩家还没把方块推到舒适区）→ 提交注定失败 → 反馈 + 走"卡关动画"
-            // assist 开了 + 全部对齐 → 成功，进 Completed。
-            if (result.Success && CurrentPhase == SubLevelPhase.RealityTaskEnhanced)
+            // 新机制：每个 block 是按 observation 解锁 target → 拖入半径 → 自动吸附+锁定计数。
+            // Submit 不再依赖 Enhanced 阶段；只要 RealityAlignmentTask 报 success（锁满）就算通过。
+            if (result.Success)
             {
                 EnterPhase(SubLevelPhase.RealityTaskCompleted);
                 return;

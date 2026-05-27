@@ -246,7 +246,6 @@ namespace GameCreate3.StoryPlayer
             inputController.Initialize(storyPlayer, pageRenderer);
             inputController.OnNextPageRequested += () => storyPlayer.NextPage();
             inputController.OnSkipSequenceRequested += () => storyPlayer.SkipSequence();
-            inputController.OnTextFastForwardRequested += () => pageRenderer.SkipCurrentAnimation();
 
             // Bind FlowBridge
             flowBridge.BindStoryPlayer(storyPlayer);

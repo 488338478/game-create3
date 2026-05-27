@@ -730,15 +730,18 @@ DualWorldWorkspace
 #### 包含
 - Canvas (ScreenSpaceOverlay) + GraphicRaycaster
 - AlignmentTask（RealityAlignmentTask 组件 + CanvasGroup）
-  - 3 个 Target_i（半透明对齐目标位）
-  - 3 个 Block_i（DraggableAlignmentBlock）
+  - N 个 Target_i（半透明对齐目标位，**prefab 里默认 m_IsActive=0**，由背景 ObservationPoint 解锁，详见 §5.7）
+  - 每个 Target 上挂一个 `AlignmentTargetUnlocker`，负责弹出动画
+  - N 个 Block_i（DraggableAlignmentBlock，拖到激活的 Target 半径内会自动吸附+锁定）
   - SubmitButton
 
+> Block / Target 数量是动态的，跟着 `blocks` 列表走。默认 3 组，要加更多自己加节点 + 在 Inspector 加 unlockMap 行就行。
+
 #### 内部引用
-`RealityAlignmentTask` 的 `blocks`、`targetRects`、`submitButton`、`interactionGroup` 全部指向自己子节点 ✓
+`RealityAlignmentTask` 的 `blocks`、`targetRects`、`submitButton`、`interactionGroup`、`unlockMap` 全部指向自己子节点或自身配置 ✓
 
 #### 复用
-单独拖也能用，但 `SubmitAttempted` 事件需要手挂订阅者（默认场景里是 `AlignmentSubLevelFlow`）。
+单独拖也能用，但 `SubmitAttempted` 事件需要手挂订阅者（默认场景里是 `AlignmentSubLevelFlow`）。Target 自动解锁机制依赖父级 SideScrollWorkspace 抛 `observation.{id}` 事件，所以脱离 DualWorldWorkspace 单跑时需要手动 `Target.SetActive(true)` 或自己抛事件。
 
 ---
 
@@ -784,7 +787,7 @@ DualWorldWorkspace
 |---|---|---|
 | `AlignmentSubLevelFlow` | AlignmentSubLevelFlow | 任意子节点；引用 RealityCanvas + DreamWorld + ChatTaskDefinition |
 | `LevelInGameFlowController` | LevelInGameFlowController | 顶层（subLevels 列表填子关流程机） |
-| `DreamToRealityEnhancer` | DreamToRealityEnhancer | DualWorldWorkspace 子树下任意层级 |
+| `DreamToRealityEnhancer` | DreamToRealityEnhancer | DualWorldWorkspace 子树下任意层级。收到 `DreamCompleted` 时调 `realityTask.UnlockAllRemainingTargets()`，把没被观察解锁的 Target 一次性弹出来 |
 | `RealityToDreamRepair` | RealityToDreamRepair | 同上 |
 | `ChatTaskController` | ChatTaskController | 同上（建议放在 ChatTaskPanel 同级或父级，方便 panel 自查） |
 
@@ -794,11 +797,81 @@ DualWorldWorkspace
 
 | Prefab | 用途 |
 |---|---|
-| `DraggableBlock` | RectTransform + Image + DraggableAlignmentBlock；放在 Canvas 下，target 字段拖一个 AlignmentTarget 进去 |
-| `AlignmentTarget` | RectTransform + Image（半透明黄色目标位） |
+| `DraggableBlock` | RectTransform + Image + DraggableAlignmentBlock；放在 Canvas 下，target 字段拖一个 AlignmentTarget 进去。Awake 后由 RealityAlignmentTask 统一注入 snapRange |
+| `AlignmentTarget` | RectTransform + Image（半透明黄色目标位）。生产环境下还要挂 `AlignmentTargetUnlocker` 才能播解锁动画 |
 | `SubmitButton` | RectTransform + Image + Button + Label 子节点 |
 | `PushableBlock` | 物理盒 + DreamPushable 标记 |
 | `DreamPushTarget` | 触发器盒 + DreamPushTarget（dwell 计时） |
+
+---
+
+### 5.7 目标解锁 + 吸附计数（DualWorld 对齐子关核心机制）
+
+旧版本是"全场 Target 一直可见，玩家把 N 个 block 都拖到位 + 点 Submit + assist 全开 → 通过"。
+现在拆成两步：先在右屏背景里观察某个物品**解锁**对应 Target，再回左屏把对应 block 拖进 Target 半径自动**吸附+锁定**，最后 Submit 检查锁定数。
+
+#### 玩家流程
+
+1. 横板里走到某个 ObservationPoint（如 `book`），按 E 交互
+2. 左屏对应的 Target_X 弹出来，`AlignmentTargetUnlocker` 默认播 0.25 秒缩放 + 淡入
+3. 把 Block_X 拖进 Target_X 的 `snapRange`（默认 60 像素）内 → 立即吸附 + 锁定，不能再拖动
+4. 把所有 block 都锁完后点 Submit → 成功，老板抽一条 success 文案
+5. 没锁完就提交 → 失败，文案告诉你"还差 N 块"
+
+#### 配置点 1：`RealityCanvas.prefab` → `RealityAlignmentTask`
+
+| 字段 | 默认值 | 说明 |
+|---|---|---|
+| `unlockMap` | `book→0`, `phone→1`, `radio→2` | observationId ↔ blockIndex 的映射。observationId 必须和背景里 ObservationPoint 的 id 完全一致 |
+| `snapRange` | 60 | 拖拽时距 Target 多少像素内开始吸附；Awake 阶段会写入每个 block 自己的 `assistedSnapRange` |
+| `blocks` / `targetRects` | 自动 | 跟着子节点配；新增 block 后在 Inspector 把它加进 blocks，并加一条 unlockMap |
+
+#### 配置点 2：每个 Target_i → `AlignmentTargetUnlocker`
+
+| 字段 | 默认值 | 说明 |
+|---|---|---|
+| `popDurationSec` | 0.25 | 默认协程动画时长 |
+| `animator` | 空 | 如果想用自己的 Animator，挂上即可，默认协程会被跳过 |
+| `animatorTriggerOnPlay` | `Unlock` | Animator 模式触发哪个 trigger |
+| `onUnlocked` | 空 UnityEvent | 接粒子、音效、CG 解锁通知都在这里挂 |
+
+不挂 `AlignmentTargetUnlocker` 也能跑 —— RealityAlignmentTask 找不到组件就直接 `SetActive(true)`，没动画。
+
+#### 数据流
+
+```
+ObservationPoint.Interact
+  → SideScrollWorkspaceBase.RaiseWorkspaceEvent("observation.book")
+  → RealityAlignmentTask 订阅 → 查 unlockMap → blockIndex=0
+  → Target_0.SetActive(true) + AlignmentTargetUnlocker.Play()
+
+DraggableAlignmentBlock.OnDrag (每帧)
+  → if target.activeInHierarchy && diff < snapRange
+  → snap to target + interactable=false + 触发 Snapped 事件
+  → RealityAlignmentTask.OnBlockSnapped
+  → Workspace.RegisterGoal("alignment.snap.{taskId}.{i}")
+  → Workspace.RaiseWorkspaceEvent(同 id)
+
+ChatBoxUI.SubmitRequested
+  → AlignmentSubLevelFlow.HandleSubmitRequested
+  → realityTask.Submit()
+  → snappedCount >= blocks.Count ? success : "还差 N 块"
+  → SubmitAttempted → AlignmentSubLevelFlow.OnRealitySubmit
+  → ChatTaskController.Raise(Completed/Failed) → 抽对应文案
+```
+
+#### 想换映射、想加更多 block
+
+- 改 `unlockMap`：Inspector 加一行，observationId 填背景里某个 ObservationPoint id（`vase`、`note_1`、`blinds_rope` 之类都行），blockIndex 填对应索引
+- 加 block：在 RealityCanvas 里复制一个 Block_x + Target_x 节点对，拖到 `blocks` / `targetRects` 列表，Target 上挂 `AlignmentTargetUnlocker`，再加一条 unlockMap
+- 想给 success / failure 文案加表情图：去 `Settings/DualWorld/AlignmentChatTask.asset`，每条 NPC 消息都有 `sticker` 字段，拖 Sprite 进去就行
+
+#### 注意
+
+- ObservationPoint 即便 `oneShot=0` 也不会让同一 Target 重复弹动画 —— RealityAlignmentTask 内部对 observationId 去重
+- 已吸附的 block 即使后面 `SetInteractable(true)` 也保持锁定，避免提交流程把已固定的块意外松开
+- block 数量是动态的，按 `blocks.Count` 来判 success；改成 5 个块、7 个块都行
+- 跨世界桥 `DreamToRealityEnhancer` 收到梦境完成时会一次性 `UnlockAllRemainingTargets`，相当于"梦里把没观察到的位置帮你点亮"
 
 ---
 
@@ -1072,4 +1145,4 @@ DualWorldWorkspace
 
 ---
 
-最后更新：2026-05-08
+最后更新：2026-05-27（加 §5.7 目标解锁 + 吸附计数机制）

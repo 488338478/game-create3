@@ -70,7 +70,7 @@ namespace GameCreate3.DualWorld
                     Debug.Log($"[ChatTask] Published: {activeTask.taskId}");
                     break;
                 case Event.Failed:
-                    AppendNpc(activeTask.failureMessage, ChatTaskPanelUI.Mood.Reject, activeTask.highlightFailure);
+                    AppendNpc(activeTask.PickFailureMessage(), ChatTaskPanelUI.Mood.Reject, activeTask.highlightFailure);
                     Debug.Log($"[ChatTask] Failed: {activeTask.taskId}");
                     break;
                 case Event.Blocked:
@@ -82,7 +82,7 @@ namespace GameCreate3.DualWorld
                     Debug.Log($"[ChatTask] Enhanced: {activeTask.taskId}");
                     break;
                 case Event.Completed:
-                    AppendNpc(activeTask.successMessage, ChatTaskPanelUI.Mood.Approve, activeTask.highlightSuccess);
+                    AppendNpc(activeTask.PickSuccessMessage(), ChatTaskPanelUI.Mood.Approve, activeTask.highlightSuccess);
                     Debug.Log($"[ChatTask] Completed: {activeTask.taskId}");
                     break;
             }
@@ -104,6 +104,12 @@ namespace GameCreate3.DualWorld
         {
             if (string.IsNullOrEmpty(body)) return;
             chatBox.Append(new ChatLogEntry(ChatSpeaker.Npc, body, mood, highlight));
+        }
+
+        private void AppendNpc(ChatTaskDefinition.NpcChatMessage message, ChatTaskPanelUI.Mood mood, bool highlight)
+        {
+            if (message == null || !message.HasContent) return;
+            chatBox.Append(new ChatLogEntry(ChatSpeaker.Npc, message.text, mood, highlight, message.sticker));
         }
 
         private void HandleCrossWorldEvent(CrossWorldEvent evt)

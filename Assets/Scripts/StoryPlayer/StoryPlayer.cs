@@ -118,6 +118,8 @@ namespace GameCreate3.StoryPlayer
             isSkipping = false;
             playbackSpeed = 1f;
 
+            pageRenderer?.SetSequenceFont(sequence.SequenceFont);
+            pageRenderer?.SetPlaybackSpeed(playbackSpeed);
             playbackCts = new CancellationTokenSource();
 
             SetState(StoryPlayerState.PlayingPage);
@@ -167,6 +169,8 @@ namespace GameCreate3.StoryPlayer
 
             transitionController?.SkipCurrentTransition();
             pageRenderer?.SkipCurrentAnimation();
+            pageRenderer?.SetSequenceFont(null);
+            pageRenderer?.SetPlaybackSpeed(1f);
             eventSystem?.StopEventTracking();
             audioAdapter?.StopBgm();
 
@@ -324,7 +328,6 @@ namespace GameCreate3.StoryPlayer
             else
             {
                 SetState(StoryPlayerState.WaitingInput);
-                pageRenderer.RequestInput();
                 await WaitForInputAsync(ct);
             }
         }

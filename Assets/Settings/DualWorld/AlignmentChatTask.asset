@@ -13,19 +13,60 @@ MonoBehaviour:
   m_Name: AlignmentChatTask
   m_EditorClassIdentifier:
   taskId: alignment.right
-  title: "排版任务"
-  description: "把右侧三个模块对齐到目标位。"
-  initialMessage: "你来看看这版排得行不行？"
-  failureMessage: "不对，再调一下。"
-  blockedMessage: "你是不是哪里没看清？要不去走两步，换个角度。"
-  enhancedMessage: "梦里好像帮你顺过了，再试一次。"
-  successMessage: "这次可以了。"
+  title: "老板的排版验收"
+  description: "调整右侧工位里的模块位置，让它们贴近目标参考。每次提交后，老板会给出不同反馈。"
+  initialMessage: "这版我看着有点不稳，你先按参考把几个模块摆齐，我等你交稿。"
+  failureMessage: "还是不太对，再细调一下。"
+  blockedMessage: "你现在可能只盯着局部了。先去梦境里走走，换个角度再回来对。"
+  enhancedMessage: "梦里那边好像把关键位置提示出来了，你现在再看应该会更清楚。"
+  successMessage: "嗯，这版终于顺眼了。"
+  failureMessages:
+  - text: "还是不太对，再细调一下。"
+    sticker: {fileID: 0}
+  - text: "左边那块有点飘，像是没贴住参考线。"
+    sticker: {fileID: 0}
+  - text: "整体位置差一点，尤其是中间区域，视觉重心偏了。"
+    sticker: {fileID: 0}
+  - text: "你这版像是大概对了，但边缘没咬齐，再抠一下。"
+    sticker: {fileID: 0}
+  - text: "不行，间距还是乱的。别凭感觉，按目标的位置来。"
+    sticker: {fileID: 0}
+  - text: "这几个块的层次感不对，看起来像散开的，不像一组。"
+    sticker: {fileID: 0}
+  - text: "先别急着交，右侧那块明显还差半个身位。"
+    sticker: {fileID: 0}
+  - text: "嗯……有进步，但还没到能发出去的程度。"
+    sticker: {fileID: 0}
+  - text: "这个版本我会被客户打回来。再来。"
+    sticker: {fileID: 0}
+  - text: "位置关系还没对上，像是所有东西都各站各的。"
+    sticker: {fileID: 0}
+  successMessages:
+  - text: "嗯，这版终于顺眼了。"
+    sticker: {fileID: 0}
+  - text: "可以，这次位置关系对了，发我吧。"
+    sticker: {fileID: 0}
+  - text: "这版稳了，间距和重心都舒服多了。"
+    sticker: {fileID: 0}
+  - text: "对，就是这个感觉。你刚才那一下调得很准。"
+    sticker: {fileID: 0}
+  - text: "可以过。客户要是挑这个，我替你挡。"
+    sticker: {fileID: 0}
+  - text: "这次不用再改了，保存一下。"
+    sticker: {fileID: 0}
+  - text: "好，终于不像临时拼上去的了。"
+    sticker: {fileID: 0}
   playerSubmitLines:
-  - "你看这版？"
-  - "这次呢？"
-  - "再调了一下，看看？"
-  - "这样行不行？"
-  - "你再看看？"
+  - "我先按参考摆了一版，你看看？"
+  - "这次我把左边和中间重新对了一下。"
+  - "我又微调了间距，现在会不会稳一点？"
+  - "右侧那块我往回收了，你再看眼。"
+  - "我按你说的把整体重心压回来了。"
+  - "这版我感觉比刚才顺，你看看能不能过。"
+  - "我又对了一遍边缘，应该没那么飘了。"
+  - "这次我没凭感觉，按目标线贴的。"
+  - "我把几个块当成一组重新排了。"
+  - "最后再交你看一次。"
   highlightInitial: 0
   highlightFailure: 0
   highlightBlocked: 0

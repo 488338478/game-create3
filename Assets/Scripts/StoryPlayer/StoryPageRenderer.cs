@@ -43,6 +43,10 @@ namespace GameCreate3.StoryPlayer
         private bool isTypewriterPlaying;
         private string currentFullText;
         private int currentCharIndex;
+        private RectTransformState defaultTextContainerState;
+        private TextStyleState defaultSpeakerStyle;
+        private TextStyleState defaultContentStyle;
+        private TMP_FontAsset activeSequenceFont;
 
         public bool IsReady => isReady;
         public bool IsRendering => isRendering;
@@ -66,6 +70,7 @@ namespace GameCreate3.StoryPlayer
             isRendering = false;
             playbackSpeed = 1f;
 
+            CaptureDefaultTextState();
             ClearAllContent();
             SetAllAlpha(0f);
         }
@@ -94,6 +99,8 @@ namespace GameCreate3.StoryPlayer
 
             isRendering = true;
             currentTextBlockIndex = 0;
+            EnsureDefaultTextStateCaptured();
+            ClearTextContent();
 
             try
             {
@@ -120,6 +127,8 @@ namespace GameCreate3.StoryPlayer
 
         public void PrepareBackground(StoryPage page)
         {
+            ClearTextContent();
+
             if (backgroundImage != null)
             {
                 backgroundImage.sprite = page.BackgroundImage;
@@ -150,22 +159,22 @@ namespace GameCreate3.StoryPlayer
             isRendering = false;
         }
 
-        public void RequestInput()
+        public bool RequestInput()
         {
             if (isTypewriterPlaying)
             {
                 SkipCurrentAnimation();
-                return;
+                return true;
             }
 
             if (currentTextBlockIndex < currentTextBlocks?.Count - 1)
             {
                 _ = ShowNextTextBlockAsync();
+                return true;
             }
-            else
-            {
-                OnInputRequested?.Invoke();
-            }
+
+            OnInputRequested?.Invoke();
+            return false;
         }
 
         public void SkipCurrentAnimation()
@@ -181,6 +190,13 @@ namespace GameCreate3.StoryPlayer
         public void SetPlaybackSpeed(float speed)
         {
             playbackSpeed = Mathf.Max(0.1f, speed);
+        }
+
+        public void SetSequenceFont(TMP_FontAsset fontAsset)
+        {
+            EnsureDefaultTextStateCaptured();
+            activeSequenceFont = fontAsset;
+            ApplyActiveSequenceFont();
         }
 
         private async Task RenderBackgroundAsync(StoryPage page, CancellationToken ct)
@@ -229,6 +245,7 @@ namespace GameCreate3.StoryPlayer
 
             if (currentTextBlocks.Count == 0)
             {
+                ClearTextContent();
                 return;
             }
 
@@ -241,6 +258,11 @@ namespace GameCreate3.StoryPlayer
             {
                 await Task.Delay(TimeSpan.FromSeconds(textBlock.DelayBeforeShow / playbackSpeed), ct);
             }
+
+            ApplyTextBlockLayout(textBlock);
+            ApplyTextBlockStyles(textBlock);
+            ApplyActiveSequenceFont();
+            SetTextVisible(true);
 
             if (speakerLabel != null)
             {
@@ -276,6 +298,88 @@ namespace GameCreate3.StoryPlayer
             {
                 await Task.Delay(TimeSpan.FromSeconds(textBlock.Duration / playbackSpeed), ct);
             }
+        }
+
+        private void ApplyTextBlockLayout(StoryTextBlock textBlock)
+        {
+            if (textContainer == null)
+            {
+                return;
+            }
+
+            if (textBlock.OverrideTextContainer)
+            {
+                textContainer.anchorMin = textBlock.TextAnchorMin;
+                textContainer.anchorMax = textBlock.TextAnchorMax;
+                textContainer.pivot = textBlock.TextPivot;
+                textContainer.anchoredPosition = textBlock.TextAnchoredPosition;
+                textContainer.sizeDelta = textBlock.TextSizeDelta;
+            }
+            else
+            {
+                ApplyRectTransformState(textContainer, defaultTextContainerState);
+            }
+        }
+
+        private void ApplyTextBlockStyles(StoryTextBlock textBlock)
+        {
+            if (contentLabel != null)
+            {
+                if (ShouldApplyContentStyle(textBlock))
+                {
+                    if (textBlock.ContentFontSize > 0f)
+                    {
+                        contentLabel.fontSize = textBlock.ContentFontSize;
+                    }
+
+                    if (textBlock.ContentColor.a > 0f)
+                    {
+                        contentLabel.color = textBlock.ContentColor;
+                    }
+
+                    contentLabel.alignment = textBlock.ContentAlignment;
+                }
+                else
+                {
+                    ApplyTextStyle(contentLabel, defaultContentStyle);
+                }
+            }
+
+            if (speakerLabel != null)
+            {
+                if (ShouldApplySpeakerStyle(textBlock))
+                {
+                    if (textBlock.SpeakerFontSize > 0f)
+                    {
+                        speakerLabel.fontSize = textBlock.SpeakerFontSize;
+                    }
+
+                    if (textBlock.SpeakerColor.a > 0f)
+                    {
+                        speakerLabel.color = textBlock.SpeakerColor;
+                    }
+
+                    speakerLabel.alignment = textBlock.SpeakerAlignment;
+                }
+                else
+                {
+                    ApplyTextStyle(speakerLabel, defaultSpeakerStyle);
+                }
+            }
+        }
+
+        private static bool ShouldApplyContentStyle(StoryTextBlock textBlock)
+        {
+            return textBlock.OverrideContentStyle
+                || textBlock.ContentFontSize > 0f
+                || textBlock.ContentColor.a > 0f;
+        }
+
+        private static bool ShouldApplySpeakerStyle(StoryTextBlock textBlock)
+        {
+            return textBlock.OverrideSpeakerStyle
+                || textBlock.SpeakerFontSize > 0f
+                || textBlock.SpeakerColor.a > 0f;
         }
 
         private async Task PlayTypewriterAsync(StoryTextBlock textBlock, CancellationToken ct)
@@ -524,19 +628,181 @@ namespace GameCreate3.StoryPlayer
                 foregroundImage.color = Color.clear;
             }
 
+            ClearTextContent();
+
+            currentTextBlocks?.Clear();
+            currentTextBlockIndex = 0;
+            isTypewriterPlaying = false;
+        }
+
+        private void ClearTextContent()
+        {
+            EnsureDefaultTextStateCaptured();
+
             if (speakerLabel != null)
             {
                 speakerLabel.text = string.Empty;
+                ApplyTextStyle(speakerLabel, defaultSpeakerStyle);
             }
 
             if (contentLabel != null)
             {
                 contentLabel.text = string.Empty;
+                ApplyTextStyle(contentLabel, defaultContentStyle);
             }
 
-            currentTextBlocks?.Clear();
-            currentTextBlockIndex = 0;
+            if (textContainer != null)
+            {
+                ApplyRectTransformState(textContainer, defaultTextContainerState);
+            }
+
             isTypewriterPlaying = false;
+            currentFullText = string.Empty;
+            currentCharIndex = 0;
+        }
+
+        private void CaptureDefaultTextState()
+        {
+            defaultTextContainerState = RectTransformState.Capture(textContainer);
+            defaultSpeakerStyle = TextStyleState.Capture(speakerLabel);
+            defaultContentStyle = TextStyleState.Capture(contentLabel);
+        }
+
+        private void ApplyActiveSequenceFont()
+        {
+            if (speakerLabel != null)
+            {
+                ApplyFontAsset(speakerLabel, activeSequenceFont != null ? activeSequenceFont : defaultSpeakerStyle.Font);
+            }
+
+            if (contentLabel != null)
+            {
+                ApplyFontAsset(contentLabel, activeSequenceFont != null ? activeSequenceFont : defaultContentStyle.Font);
+            }
+        }
+
+        private void EnsureDefaultTextStateCaptured()
+        {
+            if (!defaultTextContainerState.IsValid && textContainer != null)
+            {
+                defaultTextContainerState = RectTransformState.Capture(textContainer);
+            }
+
+            if (!defaultSpeakerStyle.IsValid && speakerLabel != null)
+            {
+                defaultSpeakerStyle = TextStyleState.Capture(speakerLabel);
+            }
+
+            if (!defaultContentStyle.IsValid && contentLabel != null)
+            {
+                defaultContentStyle = TextStyleState.Capture(contentLabel);
+            }
+        }
+
+        private static void ApplyRectTransformState(RectTransform target, RectTransformState state)
+        {
+            if (target == null || !state.IsValid)
+            {
+                return;
+            }
+
+            target.anchorMin = state.AnchorMin;
+            target.anchorMax = state.AnchorMax;
+            target.pivot = state.Pivot;
+            target.anchoredPosition = state.AnchoredPosition;
+            target.sizeDelta = state.SizeDelta;
+        }
+
+        private static void ApplyTextStyle(TMP_Text target, TextStyleState state)
+        {
+            if (target == null || !state.IsValid)
+            {
+                return;
+            }
+
+            target.fontSize = state.FontSize;
+            target.color = state.Color;
+            target.alignment = state.Alignment;
+            ApplyFontAsset(target, state.Font);
+        }
+
+        private static void ApplyFontAsset(TMP_Text target, TMP_FontAsset fontAsset)
+        {
+            if (target == null || fontAsset == null)
+            {
+                return;
+            }
+
+            target.font = fontAsset;
+            target.fontSharedMaterial = fontAsset.material;
+            target.ForceMeshUpdate(true, true);
+        }
+
+        private void SetTextVisible(bool visible)
+        {
+            var alpha = visible ? 1f : 0f;
+
+            if (textGroup != null)
+            {
+                textGroup.alpha = alpha;
+            }
+
+            if (textContainer != null)
+            {
+                var canvasGroup = textContainer.GetComponent<CanvasGroup>();
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = alpha;
+                }
+            }
+        }
+
+        private readonly struct RectTransformState
+        {
+            public readonly bool IsValid;
+            public readonly Vector2 AnchorMin;
+            public readonly Vector2 AnchorMax;
+            public readonly Vector2 Pivot;
+            public readonly Vector2 AnchoredPosition;
+            public readonly Vector2 SizeDelta;
+
+            private RectTransformState(RectTransform rectTransform)
+            {
+                IsValid = rectTransform != null;
+                AnchorMin = rectTransform != null ? rectTransform.anchorMin : Vector2.zero;
+                AnchorMax = rectTransform != null ? rectTransform.anchorMax : Vector2.one;
+                Pivot = rectTransform != null ? rectTransform.pivot : new Vector2(0.5f, 0.5f);
+                AnchoredPosition = rectTransform != null ? rectTransform.anchoredPosition : Vector2.zero;
+                SizeDelta = rectTransform != null ? rectTransform.sizeDelta : Vector2.zero;
+            }
+
+            public static RectTransformState Capture(RectTransform rectTransform)
+            {
+                return new RectTransformState(rectTransform);
+            }
+        }
+
+        private readonly struct TextStyleState
+        {
+            public readonly bool IsValid;
+            public readonly float FontSize;
+            public readonly Color Color;
+            public readonly TextAlignmentOptions Alignment;
+            public readonly TMP_FontAsset Font;
+
+            private TextStyleState(TMP_Text text)
+            {
+                IsValid = text != null;
+                FontSize = text != null ? text.fontSize : 0f;
+                Color = text != null ? text.color : Color.white;
+                Alignment = text != null ? text.alignment : TextAlignmentOptions.TopLeft;
+                Font = text != null ? text.font : null;
+            }
+
+            public static TextStyleState Capture(TMP_Text text)
+            {
+                return new TextStyleState(text);
+            }
         }
 
         private void SetAllAlpha(float alpha)

@@ -8,13 +8,15 @@ namespace GameCreate3.DualWorld
     {
         public ChatSpeaker speaker;
         public string body;
+        public Sprite sticker;
         public ChatTaskPanelUI.Mood mood;   // NPC 用；Player 固定 Neutral
         public bool highlight;
 
-        public ChatLogEntry(ChatSpeaker speaker, string body, ChatTaskPanelUI.Mood mood = ChatTaskPanelUI.Mood.Neutral, bool highlight = false)
+        public ChatLogEntry(ChatSpeaker speaker, string body, ChatTaskPanelUI.Mood mood = ChatTaskPanelUI.Mood.Neutral, bool highlight = false, Sprite sticker = null)
         {
             this.speaker = speaker;
             this.body = body;
+            this.sticker = sticker;
             this.mood = mood;
             this.highlight = highlight;
         }

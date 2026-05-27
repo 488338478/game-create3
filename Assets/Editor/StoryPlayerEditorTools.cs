@@ -26,6 +26,7 @@ namespace GameCreate3.EditorTools
         private const string RigPrefabPath = PrefabRoot + "/StoryPlayerRig.prefab";
         private const string RigPrefabResourcesPath = ResourcesPrefabRoot + "/StoryPlayerRig.prefab";
         private const string ProductionRigPrefabPath = PrefabRoot + "/StoryPlayerProductionRig.prefab";
+        private const string ChineseFontAssetPath = "Assets/chinese/OTF/WenYuanSerifSC-Bold SDF.asset";
 
         // ------------------------------------------------------------
         // Rig prefab —— 旧 Bootstrap 模式封装
@@ -125,6 +126,8 @@ namespace GameCreate3.EditorTools
             contentLabel.fontSize = 32;
             contentLabel.color = Color.white;
             contentLabel.alignment = TextAlignmentOptions.TopLeft;
+            AssignChineseFont(speakerLabel);
+            AssignChineseFont(contentLabel);
             var contentRect = contentGO.GetComponent<RectTransform>();
             contentRect.anchorMin = Vector2.zero;
             contentRect.anchorMax = Vector2.one;
@@ -232,6 +235,18 @@ namespace GameCreate3.EditorTools
             }
             prop.objectReferenceValue = value as Object;
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void AssignChineseFont(TMP_Text label)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(ChineseFontAssetPath);
+            if (font == null)
+            {
+                Debug.LogWarning("[StoryPlayerEditorTools] Chinese TMP font not found: " + ChineseFontAssetPath);
+                return;
+            }
+
+            label.font = font;
         }
 
         // ------------------------------------------------------------

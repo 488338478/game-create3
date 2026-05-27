@@ -34,7 +34,6 @@ namespace GameCreate3.StoryPlayer
 
         public event Action OnNextPageRequested;
         public event Action OnSkipSequenceRequested;
-        public event Action OnTextFastForwardRequested;
 
         private void Update()
         {
@@ -175,9 +174,8 @@ namespace GameCreate3.StoryPlayer
                 return;
             }
 
-            if (pageRenderer != null && pageRenderer.IsRendering)
+            if (pageRenderer != null && pageRenderer.RequestInput())
             {
-                OnTextFastForwardRequested?.Invoke();
                 return;
             }
 

@@ -39,6 +39,9 @@ namespace GameCreate3.DualWorld
                 return;
             }
 
+            // 新机制：梦境帮助语义 = 一次性把还没解锁的 Target 全部点亮（带动画），
+            // 玩家回来后只需把对应 block 拖过去吸附即可。
+            alignmentTask.UnlockAllRemainingTargets();
             alignmentTask.SetAssistEnabled(true);
             alignmentTask.SetInteractable(true);
             workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityEnhanced, evt.SubLevelId, null));

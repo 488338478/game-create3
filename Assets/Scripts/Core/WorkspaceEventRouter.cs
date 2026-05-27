@@ -23,6 +23,8 @@ namespace GameCreate3
             Push,                // push.<subId>.solved
             Dialogue,            // dialogue.<subId>
             Custom,              // 自由填写
+            // 新增枚举值必须追加在末尾，否则会让旧数据按 enumValueIndex 错位。
+            Interact,            // interact.<subId>
         }
 
         [Serializable]
@@ -44,6 +46,7 @@ namespace GameCreate3
                 WorkspaceEventType.Pickup             => $"pickup.{subId}",
                 WorkspaceEventType.Push               => $"push.{subId}.solved",
                 WorkspaceEventType.Dialogue           => $"dialogue.{subId}",
+                WorkspaceEventType.Interact           => $"interact.{subId}",
                 WorkspaceEventType.Custom             => subId,
                 _                                     => subId
             };

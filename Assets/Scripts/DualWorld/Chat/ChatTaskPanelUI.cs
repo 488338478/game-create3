@@ -18,12 +18,6 @@ namespace GameCreate3.DualWorld
         [SerializeField] private RectTransform contentRoot;
         [SerializeField] private ChatLogEntryView entryPrefab;
 
-        [Header("Mood Palette")]
-        [SerializeField] private Color neutralColor = new Color(0.2f, 0.25f, 0.35f);
-        [SerializeField] private Color rejectColor = new Color(0.85f, 0.3f, 0.3f);
-        [SerializeField] private Color enhanceColor = new Color(0.5f, 0.55f, 0.85f);
-        [SerializeField] private Color approveColor = new Color(0.35f, 0.7f, 0.4f);
-
         private readonly List<ChatLogEntry> entries = new List<ChatLogEntry>();
         private ChatTaskDefinition currentDef;
 
@@ -77,22 +71,11 @@ namespace GameCreate3.DualWorld
             }
         }
 
-        public Color ResolveMoodColor(Mood mood)
-        {
-            return mood switch
-            {
-                Mood.Reject => rejectColor,
-                Mood.Enhance => enhanceColor,
-                Mood.Approve => approveColor,
-                _ => neutralColor
-            };
-        }
-
         private void SpawnEntryView(ChatLogEntry entry)
         {
             if (entryPrefab == null || contentRoot == null) return;
             var view = Instantiate(entryPrefab, contentRoot);
-            view.Bind(entry, currentDef, ResolveMoodColor(entry.mood));
+            view.Bind(entry, currentDef);
         }
 
         private void ScrollToBottomDeferred()

@@ -330,5 +330,5 @@ MonoBehaviour:
   allowSkip: 0
   autoAdvanceDelay: 3
   sequenceFont: {fileID: 11400000, guid: ef9eb6d1111e4ed4896bd70d6b1322ad, type: 2}
-  endCallbackType: 0
-  endCallbackParameter: 
+  endCallbackType: 1
+  endCallbackParameter: Level2

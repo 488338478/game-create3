@@ -36,7 +36,7 @@ namespace GameCreate3.EditorTools
 
             EnsureFolder(AtomsRoot);
 
-            BuildInteractable<ObservationPoint>(AtomsRoot + "/ObservationPoint.prefab", "ObservationPoint",
+            BuildInteractable<InteractTrigger>(AtomsRoot + "/InteractTrigger.prefab", "InteractTrigger",
                 new Color(0.35f, 0.8f, 0.7f), trigger: true);
             BuildInteractable<PickupObject>(AtomsRoot + "/PickupObject.prefab", "PickupObject",
                 new Color(0.95f, 0.85f, 0.4f), trigger: true);

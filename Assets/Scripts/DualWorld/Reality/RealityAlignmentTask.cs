@@ -1,16 +1,17 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace GameCreate3.DualWorld
 {
     public sealed class RealityAlignmentTask : MonoBehaviour
     {
         [Serializable]
-        public struct ObservationUnlock
+        public struct InteractUnlock
         {
-            public string observationId;   // 对应背景中 ObservationPoint 的 id（如 book）
-            public int blockIndex;         // 对应 blocks/targetRects 索引
+            [FormerlySerializedAs("observationId")] public string interactId;   // 对应背景中 InteractTrigger 的 id（如 book）
+            public int blockIndex;                                              // 对应 blocks/targetRects 索引
         }
 
         [SerializeField] private string taskId = "alignment.right";
@@ -23,7 +24,7 @@ namespace GameCreate3.DualWorld
         [SerializeField] private float disabledAlpha = 0.42f;
 
         [Header("Per-target unlock")]
-        [SerializeField] private List<ObservationUnlock> unlockMap = new List<ObservationUnlock>();
+        [SerializeField] private List<InteractUnlock> unlockMap = new List<InteractUnlock>();
         [SerializeField] private float snapRange = 60f;
 
         private bool assistEnabled;
@@ -32,7 +33,7 @@ namespace GameCreate3.DualWorld
         private float taskStartTime;
 
         private readonly HashSet<int> snappedBlockIndices = new HashSet<int>();
-        private readonly HashSet<string> consumedObservationIds = new HashSet<string>();
+        private readonly HashSet<string> consumedInteractIds = new HashSet<string>();
 
         private SideScrollWorkspaceBase workspace;
         private bool workspaceSubscribed;
@@ -76,10 +77,24 @@ namespace GameCreate3.DualWorld
                 blocks.AddRange(GetComponentsInChildren<DraggableAlignmentBlock>(true));
             }
 
-            targetRects.Clear();
-            foreach (var block in blocks)
+            // RealityAlignmentTask 只维护自己的 targetRects / unlockMap。
+            // 每个 block 可吸附哪些 target 由 DraggableAlignmentBlock.targets 在 Inspector 手动配置，
+            // 这里禁止运行时覆盖 block.targets。
+            if (targetRects.Count == 0)
             {
-                targetRects.Add(block != null ? block.Target : null);
+                foreach (var block in blocks)
+                {
+                    if (block == null) continue;
+                    var blockTargets = block.Targets;
+                    if (blockTargets.Count == 0) continue;
+
+                    var t = blockTargets[0];
+                    if (t != null && !targetRects.Contains(t)) targetRects.Add(t);
+                }
+                if (targetRects.Count == 0)
+                {
+                    Debug.LogWarning($"[RealityAlignmentTask] '{name}' 的 targetRects 为空，且所有 block.targets 也为空。UnlockTarget 不会有效果。", this);
+                }
             }
         }
 
@@ -149,16 +164,31 @@ namespace GameCreate3.DualWorld
         private void OnWorkspaceEvent(string eventId)
         {
             if (string.IsNullOrEmpty(eventId)) return;
-            const string prefix = "observation.";
+            const string prefix = "interact.";
             if (!eventId.StartsWith(prefix, StringComparison.Ordinal)) return;
 
-            var observationId = eventId.Substring(prefix.Length);
-            if (!consumedObservationIds.Add(observationId)) return;
+            var interactId = eventId.Substring(prefix.Length);
+            if (!consumedInteractIds.Add(interactId))
+            {
+                Debug.Log($"[RealityAlignmentTask] interactId={interactId} 已 consumed，忽略", this);
+                return;
+            }
 
+            var matched = 0;
             for (var i = 0; i < unlockMap.Count; i++)
             {
-                if (!string.Equals(unlockMap[i].observationId, observationId, StringComparison.Ordinal)) continue;
+                if (!string.Equals(unlockMap[i].interactId, interactId, StringComparison.Ordinal)) continue;
                 UnlockTarget(unlockMap[i].blockIndex);
+                matched++;
+            }
+
+            if (matched == 0)
+            {
+                Debug.LogWarning($"[RealityAlignmentTask] 收到 interact.{interactId}，但 unlockMap 里没有匹配项。unlockMap.Count={unlockMap.Count}", this);
+            }
+            else
+            {
+                Debug.Log($"[RealityAlignmentTask] interact.{interactId} 解锁了 {matched} 个 target", this);
             }
         }
 
@@ -235,7 +265,7 @@ namespace GameCreate3.DualWorld
             failCount = 0;
             taskStartTime = Time.time;
             snappedBlockIndices.Clear();
-            consumedObservationIds.Clear();
+            consumedInteractIds.Clear();
             SetAssistEnabled(false);
             HideAllTargets();
             foreach (var block in blocks)

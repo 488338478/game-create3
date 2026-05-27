@@ -23,5 +23,5 @@ MonoBehaviour:
     sceneName: Level2
     useLoading: 1
   - routeId: 4
-    sceneName: Mainpage
+    sceneName: MainMenu
     useLoading: 1

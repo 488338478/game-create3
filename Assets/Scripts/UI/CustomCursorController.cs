@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace GameCreate3.UI
 {
@@ -12,10 +14,13 @@ namespace GameCreate3.UI
         [Header("Settings")]
         [SerializeField] private Vector2 hotspot = Vector2.zero;
         [SerializeField] private CursorMode cursorMode = CursorMode.Auto;
-        [SerializeField] private float dragThresholdPixels = 8f;
+        [SerializeField] private string[] pressedHoverTags = System.Array.Empty<string>();
+        [SerializeField] private string[] moveHoverTags = System.Array.Empty<string>();
+        [SerializeField] private Camera raycastCamera;
+        [SerializeField] private float raycastDistance = 100f;
         [SerializeField] private bool persistAcrossScenes = true;
 
-        private Vector2 pointerDownPosition;
+        private readonly List<RaycastResult> uiRaycastResults = new List<RaycastResult>();
         private CursorState currentState = CursorState.None;
 
         private enum CursorState
@@ -41,23 +46,15 @@ namespace GameCreate3.UI
 
         private void Update()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (IsPointerOverTaggedObject(moveHoverTags))
             {
-                pointerDownPosition = Input.mousePosition;
+                SetCursor(CursorState.Move);
+                return;
+            }
+
+            if (IsPointerOverTaggedObject(pressedHoverTags))
+            {
                 SetCursor(CursorState.Pressed);
-                return;
-            }
-
-            if (Input.GetMouseButton(0))
-            {
-                var dragDistance = ((Vector2)Input.mousePosition - pointerDownPosition).magnitude;
-                SetCursor(dragDistance >= dragThresholdPixels ? CursorState.Move : CursorState.Pressed);
-                return;
-            }
-
-            if (Input.GetMouseButtonUp(0))
-            {
-                SetCursor(CursorState.Standard);
                 return;
             }
 
@@ -86,6 +83,83 @@ namespace GameCreate3.UI
 
             Cursor.SetCursor(texture, hotspot, cursorMode);
             currentState = state;
+        }
+
+        private bool IsPointerOverTaggedObject(IReadOnlyList<string> tags)
+        {
+            if (tags == null || tags.Count == 0)
+            {
+                return false;
+            }
+
+            return IsPointerOverTaggedUi(tags) || IsPointerOverTaggedWorldObject(tags);
+        }
+
+        private bool IsPointerOverTaggedUi(IReadOnlyList<string> tags)
+        {
+            if (EventSystem.current == null)
+            {
+                return false;
+            }
+
+            uiRaycastResults.Clear();
+            var pointerEventData = new PointerEventData(EventSystem.current)
+            {
+                position = Input.mousePosition
+            };
+
+            EventSystem.current.RaycastAll(pointerEventData, uiRaycastResults);
+            foreach (var result in uiRaycastResults)
+            {
+                if (HasAnyTag(result.gameObject, tags))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsPointerOverTaggedWorldObject(IReadOnlyList<string> tags)
+        {
+            var cameraToUse = raycastCamera != null ? raycastCamera : Camera.main;
+            if (cameraToUse == null)
+            {
+                return false;
+            }
+
+            var ray = cameraToUse.ScreenPointToRay(Input.mousePosition);
+            var hit2D = Physics2D.GetRayIntersection(ray, raycastDistance);
+            if (hit2D.collider != null && HasAnyTag(hit2D.collider.gameObject, tags))
+            {
+                return true;
+            }
+
+            return Physics.Raycast(ray, out var hit3D, raycastDistance) && HasAnyTag(hit3D.collider.gameObject, tags);
+        }
+
+        private static bool HasAnyTag(GameObject target, IReadOnlyList<string> tags)
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            var current = target.transform;
+            while (current != null)
+            {
+                foreach (var tag in tags)
+                {
+                    if (!string.IsNullOrWhiteSpace(tag) && current.tag == tag)
+                    {
+                        return true;
+                    }
+                }
+
+                current = current.parent;
+            }
+
+            return false;
         }
 
 #if UNITY_EDITOR

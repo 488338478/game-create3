@@ -63,6 +63,7 @@ namespace GameCreate3
             player.transform.position = position;
             player.layer = GetLayerOrDefault("Player", 0);
             AddSpriteAndBox(player, new Vector2(0.8f, 1.4f), new Color(0.9f, 0.62f, 0.35f), false);
+            ReplacePlayerCollidersWithCapsuleAndTrigger(player, out var playerInteractBox);
             var body = player.AddComponent<Rigidbody2D>();
             body.freezeRotation = true;
             body.gravityScale = 3f;
@@ -80,8 +81,23 @@ namespace GameCreate3
             SetPrivateField(ground, "groundCheckPoint", point.transform);
             SetPrivateField(ground, "groundMask", (LayerMask)LayerMask.GetMask("Ground"));
             SetPrivateField(player.GetComponent<SideScrollInteractionDetector>(), "interactableMask", (LayerMask)LayerMask.GetMask("Interactable"));
+            player.GetComponent<SideScrollInteractionDetector>().SetDetectCollider(playerInteractBox);
             controller.ApplyConfigs(CreateMoveConfig(), CreateJumpConfig(), (LayerMask)LayerMask.GetMask("Ground"));
             return player;
+        }
+
+        private static void ReplacePlayerCollidersWithCapsuleAndTrigger(GameObject player, out BoxCollider2D interactBox)
+        {
+            var oldBox = player.GetComponent<BoxCollider2D>();
+            if (oldBox != null) Object.DestroyImmediate(oldBox);
+
+            var capsule = player.AddComponent<CapsuleCollider2D>();
+            capsule.size = new Vector2(0.8f, 1.4f);
+            capsule.direction = CapsuleDirection2D.Vertical;
+
+            interactBox = player.AddComponent<BoxCollider2D>();
+            interactBox.size = new Vector2(1.0f, 1.6f);
+            interactBox.isTrigger = true;
         }
 
         private static void BuildCameraRig(Transform parent, Transform followTarget, Collider2D bounds)
@@ -108,10 +124,10 @@ namespace GameCreate3
         private static void BuildObservation(Transform parent)
         {
             var root = CreateNamedChild(parent, "Interactables", Vector3.zero);
-            var point = CreateNamedChild(root.transform, "ObservationPoint", new Vector3(-1f, -1.5f, 0f));
+            var point = CreateNamedChild(root.transform, "InteractTrigger", new Vector3(-1f, -1.5f, 0f));
             point.layer = GetLayerOrDefault("Interactable", 0);
             AddSpriteAndBox(point, new Vector2(0.8f, 0.8f), new Color(0.33f, 0.82f, 0.72f), true);
-            point.AddComponent<ObservationPoint>();
+            point.AddComponent<InteractTrigger>();
         }
 
         private static void BuildPickup(Transform parent)

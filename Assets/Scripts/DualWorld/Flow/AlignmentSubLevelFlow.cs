@@ -20,6 +20,7 @@ namespace GameCreate3.DualWorld
 
         [Header("Traversal")]
         [SerializeField] private string exitWorkspaceEventId = "alignment_exit";
+        [SerializeField] private string realityCompletedWorkspaceEventId = "reality.completed";
 
         [Header("Chat")]
         [SerializeField] private ChatTaskDefinition taskDefinition;
@@ -99,6 +100,7 @@ namespace GameCreate3.DualWorld
                 case SubLevelPhase.RealityTaskCompleted:
                     realityTask?.SetInteractable(false);   // 任务完成，不再接受新提交
                     if (EnsureChatBox() != null) chatBox.SetSubmitInteractable(false);
+                    Workspace?.RaiseWorkspaceEvent(realityCompletedWorkspaceEventId);
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityCompleted, SubLevelId, null));
                     // RealityToDreamRepair 桥会在同一帧内打开路径并喊出 DreamWorldResolved 事件；
                     // 流自身也立刻推进到 Resolved → Traversal，避免依赖桥来驱动相位。

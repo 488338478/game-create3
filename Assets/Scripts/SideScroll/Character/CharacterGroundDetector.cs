@@ -16,8 +16,19 @@ namespace GameCreate3
         {
             if (targetCollider == null)
             {
-                targetCollider = GetComponent<Collider2D>();
+                targetCollider = ResolvePhysicsCollider();
             }
+        }
+
+        private Collider2D ResolvePhysicsCollider()
+        {
+            // 玩家身上可能同时挂着物理 collider（CapsuleCollider2D）和交互探测 trigger（BoxCollider2D, isTrigger=true）。
+            // ground 判定必须取"非 trigger"的那个，否则 bounds.min.y 会被 trigger 形状影响。
+            foreach (var c in GetComponents<Collider2D>())
+            {
+                if (c != null && !c.isTrigger) return c;
+            }
+            return GetComponent<Collider2D>();
         }
 
         public void SetGroundMask(LayerMask mask)
@@ -43,7 +54,7 @@ namespace GameCreate3
         {
             if (targetCollider == null)
             {
-                targetCollider = GetComponent<Collider2D>();
+                targetCollider = ResolvePhysicsCollider();
             }
 
             var checkPosition = groundCheckPoint != null ? (Vector2)groundCheckPoint.position : (Vector2)transform.position;

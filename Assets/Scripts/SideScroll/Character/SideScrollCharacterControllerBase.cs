@@ -20,6 +20,15 @@ namespace GameCreate3
         [SerializeField] private CharacterJumpMotor jumpMotor;
         [SerializeField] private SideScrollInteractionDetector interactionDetector;
 
+        [Header("Input Bindings")]
+        [Tooltip("交互键的 Input System binding 路径。留空则回落到默认（E / Enter / 手柄西键）。\n常用示例：<Keyboard>/e、<Keyboard>/space、<Gamepad>/buttonSouth")]
+        [SerializeField] private string[] interactBindings =
+        {
+            "<Keyboard>/e",
+            "<Keyboard>/enter",
+            "<Gamepad>/buttonWest",
+        };
+
         private ICharacterInputSource activeInputSource;
         private PlayerInputSource playerInputSource;
         private bool inputEnabled = true;
@@ -35,7 +44,7 @@ namespace GameCreate3
             jumpMotor = jumpMotor != null ? jumpMotor : GetComponent<CharacterJumpMotor>();
             interactionDetector = interactionDetector != null ? interactionDetector : GetComponent<SideScrollInteractionDetector>();
 
-            playerInputSource = new PlayerInputSource();
+            playerInputSource = new PlayerInputSource(interactBindings);
             activeInputSource = playerInputSource;
             inputProxy.SetInputSource(activeInputSource);
         }

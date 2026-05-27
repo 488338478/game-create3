@@ -40,6 +40,7 @@ namespace GameCreate3
             player.layer = GetLayerOrDefault("Player", 0);
 
             AddSpriteAndBox(player, new Vector2(0.8f, 1.4f), new Color(0.85f, 0.55f, 0.3f), false);
+            ReplacePlayerCollidersWithCapsuleAndTrigger(player, out var playerInteractBox);
             var body = player.AddComponent<Rigidbody2D>();
             body.freezeRotation = true;
             body.gravityScale = 3f;
@@ -57,8 +58,23 @@ namespace GameCreate3
             SetPrivateField(player.GetComponent<CharacterGroundDetector>(), "groundCheckPoint", scan.transform);
             SetPrivateField(player.GetComponent<CharacterGroundDetector>(), "groundMask", (LayerMask)LayerMask.GetMask("Ground"));
             SetPrivateField(player.GetComponent<SideScrollInteractionDetector>(), "interactableMask", (LayerMask)LayerMask.GetMask("Interactable"));
+            player.GetComponent<SideScrollInteractionDetector>().SetDetectCollider(playerInteractBox);
             controller.ApplyConfigs(CreateMoveConfig(), CreateJumpConfig(), (LayerMask)LayerMask.GetMask("Ground"));
             return player;
+        }
+
+        private static void ReplacePlayerCollidersWithCapsuleAndTrigger(GameObject player, out BoxCollider2D interactBox)
+        {
+            var oldBox = player.GetComponent<BoxCollider2D>();
+            if (oldBox != null) Object.DestroyImmediate(oldBox);
+
+            var capsule = player.AddComponent<CapsuleCollider2D>();
+            capsule.size = new Vector2(0.8f, 1.4f);
+            capsule.direction = CapsuleDirection2D.Vertical;
+
+            interactBox = player.AddComponent<BoxCollider2D>();
+            interactBox.size = new Vector2(1.0f, 1.6f);
+            interactBox.isTrigger = true;
         }
 
         private static void BuildCameraRig(Transform parent, Transform followTarget, Collider2D confinerShape)
@@ -105,12 +121,12 @@ namespace GameCreate3
             var root = new GameObject("Interactables");
             root.transform.SetParent(parent, false);
 
-            var interactable = new GameObject("ObservationPoint");
+            var interactable = new GameObject("InteractTrigger");
             interactable.transform.SetParent(root.transform, false);
             interactable.transform.position = new Vector3(-1f, -1.5f, 0f);
             interactable.layer = GetLayerOrDefault("Interactable", 0);
             AddSpriteAndBox(interactable, new Vector2(0.8f, 0.8f), new Color(0.35f, 0.8f, 0.7f), true);
-            interactable.AddComponent<ObservationPoint>();
+            interactable.AddComponent<InteractTrigger>();
         }
 
         private static void BuildTrigger(Transform parent)

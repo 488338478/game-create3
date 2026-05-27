@@ -128,7 +128,7 @@
 ### 6.2 SideScrollStoryWorkspace
 职责：
 - 管理观察点、剧情事件、剧情输入锁定
-- 接收 `ObservationPoint` / `DialogueTriggerZone` / `CameraZone` 事件
+- 接收 `InteractTrigger` / `DialogueTriggerZone` / `CameraZone` 事件
 
 当前限制：
 - 这轮不直接接 `DialogueController`
@@ -176,15 +176,15 @@
 
 ## 9. 交互物
 当前已实现：
-- `ObservationPoint`
+- `InteractTrigger`
 - `ExitPoint`
 - `PickupObject`
 - `PushableObject`
 - `SideScrollDebugInteractable`
 
 行为约定：
-- `ObservationPoint`
-  - 发 `observation.{id}`
+- `InteractTrigger`
+  - 发 `interact.{id}`
 - `ExitPoint`
   - 根据工作区条件决定可否交互
   - 发 `exit.{id}`
@@ -232,7 +232,7 @@
 - `WorkspaceRoot.prefab`
 - `SideScrollPlayer.prefab`
 - `CameraRig.prefab`
-- `Interactable_ObservationPoint.prefab`
+- `Interactable_InteractTrigger.prefab`
 - `Interactable_ExitPoint.prefab`
 - `Interactable_PickupObject.prefab`
 - `Interactable_PushableObject.prefab`
@@ -270,7 +270,7 @@
 - `SideScrollPlayer`
 - `CameraRig`
 - `Environment`
-- `ObservationPoint`
+- `InteractTrigger`
 - `DialogueTriggerZone`
 - `CameraZone`
 - `ExitPoint`
@@ -361,7 +361,7 @@
 - `SS_Test_Workspace` 可运行
 - `SS_Story_Template` 可运行
 - `SS_Gameplay_Template` 可运行
-- `ObservationPoint` / `DialogueTriggerZone` / `CameraZone` / `ExitPoint` 在 Story 模板中可用
+- `InteractTrigger` / `DialogueTriggerZone` / `CameraZone` / `ExitPoint` 在 Story 模板中可用
 - `PickupObject` / `PushableObject` / `GoalTriggerZone` / `ExitPoint` 在 Gameplay 模板中可用
 - `Chapter2Prototype` 不受新系统影响
 

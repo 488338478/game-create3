@@ -16,6 +16,7 @@ namespace GameCreate3.Editor
             "Push (solved)",
             "Dialogue",
             "Custom",
+            "Interact",
         };
 
         // eventType 不需要子 ID 时返回 false
@@ -34,6 +35,7 @@ namespace GameCreate3.Editor
                 WorkspaceEventType.Pickup    => $"pickup.{subIdProp.stringValue}",
                 WorkspaceEventType.Push      => $"push.{subIdProp.stringValue}.solved",
                 WorkspaceEventType.Dialogue  => $"dialogue.{subIdProp.stringValue}",
+                WorkspaceEventType.Interact  => $"interact.{subIdProp.stringValue}",
                 WorkspaceEventType.Custom    => subIdProp.stringValue,
                 _                            => subIdProp.stringValue
             };
@@ -87,6 +89,7 @@ namespace GameCreate3.Editor
                     WorkspaceEventType.Pickup   => "Pickup Id",
                     WorkspaceEventType.Push     => "Push Id",
                     WorkspaceEventType.Dialogue => "Dialogue Id",
+                    WorkspaceEventType.Interact => "Interact Id",
                     WorkspaceEventType.Custom   => "Event Id",
                     _                           => "Sub Id"
                 };

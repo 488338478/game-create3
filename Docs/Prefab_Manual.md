@@ -40,7 +40,7 @@ Assets/Prefabs/
 │   │   ├── SideScrollStoryWorkspace.prefab         ← 剧情型工作区壳
 │   │   └── SideScrollGameplayWorkspace.prefab      ← 解谜型工作区壳
 │   └── Atoms/
-│       ├── ObservationPoint.prefab                 ← 按 E 观察
+│       ├── InteractTrigger.prefab                  ← 按 E 触发事件
 │       ├── PickupObject.prefab                     ← 走过捡起
 │       ├── PushableObject.prefab                   ← 玩家可推
 │       ├── ExitPoint.prefab                        ← 关卡出口
@@ -685,7 +685,7 @@ CameraRig (SideScrollCameraController)
 
 | Prefab | 组件 | 必填字段 | 行为 |
 |---|---|---|---|
-| `ObservationPoint` | ObservationPoint | observationText | 玩家走近按 E → 显示文本 |
+| `InteractTrigger` | InteractTrigger | observationText | 玩家走近按 E → 抛事件给 workspace |
 | `PickupObject` | PickupObject | pickupId | 玩家走入 collider → 记录到工作区 collectedPickupIds |
 | `PushableObject` | PushableObject | — | 物理推动（带 Rigidbody2D） |
 | `ExitPoint` | ExitPoint | — | 玩家走入 → 工作区抛 `workspace.exit` 事件 |
@@ -730,7 +730,7 @@ DualWorldWorkspace
 #### 包含
 - Canvas (ScreenSpaceOverlay) + GraphicRaycaster
 - AlignmentTask（RealityAlignmentTask 组件 + CanvasGroup）
-  - N 个 Target_i（半透明对齐目标位，**prefab 里默认 m_IsActive=0**，由背景 ObservationPoint 解锁，详见 §5.7）
+  - N 个 Target_i（半透明对齐目标位，**prefab 里默认 m_IsActive=0**，由背景 InteractTrigger 解锁，详见 §5.7）
   - 每个 Target 上挂一个 `AlignmentTargetUnlocker`，负责弹出动画
   - N 个 Block_i（DraggableAlignmentBlock，拖到激活的 Target 半径内会自动吸附+锁定）
   - SubmitButton
@@ -741,7 +741,7 @@ DualWorldWorkspace
 `RealityAlignmentTask` 的 `blocks`、`targetRects`、`submitButton`、`interactionGroup`、`unlockMap` 全部指向自己子节点或自身配置 ✓
 
 #### 复用
-单独拖也能用，但 `SubmitAttempted` 事件需要手挂订阅者（默认场景里是 `AlignmentSubLevelFlow`）。Target 自动解锁机制依赖父级 SideScrollWorkspace 抛 `observation.{id}` 事件，所以脱离 DualWorldWorkspace 单跑时需要手动 `Target.SetActive(true)` 或自己抛事件。
+单独拖也能用，但 `SubmitAttempted` 事件需要手挂订阅者（默认场景里是 `AlignmentSubLevelFlow`）。Target 自动解锁机制依赖父级 SideScrollWorkspace 抛 `interact.{id}` 事件（由 `InteractTrigger` 触发），所以脱离 DualWorldWorkspace 单跑时需要手动 `Target.SetActive(true)` 或自己抛事件。
 
 ---
 
@@ -812,7 +812,7 @@ DualWorldWorkspace
 
 #### 玩家流程
 
-1. 横板里走到某个 ObservationPoint（如 `book`），按 E 交互
+1. 横板里走到某个 InteractTrigger（如 `book`），按 E 交互
 2. 左屏对应的 Target_X 弹出来，`AlignmentTargetUnlocker` 默认播 0.25 秒缩放 + 淡入
 3. 把 Block_X 拖进 Target_X 的 `snapRange`（默认 60 像素）内 → 立即吸附 + 锁定，不能再拖动
 4. 把所有 block 都锁完后点 Submit → 成功，老板抽一条 success 文案
@@ -822,7 +822,7 @@ DualWorldWorkspace
 
 | 字段 | 默认值 | 说明 |
 |---|---|---|
-| `unlockMap` | `book→0`, `phone→1`, `radio→2` | observationId ↔ blockIndex 的映射。observationId 必须和背景里 ObservationPoint 的 id 完全一致 |
+| `unlockMap` | `book→0`, `phone→1`, `radio→2` | interactId ↔ blockIndex 的映射。interactId 必须和背景里 InteractTrigger 的 id 完全一致 |
 | `snapRange` | 60 | 拖拽时距 Target 多少像素内开始吸附；Awake 阶段会写入每个 block 自己的 `assistedSnapRange` |
 | `blocks` / `targetRects` | 自动 | 跟着子节点配；新增 block 后在 Inspector 把它加进 blocks，并加一条 unlockMap |
 
@@ -840,8 +840,8 @@ DualWorldWorkspace
 #### 数据流
 
 ```
-ObservationPoint.Interact
-  → SideScrollWorkspaceBase.RaiseWorkspaceEvent("observation.book")
+InteractTrigger.Interact
+  → SideScrollWorkspaceBase.RaiseWorkspaceEvent("interact.book")
   → RealityAlignmentTask 订阅 → 查 unlockMap → blockIndex=0
   → Target_0.SetActive(true) + AlignmentTargetUnlocker.Play()
 
@@ -862,13 +862,13 @@ ChatBoxUI.SubmitRequested
 
 #### 想换映射、想加更多 block
 
-- 改 `unlockMap`：Inspector 加一行，observationId 填背景里某个 ObservationPoint id（`vase`、`note_1`、`blinds_rope` 之类都行），blockIndex 填对应索引
+- 改 `unlockMap`：Inspector 加一行，interactId 填背景里某个 InteractTrigger id（`vase`、`note_1`、`blinds_rope` 之类都行），blockIndex 填对应索引
 - 加 block：在 RealityCanvas 里复制一个 Block_x + Target_x 节点对，拖到 `blocks` / `targetRects` 列表，Target 上挂 `AlignmentTargetUnlocker`，再加一条 unlockMap
 - 想给 success / failure 文案加表情图：去 `Settings/DualWorld/AlignmentChatTask.asset`，每条 NPC 消息都有 `sticker` 字段，拖 Sprite 进去就行
 
 #### 注意
 
-- ObservationPoint 即便 `oneShot=0` 也不会让同一 Target 重复弹动画 —— RealityAlignmentTask 内部对 observationId 去重
+- InteractTrigger 即便 `oneShot=0` 也不会让同一 Target 重复弹动画 —— RealityAlignmentTask 内部对 interactId 去重
 - 已吸附的 block 即使后面 `SetInteractable(true)` 也保持锁定，避免提交流程把已固定的块意外松开
 - block 数量是动态的，按 `blocks.Count` 来判 success；改成 5 个块、7 个块都行
 - 跨世界桥 `DreamToRealityEnhancer` 收到梦境完成时会一次性 `UnlockAllRemainingTargets`，相当于"梦里把没观察到的位置帮你点亮"
@@ -973,7 +973,7 @@ ChatBoxUI.SubmitRequested
    - 拖 SideScrollPlayer.prefab
    - 拖 CameraRig.prefab（调 CameraBounds 大小）
    - 拖 N 个 Atoms/GroundBlock.prefab 拼地形
-   - 拖 Atoms/ObservationPoint.prefab 做剧情点
+   - 拖 Atoms/InteractTrigger.prefab 做剧情点
    - 拖 Atoms/ExitPoint.prefab 做出口
 4. Play
 ```

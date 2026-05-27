@@ -207,8 +207,13 @@ namespace GameCreate3.DualWorld
 
                 var block = CreateUiBlock(taskGo.transform, $"Block_{i}", new Vector2(-120f + i * 120f, -80f), new Color(0.85f, 0.5f, 0.4f));
                 var draggable = block.gameObject.AddComponent<DraggableAlignmentBlock>();
-                ApplyDraggableFields(draggable, target);
                 blocks.Add(draggable);
+            }
+
+            // A 方案：所有 block 共享同一组候选 targets。
+            foreach (var draggable in blocks)
+            {
+                ApplyDraggableFields(draggable, targets);
             }
 
             var submitGo = new GameObject("SubmitButton");
@@ -401,10 +406,20 @@ namespace GameCreate3.DualWorld
             return cachedSquareSprite;
         }
 
-        private static void ApplyDraggableFields(DraggableAlignmentBlock block, RectTransform target)
+        private static void ApplyDraggableFields(DraggableAlignmentBlock block, IList<RectTransform> targets)
         {
             var type = typeof(DraggableAlignmentBlock);
-            type.GetField("target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(block, target);
+            var field = type.GetField("targets", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field == null) return;
+            var list = new List<RectTransform>(targets != null ? targets.Count : 0);
+            if (targets != null)
+            {
+                for (var i = 0; i < targets.Count; i++)
+                {
+                    if (targets[i] != null) list.Add(targets[i]);
+                }
+            }
+            field.SetValue(block, list);
         }
 
         private static void ApplyAlignmentTaskFields(RealityAlignmentTask task, CanvasGroup group, Button submit, List<DraggableAlignmentBlock> blocks, List<RectTransform> targets)
@@ -521,8 +536,13 @@ namespace GameCreate3.DualWorld
             renderer.drawMode = SpriteDrawMode.Sliced;
             renderer.size = new Vector2(0.8f, 1.4f);
 
-            var box = player.AddComponent<BoxCollider2D>();
-            box.size = new Vector2(0.8f, 1.4f);
+            var capsule = player.AddComponent<CapsuleCollider2D>();
+            capsule.size = new Vector2(0.8f, 1.4f);
+            capsule.direction = CapsuleDirection2D.Vertical;
+
+            var interactBox = player.AddComponent<BoxCollider2D>();
+            interactBox.size = new Vector2(1.0f, 1.6f);
+            interactBox.isTrigger = true;
 
             var body = player.AddComponent<Rigidbody2D>();
             body.freezeRotation = true;
@@ -547,6 +567,7 @@ namespace GameCreate3.DualWorld
             typeof(CharacterGroundDetector).GetField("groundCheckPoint", F)?.SetValue(player.GetComponent<CharacterGroundDetector>(), groundCheck.transform);
             typeof(CharacterGroundDetector).GetField("groundMask", F)?.SetValue(player.GetComponent<CharacterGroundDetector>(), (LayerMask)LayerMask.GetMask("Ground"));
             typeof(SideScrollInteractionDetector).GetField("interactableMask", F)?.SetValue(player.GetComponent<SideScrollInteractionDetector>(), (LayerMask)LayerMask.GetMask("Interactable"));
+            typeof(SideScrollInteractionDetector).GetField("detectCollider", F)?.SetValue(player.GetComponent<SideScrollInteractionDetector>(), interactBox);
 
             // controller.ApplyConfigs would NRE here: root is inactive, so the controller's Awake hasn't run
             // and its serialized motor refs are still null. Apply configs to the motors directly — they don't need Awake.

@@ -192,6 +192,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 114000010000000001, guid: 04050607080901020a0304050607080c, type: 3}
+      propertyPath: catalog
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 1000010000000000001, guid: 04050607080901020a0304050607080c, type: 3}
       propertyPath: m_Name
       value: SceneRouterHooks
@@ -510,12 +514,17 @@ PrefabInstance:
       propertyPath: scenePages.Array.data[0]
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 5765397139909830853, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
+      propertyPath: selectionMarkerOffset.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8794319503238001249, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_AdditionalShaderChannelsFlag
       value: 25
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6205575434060655073, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}

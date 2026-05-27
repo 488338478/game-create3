@@ -16,6 +16,9 @@ namespace GameCreate3.UI
             public string routeId;
             public string displayName;
             public bool interactable = true;
+            public Sprite selectedSprite;
+            public Sprite unselectedSprite;
+            public Sprite lockedSprite;
         }
 
         [Header("Navigation")]
@@ -25,6 +28,7 @@ namespace GameCreate3.UI
         [SerializeField] private Button previousButton;
         [SerializeField] private Button nextButton;
         [SerializeField] private Button selectedLevelButton;
+        [SerializeField] private Image selectedLevelPreviewImage;
         [SerializeField] private TMP_Text selectedLevelNameText;
         [SerializeField] private TMP_Text selectedLevelStateText;
         [SerializeField] private bool wrapAround = true;
@@ -93,6 +97,7 @@ namespace GameCreate3.UI
 
                 var label = string.IsNullOrWhiteSpace(level.displayName) ? routeId : level.displayName;
                 ApplyButtonLabel(button, label);
+                ApplyButtonSprite(button, ResolveLevelSprite(i, i == currentIndex));
                 var levelIndex = i;
                 button.onClick.AddListener(() => HandleLevelSelected(levelIndex));
                 spawnedButtons.Add(button);
@@ -162,6 +167,7 @@ namespace GameCreate3.UI
             if (levels.Count == 0)
             {
                 ApplySelectedLevelText("暂无关卡");
+                ApplySelectedLevelPreview(null);
                 SetSelectedLevelInteractable(false);
                 return;
             }
@@ -174,7 +180,9 @@ namespace GameCreate3.UI
             var selectable = IsLevelSelectable(currentIndex);
 
             ApplySelectedLevelText(displayName);
+            ApplySelectedLevelPreview(ResolveLevelSprite(currentIndex, true));
             SetSelectedLevelInteractable(selectable);
+            RefreshSpawnedButtonSprites();
 
             if (selectedLevelStateText != null)
             {
@@ -285,11 +293,77 @@ namespace GameCreate3.UI
             ApplyButtonLabel(selectedLevelButton, label);
         }
 
+        private void ApplySelectedLevelPreview(Sprite sprite)
+        {
+            if (selectedLevelPreviewImage == null)
+            {
+                return;
+            }
+
+            selectedLevelPreviewImage.sprite = sprite;
+            selectedLevelPreviewImage.enabled = sprite != null;
+            selectedLevelPreviewImage.preserveAspect = true;
+        }
+
         private void SetSelectedLevelInteractable(bool interactable)
         {
             if (selectedLevelButton != null)
             {
                 selectedLevelButton.interactable = interactable;
+            }
+        }
+
+        private Sprite ResolveLevelSprite(int levelIndex, bool selected)
+        {
+            if (levelIndex < 0 || levelIndex >= levels.Count)
+            {
+                return null;
+            }
+
+            var level = levels[levelIndex];
+            if (level == null)
+            {
+                return null;
+            }
+
+            if (!IsLevelSelectable(levelIndex) && level.lockedSprite != null)
+            {
+                return level.lockedSprite;
+            }
+
+            if (selected && level.selectedSprite != null)
+            {
+                return level.selectedSprite;
+            }
+
+            return level.unselectedSprite != null ? level.unselectedSprite : level.selectedSprite;
+        }
+
+        private void RefreshSpawnedButtonSprites()
+        {
+            for (var i = 0; i < spawnedButtons.Count; i++)
+            {
+                ApplyButtonSprite(spawnedButtons[i], ResolveLevelSprite(i, i == currentIndex));
+            }
+        }
+
+        private static void ApplyButtonSprite(Button button, Sprite sprite)
+        {
+            if (button == null || sprite == null)
+            {
+                return;
+            }
+
+            var image = button.targetGraphic as Image;
+            if (image == null)
+            {
+                image = button.GetComponent<Image>();
+            }
+
+            if (image != null)
+            {
+                image.sprite = sprite;
+                image.preserveAspect = true;
             }
         }
 

@@ -42,7 +42,7 @@ MonoBehaviour:
     textBlocks:
     - textId: 1
       speaker: 
-      content: 11111
+      content: 
       displayMode: 0
       typewriterSpeed: 0
       delayBeforeShow: 0
@@ -99,7 +99,7 @@ MonoBehaviour:
     textBlocks:
     - textId: 1
       speaker: 
-      content: fuck
+      content: 
       displayMode: 0
       typewriterSpeed: 0
       delayBeforeShow: 0

@@ -32,6 +32,7 @@ namespace GameCreate3
 
         private float originalLightIntensity;
         private Coroutine activeRoutine;
+        private GameObject generatedOverlayRoot;
 
         private void Awake()
         {
@@ -42,6 +43,15 @@ namespace GameCreate3
                 originalLightIntensity = globalLight.intensity;
 
             SetOverlayAlpha(0f);
+        }
+
+        private void OnDestroy()
+        {
+            if (generatedOverlayRoot != null)
+            {
+                Destroy(generatedOverlayRoot);
+                generatedOverlayRoot = null;
+            }
         }
 
         /// <summary>开始变白，可挂在 UnityEvent 上与 SineMover.Trigger 同时调用。</summary>
@@ -99,6 +109,7 @@ namespace GameCreate3
             if (overlayImage != null) return;
 
             var go     = new GameObject("ScreenWhiteoutOverlay");
+            generatedOverlayRoot = go;
             var canvas = go.AddComponent<Canvas>();
             canvas.renderMode  = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = overlaySortOrder;
@@ -116,8 +127,6 @@ namespace GameCreate3
             overlayImage       = imgGo.AddComponent<Image>();
             overlayImage.color = new Color(1f, 1f, 1f, 0f);
             overlayImage.raycastTarget = false;
-
-            DontDestroyOnLoad(go);
         }
 
         private void EnsureGlobalLight()

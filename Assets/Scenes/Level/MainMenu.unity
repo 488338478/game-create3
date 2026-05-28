@@ -195,7 +195,7 @@ PrefabInstance:
     - target: {fileID: 114000010000000001, guid: 04050607080901020a0304050607080c, type: 3}
       propertyPath: catalog
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 2f952216120e100408d36ccacd299092, type: 2}
     - target: {fileID: 1000010000000000001, guid: 04050607080901020a0304050607080c, type: 3}
       propertyPath: m_Name
       value: SceneRouterHooks
@@ -517,6 +517,18 @@ PrefabInstance:
     - target: {fileID: 5765397139909830853, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: selectionMarkerOffset.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639505280875609872, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
+      propertyPath: levels.Array.data[0].routeId
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8639505280875609872, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
+      propertyPath: levels.Array.data[1].routeId
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8794319503238001249, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
+      propertyPath: m_SortingOrder
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8794319503238001249, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_AdditionalShaderChannelsFlag

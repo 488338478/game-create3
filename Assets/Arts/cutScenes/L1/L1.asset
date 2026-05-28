@@ -35,39 +35,21 @@ MonoBehaviour:
       bgmVolume: 0
       voiceOver: {fileID: 0}
       soundEffects: []
-  - pageId: 1.1
-    pageType: 1
-    backgroundImage: {fileID: 21300000, guid: 29134813bd84f344bbc92dc09d2ed80d, type: 3}
+  - pageId: 2.2
+    pageType: 0
+    backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
     foregroundImage: {fileID: 0}
-    textBlocks:
-    - textId: 1
-      speaker: 
-      content: 
-      displayMode: 0
-      typewriterSpeed: 0
-      delayBeforeShow: 0
-      duration: 0
-      overrideTextContainer: 1
-      textAnchorMin: {x: 0, y: 0}
-      textAnchorMax: {x: 1, y: 0.3}
-      textPivot: {x: 0.5, y: 0.5}
-      textAnchoredPosition: {x: 687.5149, y: 793.2121}
-      textSizeDelta: {x: -1490.5454, y: -136.9696}
-      overrideContentStyle: 1
-      contentFontSize: 100
-      contentColor: {r: 0, g: 0, b: 0, a: 1}
-      contentAlignment: 257
-      overrideSpeakerStyle: 0
-      speakerFontSize: 0
-      speakerColor: {r: 0, g: 0, b: 0, a: 0}
-      speakerAlignment: 257
-    displayDuration: 0
+    textBlocks: []
+    displayDuration: 2
     waitForInput: 0
     elements: []
     transitionIn: 0
     transitionOut: 1
     transitionDuration: 0.5
-    pageEvents: []
+    pageEvents:
+    - eventType: 6
+      triggerTime: 0
+      eventData: L1Strobe
     audioConfig:
       bgm: {fileID: 0}
       loopBgm: 0
@@ -75,26 +57,8 @@ MonoBehaviour:
       voiceOver: {fileID: 0}
       soundEffects: []
   - pageId: 2
-    pageType: 0
-    backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
-    foregroundImage: {fileID: 0}
-    textBlocks: []
-    displayDuration: 0
-    waitForInput: 0
-    elements: []
-    transitionIn: 1
-    transitionOut: 1
-    transitionDuration: 0.5
-    pageEvents: []
-    audioConfig:
-      bgm: {fileID: 0}
-      loopBgm: 0
-      bgmVolume: 0
-      voiceOver: {fileID: 0}
-      soundEffects: []
-  - pageId: 2.1
     pageType: 1
-    backgroundImage: {fileID: 21300000, guid: aac17dcca846a5341828ce45d07395fe, type: 3}
+    backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks:
     - textId: 1
@@ -131,29 +95,8 @@ MonoBehaviour:
       bgmVolume: 0
       voiceOver: {fileID: 0}
       soundEffects: []
-  - pageId: 2.2
-    pageType: 0
-    backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
-    foregroundImage: {fileID: 0}
-    textBlocks: []
-    displayDuration: 2
-    waitForInput: 0
-    elements: []
-    transitionIn: 0
-    transitionOut: 1
-    transitionDuration: 0.5
-    pageEvents:
-    - eventType: 6
-      triggerTime: 0
-      eventData: L1Strobe
-    audioConfig:
-      bgm: {fileID: 0}
-      loopBgm: 0
-      bgmVolume: 0
-      voiceOver: {fileID: 0}
-      soundEffects: []
   - pageId: 3
-    pageType: 0
+    pageType: 3
     backgroundImage: {fileID: 21300000, guid: 062d8aaf738bf004a99d254aecd8c37e, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks: []
@@ -163,124 +106,10 @@ MonoBehaviour:
     transitionIn: 1
     transitionOut: 1
     transitionDuration: 0.5
-    pageEvents: []
-    audioConfig:
-      bgm: {fileID: 0}
-      loopBgm: 0
-      bgmVolume: 0
-      voiceOver: {fileID: 0}
-      soundEffects: []
-  - pageId: 3.1
-    pageType: 0
-    backgroundImage: {fileID: 21300000, guid: a9f66fb9a6976e647a03a706ffa6bab9, type: 3}
-    foregroundImage: {fileID: 0}
-    textBlocks:
-    - textId: 
-      speaker: 
-      content: 
-      displayMode: 0
-      typewriterSpeed: 0
-      delayBeforeShow: 0
-      duration: 0
-      overrideTextContainer: 1
-      textAnchorMin: {x: 0, y: 0}
-      textAnchorMax: {x: 0, y: 0}
-      textPivot: {x: 0, y: 0}
-      textAnchoredPosition: {x: 194.60878, y: 635.88416}
-      textSizeDelta: {x: 419.4201, y: 189.39124}
-      overrideContentStyle: 0
-      contentFontSize: 0
-      contentColor: {r: 0, g: 0, b: 0, a: 0}
-      contentAlignment: 0
-      overrideSpeakerStyle: 0
-      speakerFontSize: 0
-      speakerColor: {r: 0, g: 0, b: 0, a: 0}
-      speakerAlignment: 0
-    displayDuration: 0
-    waitForInput: 0
-    elements: []
-    transitionIn: 1
-    transitionOut: 1
-    transitionDuration: 0.5
-    pageEvents: []
-    audioConfig:
-      bgm: {fileID: 0}
-      loopBgm: 0
-      bgmVolume: 0
-      voiceOver: {fileID: 0}
-      soundEffects: []
-  - pageId: 3.2
-    pageType: 0
-    backgroundImage: {fileID: 21300000, guid: a9f66fb9a6976e647a03a706ffa6bab9, type: 3}
-    foregroundImage: {fileID: 0}
-    textBlocks:
-    - textId: 
-      speaker: 
-      content: 
-      displayMode: 0
-      typewriterSpeed: 0
-      delayBeforeShow: 0
-      duration: 0
-      overrideTextContainer: 1
-      textAnchorMin: {x: 0, y: 0}
-      textAnchorMax: {x: 0, y: 0}
-      textPivot: {x: 0, y: 0}
-      textAnchoredPosition: {x: 341.2465, y: 520.8695}
-      textSizeDelta: {x: 415.70987, y: 161.56525}
-      overrideContentStyle: 0
-      contentFontSize: 0
-      contentColor: {r: 0, g: 0, b: 0, a: 0}
-      contentAlignment: 0
-      overrideSpeakerStyle: 0
-      speakerFontSize: 0
-      speakerColor: {r: 0, g: 0, b: 0, a: 0}
-      speakerAlignment: 0
-    displayDuration: 0
-    waitForInput: 0
-    elements: []
-    transitionIn: 1
-    transitionOut: 1
-    transitionDuration: 0.5
-    pageEvents: []
-    audioConfig:
-      bgm: {fileID: 0}
-      loopBgm: 0
-      bgmVolume: 0
-      voiceOver: {fileID: 0}
-      soundEffects: []
-  - pageId: 3.3
-    pageType: 0
-    backgroundImage: {fileID: 21300000, guid: a9f66fb9a6976e647a03a706ffa6bab9, type: 3}
-    foregroundImage: {fileID: 0}
-    textBlocks:
-    - textId: 
-      speaker: 
-      content: 
-      displayMode: 0
-      typewriterSpeed: 0
-      delayBeforeShow: 0
-      duration: 0
-      overrideTextContainer: 1
-      textAnchorMin: {x: 0, y: 0}
-      textAnchorMax: {x: 0, y: 0}
-      textPivot: {x: 0, y: 0}
-      textAnchoredPosition: {x: 1064.6377, y: 804.69574}
-      textSizeDelta: {x: 571.53625, y: 120.75366}
-      overrideContentStyle: 0
-      contentFontSize: 0
-      contentColor: {r: 0, g: 0, b: 0, a: 0}
-      contentAlignment: 0
-      overrideSpeakerStyle: 0
-      speakerFontSize: 0
-      speakerColor: {r: 0, g: 0, b: 0, a: 0}
-      speakerAlignment: 0
-    displayDuration: 0
-    waitForInput: 0
-    elements: []
-    transitionIn: 1
-    transitionOut: 1
-    transitionDuration: 0.5
-    pageEvents: []
+    pageEvents:
+    - eventType: 3
+      triggerTime: 0
+      eventData: Page3_LihuiAnim
     audioConfig:
       bgm: {fileID: 0}
       loopBgm: 0

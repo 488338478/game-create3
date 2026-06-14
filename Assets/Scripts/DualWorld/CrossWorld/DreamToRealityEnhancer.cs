@@ -44,7 +44,6 @@ namespace GameCreate3.DualWorld
             alignmentTask.UnlockAllRemainingTargets();
             alignmentTask.SetAssistEnabled(true);
             alignmentTask.SetInteractable(true);
-            workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityEnhanced, evt.SubLevelId, null));
         }
     }
 }

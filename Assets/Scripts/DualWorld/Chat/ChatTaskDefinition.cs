@@ -17,16 +17,10 @@ namespace GameCreate3.DualWorld
 
         public string taskId = "chat.task";
         public string title = "未命名任务";
-        public string description = "请完成右屏任务。";
 
-        [Header("NPC Messages")]
-        [TextArea] public string initialMessage = "你来看看这版排得行不行？";
-        [HideInInspector]
-        [TextArea] public string failureMessage = "不对，再调一下。";
-        [TextArea] public string blockedMessage = "你是不是哪里没看清？要不去走两步，换个角度。";
-        [TextArea] public string enhancedMessage = "梦里好像帮你顺过了，再试一次。";
-        [HideInInspector]
-        [TextArea] public string successMessage = "这次可以了。";
+        [Header("Initial (发布任务时立刻发一条)")]
+        public NpcChatMessage initialMessage = new NpcChatMessage { text = "来，把右边那几个模块按参考摆齐。我盯着呢。" };
+        public bool highlightInitial = false;
 
         [Header("NPC Random Messages")]
         public List<NpcChatMessage> failureMessages = new List<NpcChatMessage>
@@ -49,10 +43,7 @@ namespace GameCreate3.DualWorld
         };
 
         [Header("Highlight per NPC event")]
-        public bool highlightInitial = false;
         public bool highlightFailure = false;
-        public bool highlightBlocked = false;
-        public bool highlightEnhanced = true;
         public bool highlightSuccess = true;
 
         public string PickPlayerLine(int submitIndex)
@@ -64,38 +55,36 @@ namespace GameCreate3.DualWorld
 
         public NpcChatMessage PickFailureMessage()
         {
-            return PickNpcMessage(failureMessages, failureMessage);
+            return PickNpcMessage(failureMessages);
         }
 
         public NpcChatMessage PickSuccessMessage()
         {
-            return PickNpcMessage(successMessages, successMessage);
+            return PickNpcMessage(successMessages);
         }
 
-        private static NpcChatMessage PickNpcMessage(IReadOnlyList<NpcChatMessage> messages, string fallbackText)
+        private static NpcChatMessage PickNpcMessage(IReadOnlyList<NpcChatMessage> messages)
         {
-            if (messages != null)
-            {
-                var validCount = 0;
-                for (var i = 0; i < messages.Count; i++)
-                {
-                    if (messages[i] != null && messages[i].HasContent) validCount++;
-                }
+            if (messages == null) return null;
 
-                if (validCount > 0)
-                {
-                    var target = Random.Range(0, validCount);
-                    for (var i = 0; i < messages.Count; i++)
-                    {
-                        var message = messages[i];
-                        if (message == null || !message.HasContent) continue;
-                        if (target == 0) return message;
-                        target--;
-                    }
-                }
+            var validCount = 0;
+            for (var i = 0; i < messages.Count; i++)
+            {
+                if (messages[i] != null && messages[i].HasContent) validCount++;
             }
 
-            return new NpcChatMessage { text = fallbackText };
+            if (validCount == 0) return null;
+
+            var target = Random.Range(0, validCount);
+            for (var i = 0; i < messages.Count; i++)
+            {
+                var message = messages[i];
+                if (message == null || !message.HasContent) continue;
+                if (target == 0) return message;
+                target--;
+            }
+
+            return null;
         }
     }
 }

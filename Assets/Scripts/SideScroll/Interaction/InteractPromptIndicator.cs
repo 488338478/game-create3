@@ -6,11 +6,17 @@ namespace GameCreate3
     public sealed class InteractPromptIndicator : MonoBehaviour
     {
         [SerializeField] private GameObject promptVisual;
+        [Tooltip("Prompt 的定位基准物体。不填则用本物体（按碰撞体几何中心）；填了则浮在指定物体上方。")]
+        [SerializeField] private Transform targetObject;
         [SerializeField] private Vector3 offset = new Vector3(0f, 0.7f, 0f);
         [SerializeField] private float floatAmplitude = 0.08f;
         [SerializeField] private float floatSpeed = 2.5f;
+        [Tooltip("锁定 Prompt 的世界缩放，使其不受父物体缩放影响。")]
+        [SerializeField] private bool maintainConstantScale = true;
+        [Tooltip("Prompt 缩放系数，在设计缩放基础上整体放大/缩小，可运行时实时调整。")]
+        [SerializeField] private float promptScale = 0.3f;
 
-        private Vector3 baseLocalPos;
+        private Vector3 promptDesignScale = Vector3.one;
         private bool visible;
         private ISideScrollInteractable ownInteractable;
 
@@ -21,8 +27,7 @@ namespace GameCreate3
             EnsurePromptVisual();
             if (promptVisual == null) return;
 
-            baseLocalPos = offset;
-            promptVisual.transform.localPosition = baseLocalPos;
+            promptDesignScale = promptVisual.transform.localScale;
             promptVisual.transform.rotation = Quaternion.identity;
             promptVisual.SetActive(false);
 
@@ -35,8 +40,7 @@ namespace GameCreate3
         private void Start()
         {
             if (promptVisual == null) return;
-            baseLocalPos = ComputeBaseLocalPos();
-            promptVisual.transform.localPosition = baseLocalPos;
+            promptVisual.transform.position = GetBasisWorldCenter() + offset;
         }
 
         private void OnEnable()
@@ -53,8 +57,40 @@ namespace GameCreate3
         private void Update()
         {
             if (!visible || promptVisual == null) return;
-            var y = baseLocalPos.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
-            promptVisual.transform.localPosition = new Vector3(baseLocalPos.x, y, baseLocalPos.z);
+            var floatY = Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
+            promptVisual.transform.position = GetBasisWorldCenter() + offset + new Vector3(0f, floatY, 0f);
+        }
+
+        private void LateUpdate()
+        {
+            if (!visible) return;
+            ApplyConstantScale();
+        }
+
+        // 用父链 lossyScale 反向补偿 localScale，让 Prompt 的世界缩放锁定在设计值，不被父物体缩放放大/缩小。
+        private void ApplyConstantScale()
+        {
+            if (promptVisual == null) return;
+            var targetScale = promptDesignScale * promptScale;
+
+            if (!maintainConstantScale)
+            {
+                // 不锁世界缩放时，promptScale 直接作用在 localScale 上（仍跟随父物体）。
+                promptVisual.transform.localScale = targetScale;
+                return;
+            }
+
+            var parent = promptVisual.transform.parent;
+            var parentScale = parent != null ? parent.lossyScale : Vector3.one;
+            promptVisual.transform.localScale = new Vector3(
+                SafeDivide(targetScale.x, parentScale.x),
+                SafeDivide(targetScale.y, parentScale.y),
+                SafeDivide(targetScale.z, parentScale.z));
+        }
+
+        private static float SafeDivide(float value, float divisor)
+        {
+            return Mathf.Approximately(divisor, 0f) ? value : value / divisor;
         }
 
         private void OnHoverChanged(SideScrollInteractionDetector detector, ISideScrollInteractable prev, ISideScrollInteractable curr)
@@ -75,7 +111,11 @@ namespace GameCreate3
         {
             if (visible) return;
             visible = true;
-            if (promptVisual != null) promptVisual.SetActive(true);
+            if (promptVisual != null)
+            {
+                promptVisual.SetActive(true);
+                ApplyConstantScale();
+            }
         }
 
         private void Hide()
@@ -85,18 +125,30 @@ namespace GameCreate3
             if (promptVisual != null) promptVisual.SetActive(false);
         }
 
-        private Vector3 ComputeBaseLocalPos()
+        // 定位基准的世界坐标中心。
+        // - 填了 targetObject：以它（有碰撞体取几何中心，否则取 position）为基准。
+        // - 没填：维持原行为，以本物体 / 所属 interactable 的碰撞体几何中心为基准。
+        // offset 在此基础上作为世界空间偏移，使 Prompt 不受父物体缩放影响而被压扁/拉伸。
+        private Vector3 GetBasisWorldCenter()
         {
-            // Offset 以「碰撞体几何中心」为基准，而非 Indicator 自身原点，
-            // 这样无论 Collider2D.offset 怎么设，Prompt 都会浮在物体几何中心上方。
-            var col = GetComponent<Collider2D>()
+            var col = ResolveBasisCollider(out var basis);
+            return col != null ? col.bounds.center : basis.position;
+        }
+
+        private Collider2D ResolveBasisCollider(out Transform basis)
+        {
+            if (targetObject != null)
+            {
+                basis = targetObject;
+                return targetObject.GetComponent<Collider2D>()
+                    ?? targetObject.GetComponentInChildren<Collider2D>();
+            }
+
+            basis = transform;
+            return GetComponent<Collider2D>()
                 ?? (ownInteractable as Component)?.GetComponent<Collider2D>()
                 ?? GetComponentInParent<Collider2D>()
                 ?? GetComponentInChildren<Collider2D>();
-            if (col == null) return offset;
-
-            var centerLocal = transform.InverseTransformPoint(col.bounds.center);
-            return centerLocal + offset;
         }
 
         private void EnsurePromptVisual()

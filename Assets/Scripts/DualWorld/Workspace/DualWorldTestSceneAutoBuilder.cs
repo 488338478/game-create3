@@ -362,14 +362,8 @@ namespace GameCreate3.DualWorld
             var def = ScriptableObject.CreateInstance<ChatTaskDefinition>();
             def.taskId = "alignment.right";
             def.title = "排版任务";
-            def.description = "把右侧三个模块对齐到目标位。";
-            def.initialMessage = "你来看看这版排得行不行？";
-            def.failureMessage = "不对，再调一下。";
-            def.blockedMessage = "你是不是哪里没看清？要不去走两步，换个角度。";
-            def.enhancedMessage = "梦里好像帮你顺过了，再试一次。";
-            def.successMessage = "这次可以了。";
-            def.failureMessages.Add(new ChatTaskDefinition.NpcChatMessage { text = def.failureMessage });
-            def.successMessages.Add(new ChatTaskDefinition.NpcChatMessage { text = def.successMessage });
+            def.failureMessages.Add(new ChatTaskDefinition.NpcChatMessage { text = "不对，再调一下。" });
+            def.successMessages.Add(new ChatTaskDefinition.NpcChatMessage { text = "这次可以了。" });
             return def;
         }
 

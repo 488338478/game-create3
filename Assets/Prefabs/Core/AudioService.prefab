@@ -459,6 +459,10 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  playBgmOnAwake: 1
+  defaultBgmId: 
+  defaultBgmLoop: 1
+  defaultBgmVolumeScale: 1
   bgmSource: {fileID: 2568180548510230053}
   ambientSource: {fileID: 4412064970933821482}
   sfxSource: {fileID: 9143546768630378116}

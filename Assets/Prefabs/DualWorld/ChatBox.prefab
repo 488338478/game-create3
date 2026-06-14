@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4096361841301515418}
   - component: {fileID: 726806161536974487}
   - component: {fileID: 1678333303718597744}
+  - component: {fileID: 8801234567890000001}
   m_Layer: 0
   m_Name: ChatBox
   m_TagString: Untagged
@@ -19,6 +20,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &8801234567890000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 210274076146277063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88c6340f9a2b68f419b6292689d6d423, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  npcMessageGapSec: 0.5
 --- !u!224 &4930629372352775745
 RectTransform:
   m_ObjectHideFlags: 0

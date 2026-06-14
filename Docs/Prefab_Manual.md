@@ -1,6 +1,6 @@
 # Prefab 使用手册
 
-> 配套 `GameCreate3` Editor 工具一键生成的全部 prefab。
+> `Assets/Prefabs/**` 下的全部 prefab 清单。这些 prefab 即权威，直接编辑（过程性生成器已于 2026-06-15 移除，见 `Project_Handbook.md` §19.1）。
 > 关卡搭建只需要看这一份。
 
 ---
@@ -110,7 +110,7 @@ Core 下面放的是从 `Assets/Scripts/Core` 梳理出的**全局 Logic 单例 
 **全局音频服务**。裸 GameObject 上挂 `GameAudioService`。
 
 #### 能力
-- 播放 BGM：`PlayBGM(bgmId)`
+- 播放 BGM：`PlayBGM(bgmId)` 或 `PlayBGM(AudioClip clip)`（两个重载，string 版内部解析成 clip 后调 clip 版）
 - 播放环境音：`PlayAmbient(ambientId)`
 - 播放音效：`PlaySFX(sfxId, channel)`
 - 设置音量：`SetVolume(GameAudioChannel, value01)`
@@ -122,6 +122,18 @@ Core 下面放的是从 `Assets/Scripts/Core` 梳理出的**全局 Logic 单例 
 | BGM | `Resources/Audio/BGM/{bgmId}` |
 | Ambient | `Resources/Audio/Ambient/{ambientId}` |
 | SFX / UI SFX | `Resources/Audio/SFX/{sfxId}` |
+
+> string 版 `PlayBGM` 走上表 Resources 路径；`PlayBGM(AudioClip)` 重载直接吃资源引用，不受 Resources 路径约束。
+
+#### 默认 BGM（启动自动播）
+| 字段 | 默认值 | 说明 |
+|---|---|---|
+| `playBgmOnAwake` | false | 勾上就在 `Awake` 自动播默认 BGM |
+| `defaultBgmClip` | 空 | 直接拖 `AudioClip` 资源引用（不是字符串 ID） |
+| `defaultBgmLoop` | true | 是否循环 |
+| `defaultBgmVolumeScale` | 1 | 单条音量缩放（0~1） |
+
+只有 `playBgmOnAwake` 勾上且 `defaultBgmClip` 非空时才会播。因为是 `dontDestroyOnLoad` 单例，只有**第一份实例**的 `Awake` 会触发，后续重复实例会被 `Destroy`，不会重复播。
 
 #### 内部引用
 `bgmSource`、`ambientSource`、`sfxSource`、`uiSource`、`voiceSource` 可以 prefab 内预配；如果为空，运行时会自动创建 `Core_BGM`、`Core_Ambient`、`Core_SFX`、`Core_UI`、`Core_Voice` 子节点并挂 `AudioSource`。
@@ -1137,12 +1149,13 @@ DualWorldWorkspace
 
 如果自动生成的不够用：
 
-1. **从已有 prefab 派生 Variant**：右键 prefab → Create → Prefab Variant，然后改细节
-2. **新增触发器类型**：实现自己的 `: TriggerZoneBase` 或 `: SideScrollInteractableBase` 子类，套这套 BindWorkspace 机制就行
-3. **新增子关流程机**：实现 `: BaseSubLevelFlow` 子类，按 8 阶段枚举走
+1. **直接改 prefab**：prefab 等序列化文件可以直接编辑字段、引用、子节点，改完即生效、即权威
+2. **从已有 prefab 派生 Variant**：右键 prefab → Create → Prefab Variant，然后改细节
+3. **新增触发器类型**：实现自己的 `: TriggerZoneBase` 或 `: SideScrollInteractableBase` 子类，套这套 BindWorkspace 机制就行
+4. **新增子关流程机**：实现 `: BaseSubLevelFlow` 子类，按 8 阶段枚举走
 
-不要直接修改 `Assets/Editor/*` 生成的 prefab —— 重跑菜单会覆盖你的改动。
+注意：过程性生成器已移除，prefab 即权威，直接改即可；删了 prefab 只能从版本库恢复（见 `Project_Handbook.md` §19.1）。
 
 ---
 
-最后更新：2026-05-27（加 §5.7 目标解锁 + 吸附计数机制）
+最后更新：2026-06-15（移除过程性生成器，prefab/asset 即权威）

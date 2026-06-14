@@ -63,7 +63,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   flowController: {fileID: 6136125704647704504}
-  chatTaskController: {fileID: 1910181225909423602}
+  chatTaskController: {fileID: 0}
 --- !u!114 &3105981417460390570
 MonoBehaviour:
   m_ObjectHideFlags: 0

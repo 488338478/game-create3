@@ -27,8 +27,11 @@ namespace GameCreate3.DualWorld
 
         [Header("Tuning")]
         [SerializeField] private float blockedToDreamDelaySec = 1f;
+        // submit 后先出 player 语料，隔这点时间再触发评估（= NPC 返信），让两条消息错开。
+        [SerializeField] private float submitToNpcReplyDelaySec = 0.35f;
 
         private ChatBoxUI chatBox;
+        private Coroutine pendingSubmitRoutine;
 
         private ChatBoxUI EnsureChatBox()
         {
@@ -56,7 +59,29 @@ namespace GameCreate3.DualWorld
         private void HandleSubmitRequested()
         {
             if (realityTask == null || !realityTask.IsInteractable) return;
+
+            // 先把玩家这条语料 append 出去。
             Workspace?.ChatTaskController?.AppendPlayerSubmit();
+
+            // 评估（会顺带 append NPC 返信）错开一点时机再触发，避免和玩家消息同帧涌出。
+            // 连点：若上一条倒计时还没结束又点了，重置倒计时——不管连点几次，
+            // 都只在最后一次点击的延迟过后回一条 NPC。
+            if (submitToNpcReplyDelaySec > 0f && isActiveAndEnabled)
+            {
+                if (pendingSubmitRoutine != null) StopCoroutine(pendingSubmitRoutine);
+                pendingSubmitRoutine = StartCoroutine(DelayThen(submitToNpcReplyDelaySec, SubmitRealityTask));
+            }
+            else
+            {
+                SubmitRealityTask();
+            }
+        }
+
+        private void SubmitRealityTask()
+        {
+            pendingSubmitRoutine = null;
+            // 协程延迟期间状态可能变化（如任务被关闭），重新校验。
+            if (realityTask == null || !realityTask.IsInteractable) return;
             realityTask.Submit();
         }
 
@@ -78,8 +103,7 @@ namespace GameCreate3.DualWorld
                     break;
 
                 case SubLevelPhase.RealityTaskBlocked:
-                    // 仅作为"卡关反馈"事件标记；UI 不锁、玩家不锁，1 秒后自然推进。
-                    Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityBlocked, SubLevelId, null));
+                    // 仅作为"卡关反馈"阶段标记；UI 不锁、玩家不锁，1 秒后自然推进。
                     StartCoroutine(DelayThen(blockedToDreamDelaySec, () =>
                     {
                         if (CurrentPhase == SubLevelPhase.RealityTaskBlocked)

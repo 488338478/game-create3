@@ -30,6 +30,12 @@ namespace GameCreate3.Core
         [SerializeField] private float defaultFadeSeconds = 1f;
         [SerializeField] private AnimationCurve fadeCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+        [Header("Default BGM")]
+        [SerializeField] private bool playBgmOnAwake;
+        [SerializeField] private AudioClip defaultBgmClip;
+        [SerializeField] private bool defaultBgmLoop = true;
+        [SerializeField] [Range(0f, 1f)] private float defaultBgmVolumeScale = 1f;
+
         [Header("Sources (optional — created if null)")]
         [SerializeField] private AudioSource bgmSource;
         [SerializeField] private AudioSource ambientSource;
@@ -62,6 +68,11 @@ namespace GameCreate3.Core
 
             EnsureSources();
             ApplyStoredVolumesToSources();
+
+            if (playBgmOnAwake && defaultBgmClip != null)
+            {
+                PlayBGM(defaultBgmClip, defaultBgmLoop, defaultBgmVolumeScale);
+            }
         }
 
         private void OnDestroy()
@@ -74,7 +85,11 @@ namespace GameCreate3.Core
 
         public void PlayBGM(string bgmId, bool loop = true, float volumeScale = 1f)
         {
-            var clip = ResolveBgmClip(bgmId);
+            PlayBGM(ResolveBgmClip(bgmId), loop, volumeScale);
+        }
+
+        public void PlayBGM(AudioClip clip, bool loop = true, float volumeScale = 1f)
+        {
             if (clip == null || bgmSource == null)
             {
                 return;

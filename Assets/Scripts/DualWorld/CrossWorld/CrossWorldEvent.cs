@@ -2,10 +2,8 @@ namespace GameCreate3.DualWorld
 {
     public enum CrossWorldEventType
     {
-        RealityBlocked,
         DreamUnlocked,
         DreamCompleted,
-        RealityEnhanced,
         RealityCompleted,
         DreamWorldResolved,
         ExitReached

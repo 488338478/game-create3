@@ -439,22 +439,28 @@
 
 ## 19. Prefab 体系
 
-### 19.1 一键生成菜单
-所有 prefab 都通过 Editor 菜单按需生成，**不进 git**（除非显式提交）。源代码改了之后重跑菜单覆盖即可。
+### 19.1 prefab / asset 即权威（生成器已移除）
+**过程性一键生成菜单已全部删除**（2026-06-15）。`Assets/Editor` 下原本的 `CoreUIEditorTools` / `DualWorldEditorTools` / `SceneEssentialsEditorTools` / `SideScrollEditorTools` / `StoryPlayerEditorTools`，以及 `SuctionEffectAnimatorBuilder` / `InteractTriggerAtomConverter` / `MainMenuSceneSetup`，都已清掉。
 
-| 菜单项 | 产物 | 说明 |
-|---|---|---|
-| `GameCreate3/Generate Default Assets` | `Assets/Settings/Defaults/Default*.asset` + `Assets/Settings/DualWorld/AlignmentChatTask.asset` | 默认 SO 资产 |
-| `GameCreate3/Generate Scene Essentials Prefab` | `Assets/Prefabs/SceneEssentials.prefab` | Main Camera + CinemachineBrain + EventSystem |
-| `GameCreate3/SideScroll/Generate Atom Prefabs` | `Assets/Prefabs/SideScroll/Atoms/*.prefab` | 11 个原子件：交互物 + 5 类触发器 + 地面 + 镜头边界 |
-| `GameCreate3/SideScroll/Generate Workspace Shells` | `Assets/Prefabs/SideScroll/Shells/*.prefab` | Story / Gameplay 工作区壳 |
-| `GameCreate3/DualWorld/Generate Atom Prefabs` | `Assets/Prefabs/DualWorld/Atoms/*.prefab` | 5 个 DualWorld 专用原子件 |
-| `GameCreate3/DualWorld/Generate Workspace Prefab` | `Assets/Prefabs/DualWorld/DualWorldWorkspace.prefab` + 嵌套 5 个组合件 prefab + 5 个 Logic prefab | 完整工作区，运行时 SO 引用全部已替换为持久 .asset |
-| `GameCreate3/StoryPlayer/Generate Atom Prefabs` | `Assets/Prefabs/StoryPlayer/Atoms/*.prefab` | 3 个 UI 原子（背景 / 淡入遮罩 / 输入屏蔽层） |
-| `GameCreate3/StoryPlayer/Generate Trigger Prefabs` | `Assets/Prefabs/StoryPlayer/Triggers/*.prefab` | **生产用**：Zone / Interactable / WorkspaceEvent / AutoPlay 4 个触发器 |
-| `GameCreate3/StoryPlayer/Generate Rig Prefab` | `Assets/Prefabs/StoryPlayer/StoryPlayerRig.prefab` | StoryPlayer 全局单例 rig（兼容旧 Bootstrap 模式） |
+现在的约定：
+- `Assets/Prefabs/**`、`Assets/Resources/Prefabs/**`、`Assets/Settings/**` 里的 prefab 和 `.asset` **就是唯一权威**，直接在 Unity 里改 / 改序列化文件即生效，不再有「改源代码 + 重跑菜单覆盖」这一步。
+- 改 prefab 结构（加组件、改引用、调布局）→ 直接编辑 prefab 本体或其 `.prefab` 序列化文件。
+- 改默认数值 → 直接改 `Assets/Settings/Defaults/*.asset` 等。
+- `Assets/Editor` 现在只保留 Inspector 增强：`WorkspaceEventRouterDrawer`（PropertyDrawer）、`StorySequenceTextLayoutEditor`（剧情文本排版自定义 Editor）。
 
-每次生成除了存到 `Assets/Prefabs/` 还会复制一份到 `Assets/Resources/Prefabs/`，让 `Resources.Load<GameObject>("Prefabs/...")` 能在运行时找到。
+现有产物（不会再被菜单重建，删了要从版本库恢复）：
+
+| 路径 | 内容 |
+|---|---|
+| `Assets/Settings/Defaults/Default*.asset` + `Assets/Settings/DualWorld/AlignmentChatTask.asset` | 默认 SO 资产 |
+| `Assets/Prefabs/SceneEssentials.prefab` | Main Camera + CinemachineBrain + EventSystem |
+| `Assets/Prefabs/SideScroll/Atoms/*.prefab` | 交互物 + 5 类触发器 + 地面 + 镜头边界 |
+| `Assets/Prefabs/SideScroll/Shells/*.prefab` | Story / Gameplay 工作区壳 |
+| `Assets/Prefabs/DualWorld/**` | DualWorld 原子件 + `DualWorldWorkspace.prefab`（嵌套组合件 + Logic prefab） |
+| `Assets/Prefabs/StoryPlayer/**` | UI 原子 + 4 个触发器 + `StoryPlayerRig.prefab` |
+| `Assets/Prefabs/UI/**`、`Assets/Prefabs/Core/**` | UI 页面 / 弹窗 / 原子 + Core 全局服务 |
+
+> 运行时 `Resources.Load<GameObject>("Prefabs/...")` 仍按老路径找 `Assets/Resources/Prefabs/`，所以新增需要被 `Resources.Load` 的 prefab 时，记得手动在 `Assets/Resources/Prefabs/` 也放一份。
 
 ### 19.2 用法
 新场景接 DualWorld：
@@ -462,7 +468,7 @@
 2. 拖 `Assets/Prefabs/DualWorld/DualWorldWorkspace.prefab` 进 Hierarchy
 3. Play
 
-如果场景名是 `DW_Test_Workspace` 且没有手挂工作区，`DualWorldRuntimeBootstrap` 会在 `AfterSceneLoad` 自动 `Resources.Load + Instantiate`。Resources 没找到 prefab 时回退到老的 `DualWorldTestSceneAutoBuilder`（兜底，便于刚 clone 仓库还没跑过菜单的人也能 Play）。
+如果场景名是 `DW_Test_Workspace` 且没有手挂工作区，`DualWorldRuntimeBootstrap` 会在 `AfterSceneLoad` 自动 `Resources.Load + Instantiate`。Resources 没找到 prefab 时回退到运行时脚本 `DualWorldTestSceneAutoBuilder`（兜底，纯代码搭建，不依赖任何 Editor 生成器）。
 
 ### 19.3 Prefab 嵌套关系
 
@@ -505,9 +511,9 @@ DualWorldWorkspace.prefab            ← 顶层壳：DualWorldWorkspace + LevelI
 如果是手挂场景：把这些组件放在工作区根下任意层级（不要放到工作区根的兄弟节点）。
 
 ### 19.6 重要约束
-- **不要**手动编辑 prefab 里的物体后期望"指挥"运行时；运行时仍以 prefab 为权威。改东西改源代码 + 重跑菜单。
+- **prefab 等序列化文件就是权威，直接改数据**：手动编辑 `.prefab` / `.asset` / scene 的字段、引用、子节点结构都 OK，改完即生效、运行时即以改后的 prefab 为准。
 - 改 SO 默认值：直接改 `Assets/Settings/Defaults/*.asset`，prefab 引用的就是这些资产，立刻生效。
-- 改 Editor 工具不影响已经 baked 的 prefab，**必须重跑菜单**才会重新生成。
+- **已无任何「重跑菜单覆盖」流程**：过程性生成器已删（见 §19.1）。prefab 删了只能从版本库恢复，不能再靠菜单重建。
 
 ## 20. 强制规则
 ### Rule DOC-001：任何变更必须同步更新文档

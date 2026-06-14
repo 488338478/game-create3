@@ -5,12 +5,12 @@ namespace GameCreate3.DualWorld
 {
     public sealed class ChatLogEntryView : MonoBehaviour
     {
-        private const float NpcBubbleMinWidth = 172f;
-        private const float NpcBubbleMaxWidth = 280f;
-        private const float NpcBubbleWidthPerDisplayChar = 16f;
-        private const int NpcBubblePreferredLineChars = 7;
-        private const int NpcBubbleTextBottomPadding = 12;
-        private const int NpcBubbleStickerBottomPadding = 60;
+        private const float BubbleMinWidth = 172f;
+        private const float BubbleMaxWidth = 280f;
+        private const int NpcBubbleTextBottomPadding = 16;
+        // 表情气泡：表情显示高度 + 四周对称内边距（气泡按表情尺寸严丝合缝）。
+        private const float StickerDisplayHeight = 110f;
+        private const int StickerBubblePadding = 14;
 
         [Header("Roots (二选一激活)")]
         [SerializeField] private GameObject npcRoot;
@@ -37,9 +37,10 @@ namespace GameCreate3.DualWorld
             {
                 BindNpcBody(entry);
             }
-            else
+            else if (playerBody != null)
             {
-                if (playerBody != null) playerBody.text = entry.body;
+                playerBody.text = entry.body;
+                FitTextBubble(playerBody);
             }
         }
 
@@ -50,67 +51,136 @@ namespace GameCreate3.DualWorld
             {
                 npcBody.gameObject.SetActive(!hasSticker);
                 npcBody.text = hasSticker ? string.Empty : entry.body;
-                AdjustNpcBubbleLayout(entry.body, hasSticker);
+
+                if (!hasSticker)
+                {
+                    SetBubbleBottomPadding(npcBody, NpcBubbleTextBottomPadding);
+                    FitTextBubble(npcBody);
+                }
             }
 
             var sticker = ResolveNpcSticker();
             if (sticker == null) return;
 
             sticker.gameObject.SetActive(hasSticker);
-            sticker.sprite = entry.sticker;
-            sticker.preserveAspect = true;
+            if (hasSticker)
+            {
+                sticker.sprite = entry.sticker;
+                sticker.preserveAspect = true;
+                FitStickerBubble(sticker);
+            }
         }
 
-        private void AdjustNpcBubbleLayout(string body, bool hasSticker)
+        private static void SetBubbleBottomPadding(Text body, int bottom)
         {
-            if (npcBody == null || npcBody.transform.parent == null) return;
-
-            var bubble = npcBody.transform.parent;
-            var group = bubble.GetComponent<VerticalLayoutGroup>();
-            if (group != null)
-            {
-                group.padding.bottom = hasSticker ? NpcBubbleStickerBottomPadding : NpcBubbleTextBottomPadding;
-            }
-
-            var bubbleLayout = bubble.GetComponent<LayoutElement>();
-            if (bubbleLayout == null || hasSticker) return;
-
-            var displayChars = EstimateDisplayLineChars(body);
-            bubbleLayout.preferredWidth = Mathf.Clamp(
-                NpcBubbleMinWidth + displayChars * NpcBubbleWidthPerDisplayChar,
-                NpcBubbleMinWidth,
-                NpcBubbleMaxWidth);
+            if (body == null || body.transform.parent == null) return;
+            var group = body.transform.parent.GetComponent<VerticalLayoutGroup>();
+            if (group != null) group.padding.bottom = bottom;
         }
 
-        private static int EstimateDisplayLineChars(string text)
+        /// <summary>
+        /// 让气泡真正贴合文字（保留 Body 的 localScale）。
+        ///
+        /// 关键点：UGUI 的 LayoutGroup / ContentSizeFitter / LayoutElement 全部无视 localScale，
+        /// 所以只要让布局去控制带缩放的 Body，气泡就会按"未缩放"尺寸算大小，必然多出 1/scale 的空白。
+        /// 这里改为：
+        ///   1) 关掉气泡这层的 VerticalLayoutGroup，让它别再拉伸 / 摆放 Body；
+        ///   2) 按文字真实字形尺寸（未缩放）测量，自己给 Body 定宽高、左上角对齐；
+        ///   3) 可见尺寸 = 文字尺寸 × scale + 内边距，写进气泡的 LayoutElement，
+        ///      外层链路（NpcRoot / ChatLogEntry）继续按这个值排版。
+        /// </summary>
+        private static void FitTextBubble(Text body)
         {
-            if (string.IsNullOrEmpty(text)) return 0;
+            if (body == null || body.transform.parent == null) return;
 
-            var hasManualBreak = false;
-            var totalChars = 0;
-            var lineChars = 0;
-            var widestLine = 0;
-            foreach (var c in text)
+            var bubbleRT = body.transform.parent as RectTransform;
+            if (bubbleRT == null) return;
+
+            var layout = bubbleRT.GetComponent<LayoutElement>();
+            if (layout == null) return;
+
+            var group = bubbleRT.GetComponent<VerticalLayoutGroup>();
+            var padLeft = group != null ? group.padding.left : 0;
+            var padRight = group != null ? group.padding.right : 0;
+            var padTop = group != null ? group.padding.top : 0;
+            var padBottom = group != null ? group.padding.bottom : 0;
+
+            // 接管 Body，禁用布局组件对它的控制。
+            if (group != null) group.enabled = false;
+
+            var bodyRT = body.rectTransform;
+            var scale = bodyRT.localScale;
+            var scaleX = Mathf.Approximately(scale.x, 0f) ? 1f : scale.x;
+            var scaleY = Mathf.Approximately(scale.y, 0f) ? 1f : scale.y;
+
+            // pivot / anchor 设为左上角：缩放围绕左上角发生，定位只需一个偏移。
+            bodyRT.anchorMin = new Vector2(0f, 1f);
+            bodyRT.anchorMax = new Vector2(0f, 1f);
+            bodyRT.pivot = new Vector2(0f, 1f);
+
+            // 1) 未缩放单行宽度（preferredWidth 用零 extents，不受当前 rect 影响）。
+            var singleLineWidth = body.preferredWidth;
+            // 可见最大内宽换算回未缩放空间，作为换行上限。
+            var maxInnerUnscaled = (BubbleMaxWidth - padLeft - padRight) / scaleX;
+            var bodyWidth = Mathf.Min(singleLineWidth, Mathf.Max(1f, maxInnerUnscaled));
+            bodyRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, bodyWidth);
+
+            // 2) 定宽后再测高度（preferredHeight 按当前 rect 宽度换行计算）。
+            var bodyHeight = body.preferredHeight;
+            bodyRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, bodyHeight);
+
+            // 3) Body 左上角放到 (padLeft, -padTop)。
+            bodyRT.anchoredPosition = new Vector2(padLeft, -padTop);
+
+            // 4) 可见尺寸写进 LayoutElement，外层据此排版。
+            var visibleWidth = Mathf.Clamp(
+                bodyWidth * scaleX + padLeft + padRight, BubbleMinWidth, BubbleMaxWidth);
+            var visibleHeight = bodyHeight * scaleY + padTop + padBottom;
+            layout.preferredWidth = visibleWidth;
+            layout.preferredHeight = visibleHeight;
+        }
+
+        /// <summary>
+        /// 让表情气泡严丝合缝包住表情。
+        /// 之前贴纸走原 VerticalLayoutGroup，气泡按 prefab 固定宽度（280）+ 大底边距排，
+        /// 而表情只有 ~100px，于是四周大片留白。这里和文字气泡一样接管布局：
+        /// 关掉 VLG，按表情原始宽高比定贴纸尺寸，气泡 = 表情 + 四周对称内边距。
+        /// </summary>
+        private static void FitStickerBubble(Image sticker)
+        {
+            if (sticker == null || sticker.transform.parent == null) return;
+
+            var bubbleRT = sticker.transform.parent as RectTransform;
+            if (bubbleRT == null) return;
+
+            var group = bubbleRT.GetComponent<VerticalLayoutGroup>();
+            if (group != null) group.enabled = false;
+
+            var rt = sticker.rectTransform;
+            rt.localScale = Vector3.one;
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+
+            // 按表情原始宽高比换算显示尺寸，避免 preserveAspect 再次留白。
+            var h = StickerDisplayHeight;
+            var w = h;
+            var spr = sticker.sprite;
+            if (spr != null && spr.rect.height > 0f)
             {
-                if (c == '\n')
-                {
-                    hasManualBreak = true;
-                    widestLine = Mathf.Max(widestLine, lineChars);
-                    lineChars = 0;
-                    continue;
-                }
-
-                if (char.IsWhiteSpace(c)) continue;
-
-                lineChars++;
-                totalChars++;
+                w = h * (spr.rect.width / spr.rect.height);
             }
 
-            widestLine = Mathf.Max(widestLine, lineChars);
-            if (hasManualBreak) return Mathf.Min(widestLine, NpcBubblePreferredLineChars);
+            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, w);
+            rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, h);
+            rt.anchoredPosition = new Vector2(StickerBubblePadding, -StickerBubblePadding);
 
-            var estimatedLineChars = Mathf.CeilToInt(Mathf.Sqrt(totalChars * 1.8f));
-            return Mathf.Clamp(estimatedLineChars, 0, NpcBubblePreferredLineChars);
+            var layout = bubbleRT.GetComponent<LayoutElement>();
+            if (layout != null)
+            {
+                layout.preferredWidth = w + StickerBubblePadding * 2;
+                layout.preferredHeight = h + StickerBubblePadding * 2;
+            }
         }
 
         private Image ResolveNpcSticker()

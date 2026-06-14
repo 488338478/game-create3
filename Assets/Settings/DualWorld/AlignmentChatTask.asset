@@ -14,61 +14,56 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   taskId: alignment.right
   title: "老板的排版验收"
-  description: "调整右侧工位里的模块位置，让它们贴近目标参考。每次提交后，老板会给出不同反馈。"
-  initialMessage: "这版我看着有点不稳，你先按参考把几个模块摆齐，我等你交稿。"
-  failureMessage: "还是不太对，再细调一下。"
-  blockedMessage: "你现在可能只盯着局部了。先去梦境里走走，换个角度再回来对。"
-  enhancedMessage: "梦里那边好像把关键位置提示出来了，你现在再看应该会更清楚。"
-  successMessage: "嗯，这版终于顺眼了。"
-  failureMessages:
-  - text: "还是不太对，再细调一下。"
+  initialMessage:
+    text: "来，把右边那几个模块按参考摆齐。我盯着呢，别让我失望。"
     sticker: {fileID: 0}
-  - text: "左边那块有点飘，像是没贴住参考线。"
-    sticker: {fileID: 0}
-  - text: "整体位置差一点，尤其是中间区域，视觉重心偏了。"
-    sticker: {fileID: 0}
-  - text: "你这版像是大概对了，但边缘没咬齐，再抠一下。"
-    sticker: {fileID: 0}
-  - text: "不行，间距还是乱的。别凭感觉，按目标的位置来。"
-    sticker: {fileID: 0}
-  - text: "这几个块的层次感不对，看起来像散开的，不像一组。"
-    sticker: {fileID: 0}
-  - text: "先别急着交，右侧那块明显还差半个身位。"
-    sticker: {fileID: 0}
-  - text: "嗯……有进步，但还没到能发出去的程度。"
-    sticker: {fileID: 0}
-  - text: "这个版本我会被客户打回来。再来。"
-    sticker: {fileID: 0}
-  - text: "位置关系还没对上，像是所有东西都各站各的。"
-    sticker: {fileID: 0}
-  successMessages:
-  - text: "嗯，这版终于顺眼了。"
-    sticker: {fileID: 0}
-  - text: "可以，这次位置关系对了，发我吧。"
-    sticker: {fileID: 0}
-  - text: "这版稳了，间距和重心都舒服多了。"
-    sticker: {fileID: 0}
-  - text: "对，就是这个感觉。你刚才那一下调得很准。"
-    sticker: {fileID: 0}
-  - text: "可以过。客户要是挑这个，我替你挡。"
-    sticker: {fileID: 0}
-  - text: "这次不用再改了，保存一下。"
-    sticker: {fileID: 0}
-  - text: "好，终于不像临时拼上去的了。"
-    sticker: {fileID: 0}
-  playerSubmitLines:
-  - "我先按参考摆了一版，你看看？"
-  - "这次我把左边和中间重新对了一下。"
-  - "我又微调了间距，现在会不会稳一点？"
-  - "右侧那块我往回收了，你再看眼。"
-  - "我按你说的把整体重心压回来了。"
-  - "这版我感觉比刚才顺，你看看能不能过。"
-  - "我又对了一遍边缘，应该没那么飘了。"
-  - "这次我没凭感觉，按目标线贴的。"
-  - "我把几个块当成一组重新排了。"
-  - "最后再交你看一次。"
   highlightInitial: 0
+  failureMessages:
+  - text: "这就是你交的？"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "还是不对。我说的话，你到底有没有听进去。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "左边那块飘着呢，你眼睛是干什么用的。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "差远了。别人一遍就过，你这都第几遍了。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "重来。别跟我说你尽力了，我要的是结果。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "几个块各站各的，一看就没用心。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "心里没点数？右边明显还差一截。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "又凭感觉是吧。职场里没有“差不多”这三个字。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "这版要是发出去，我的脸往哪儿搁。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "我对你严，是还觉得你能做好。别让我看走眼。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  successMessages:
+  - text: "嗯，这版还行。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  - text: "这才对嘛。早这样，不就省事了。"
+    sticker: {fileID: 21300000, guid: 2f8312bed5ef921429b792a4a6025919, type: 3}
+  - text: "可以，发吧。看，你不是做不到。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  - text: "稳了。下次别等我说这么多遍。"
+    sticker: {fileID: 21300000, guid: 2f8312bed5ef921429b792a4a6025919, type: 3}
+  - text: "行，过。这回总算没让我白盯着。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  - text: "终于像样了，存一下。"
+    sticker: {fileID: 21300000, guid: 2f8312bed5ef921429b792a4a6025919, type: 3}
+  - text: "记住这感觉。别下次又给我打回原形。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  playerSubmitLines:
+  - "老板，我先排了一版，您看看。"
+  - "这次左边和中间我重新对过了，应该好点了吧？"
+  - "我又调了下间距……现在稳一点了吗？"
+  - "右边那块我收回来了，您再看一眼？"
+  - "我按您说的，把重心压回来了……"
+  - "这版我真的很认真，您看能过吗？"
+  - "边缘我又对了一遍，应该不飘了……吧。"
+  - "这次我没敢凭感觉，都是照着线贴的。"
+  - "我……我尽力了，您再看看好不好？"
+  - "最后这版，您就看一眼……"
   highlightFailure: 0
-  highlightBlocked: 0
-  highlightEnhanced: 1
   highlightSuccess: 1

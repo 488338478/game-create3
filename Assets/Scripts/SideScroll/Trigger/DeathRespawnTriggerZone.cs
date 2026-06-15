@@ -57,6 +57,7 @@ namespace GameCreate3
                 return;
             }
 
+            GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Fall_Down");
             activeRoutine = StartCoroutine(RespawnRoutine(player));
         }
 

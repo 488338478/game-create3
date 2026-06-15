@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using GameCreate3.StoryPlayer;
 using GameCreate3.UI;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GameCreate3.Core
 {
@@ -73,14 +74,52 @@ namespace GameCreate3.Core
             {
                 PlayBGM(defaultBgmClip, defaultBgmLoop, defaultBgmVolumeScale);
             }
+
+            // 跨场景 BGM：单例常驻，监听场景加载，按场景名自动切换 BGM。
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            ApplySceneBgm(SceneManager.GetActiveScene().name);
         }
 
         private void OnDestroy()
         {
             if (Instance == this)
             {
+                SceneManager.sceneLoaded -= HandleSceneLoaded;
                 Instance = null;
             }
+        }
+
+        // 场景名 -> Resources/Audio/BGM/{id}。改这里即可调整每个场景的 BGM。
+        private static readonly Dictionary<string, string> SceneBgmMap = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "MainMenu", "BGM_Menu" },
+            { "Level1", "BGM_Level" },
+            { "Level1Cutscene", "BGM_Level" },
+            { "Level2", "BGM_Level" },
+        };
+
+        private string currentSceneBgmId;
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ApplySceneBgm(scene.name);
+        }
+
+        private void ApplySceneBgm(string sceneName)
+        {
+            if (!SceneBgmMap.TryGetValue(sceneName, out var bgmId) || string.IsNullOrEmpty(bgmId))
+            {
+                return;
+            }
+
+            // 同一首不重启，避免相邻场景间断音。
+            if (bgmId == currentSceneBgmId && bgmSource != null && bgmSource.isPlaying)
+            {
+                return;
+            }
+
+            currentSceneBgmId = bgmId;
+            PlayBGM(bgmId, true);
         }
 
         public void PlayBGM(string bgmId, bool loop = true, float volumeScale = 1f)
@@ -152,6 +191,41 @@ namespace GameCreate3.Core
                 : GetEffectiveSfxVolume() * Mathf.Clamp01(volumeScale);
 
             src.PlayOneShot(clip, vol);
+        }
+
+        // 直接传 AudioClip 引用的重载：Inspector 里拖一个 clip 即可，不用 id。
+        public void PlaySFX(AudioClip clip, GameAudioChannel channel = GameAudioChannel.Sfx, float volumeScale = 1f)
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            var src = channel == GameAudioChannel.Ui ? uiSource : sfxSource;
+            if (src == null)
+            {
+                return;
+            }
+
+            var vol = channel == GameAudioChannel.Ui
+                ? GetEffectiveUiVolume() * Mathf.Clamp01(volumeScale)
+                : GetEffectiveSfxVolume() * Mathf.Clamp01(volumeScale);
+
+            src.PlayOneShot(clip, vol);
+        }
+
+        // UnityEvent(Button.onClick)可绑定的单参数入口：只拖一个 AudioClip。
+        // channel 靠方法名区分，volumeScale 默认 1。
+        // 转发到单例 Instance：prefab 的 onClick 只能引用 AudioService 资产，
+        // 资产组件不在场景播放，转发到场景里活的单例才会出声。
+        public void PlayUiSfx(AudioClip clip)
+        {
+            (Instance != null ? Instance : this).PlaySFX(clip, GameAudioChannel.Ui);
+        }
+
+        public void PlaySfx(AudioClip clip)
+        {
+            (Instance != null ? Instance : this).PlaySFX(clip, GameAudioChannel.Sfx);
         }
 
         public void SetVolume(GameAudioChannel channel, float value01)

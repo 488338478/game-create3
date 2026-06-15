@@ -729,7 +729,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3400000028000084}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+        m_TargetAssemblyTypeName: GameCreate3.Core.GameAudioService, Assembly-CSharp
+        m_MethodName: PlayUiSfx
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 8300000, guid: 14231343a7f330d42aed476f15bfb777, type: 3}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.AudioClip, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument:
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &3400000021000063
 GameObject:
   m_ObjectHideFlags: 0

@@ -101,6 +101,12 @@ namespace GameCreate3.DualWorld
             }
         }
 
+        public void AppendNpcLine(string line, ChatTaskPanelUI.Mood mood = ChatTaskPanelUI.Mood.Neutral, bool highlight = false)
+        {
+            if (string.IsNullOrWhiteSpace(line) || EnsureChatBox() == null) return;
+            chatBox.Append(new ChatLogEntry(ChatSpeaker.Npc, line, mood, highlight));
+        }
+
         private void AppendNpc(ChatTaskDefinition.NpcChatMessage message, ChatTaskPanelUI.Mood mood, bool highlight)
         {
             if (message == null || !message.HasContent) return;

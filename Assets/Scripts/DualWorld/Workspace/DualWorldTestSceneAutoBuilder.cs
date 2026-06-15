@@ -72,7 +72,7 @@ namespace GameCreate3.DualWorld
             var persistentCanvas = persistentUiGo.AddComponent<Canvas>();
             persistentCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
             persistentCanvas.sortingOrder = 10;
-            persistentUiGo.AddComponent<CanvasScaler>();
+            ConfigureCanvasScaler(persistentUiGo.AddComponent<CanvasScaler>());
             persistentUiGo.AddComponent<GraphicRaycaster>();
 
             var (chatController, chatPanel) = BuildChatPanel(persistentCanvas.transform, workspace);
@@ -155,7 +155,7 @@ namespace GameCreate3.DualWorld
             canvasGo.transform.SetParent(parent, false);
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGo.AddComponent<CanvasScaler>();
+            ConfigureCanvasScaler(canvasGo.AddComponent<CanvasScaler>());
             canvasGo.AddComponent<GraphicRaycaster>();
 
             // RealityPanel 会被 DualWorldScreenLayout 锚定到屏幕左半。
@@ -648,6 +648,19 @@ namespace GameCreate3.DualWorld
         {
             var layer = LayerMask.NameToLayer(layerName);
             return layer >= 0 ? layer : fallback;
+        }
+
+        private static void ConfigureCanvasScaler(CanvasScaler scaler)
+        {
+            if (scaler == null)
+            {
+                return;
+            }
+
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
         }
     }
 }

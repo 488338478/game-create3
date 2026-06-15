@@ -113,7 +113,11 @@ namespace GameCreate3
             var canvas = go.AddComponent<Canvas>();
             canvas.renderMode  = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = overlaySortOrder;
-            go.AddComponent<CanvasScaler>();
+            var scaler = go.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
             go.AddComponent<GraphicRaycaster>();
 
             var imgGo  = new GameObject("White");

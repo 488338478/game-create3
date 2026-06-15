@@ -1,33 +1,46 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GameCreate3
 {
-    public sealed class ColorSlot : MonoBehaviour
+    public sealed class ColorSlot : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private Image colorImage;
         [SerializeField] private Button colorButton;
+        [SerializeField] private int targetVariantId = -1;
+        [SerializeField] private string targetColorId = string.Empty;
         [SerializeField] private Color targetColor;
         [SerializeField] private float colorTolerance = 0.01f;
-        [SerializeField] private List<Color> availableColors = new List<Color>();
+        [SerializeField] private List<PaletteColorOption> availableOptions = new List<PaletteColorOption>();
+        [SerializeField] private List<ColorApplyTarget> applyTargets = new List<ColorApplyTarget>();
+        [SerializeField] private bool usePaletteSelectionWhenDreamEnabled = true;
 
-        private int currentColorIndex;
         private bool dreamPaletteEnabled;
         private bool interactable = true;
+        private PaletteColorOption currentOption;
+        private Sprite baseDisplaySprite;
+        private Color baseDisplayColor = Color.white;
+
+        public event System.Action<ColorSlot> Clicked;
+
+        public Color CurrentColor => colorImage != null ? colorImage.color : currentOption.fallbackColor;
+        public string CurrentColorId => currentOption.colorId;
 
         public void Initialize(Image image, Button button, Color target)
         {
             colorImage = image;
             colorButton = button;
             targetColor = target;
+            CacheBaseDisplay();
 
             if (colorButton != null)
             {
                 colorButton.onClick.AddListener(CycleColor);
             }
 
-            UpdateColorDisplay();
+            RestoreBaseDisplay();
         }
 
         private void Awake()
@@ -40,6 +53,16 @@ namespace GameCreate3
             {
                 colorImage = GetComponent<Image>();
             }
+
+            CacheBaseDisplay();
+
+            if (applyTargets.Count == 0)
+            {
+                var foundTargets = GetComponentsInChildren<ColorApplyTarget>(true);
+                applyTargets.AddRange(foundTargets);
+            }
+
+            RestoreBaseDisplay();
         }
 
         private void OnEnable()
@@ -59,22 +82,30 @@ namespace GameCreate3
             }
         }
 
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (colorButton != null)
+            {
+                return;
+            }
+
+            CycleColor();
+        }
+
         public void SetDreamPaletteEnabled(bool enabled)
         {
             dreamPaletteEnabled = enabled;
-            if (enabled && availableColors.Count > 0)
-            {
-                currentColorIndex = 0;
-                UpdateColorDisplay();
-            }
         }
 
-        public void SetAvailableColors(List<Color> colors)
+        public void SetAvailableColors(IReadOnlyList<PaletteColorOption> options)
         {
-            availableColors.Clear();
-            if (colors != null)
+            availableOptions.Clear();
+            if (options != null)
             {
-                availableColors.AddRange(colors);
+                for (var i = 0; i < options.Count; i++)
+                {
+                    availableOptions.Add(options[i]);
+                }
             }
         }
 
@@ -89,23 +120,51 @@ namespace GameCreate3
 
         public bool IsCorrectColor()
         {
-            if (colorImage == null)
+            if (targetVariantId >= 0 || !string.IsNullOrWhiteSpace(targetColorId) || currentOption.variantId >= 0 || !string.IsNullOrWhiteSpace(currentOption.colorId))
             {
-                return false;
+                return currentOption.Matches(targetVariantId, targetColorId);
             }
 
-            var currentColor = colorImage.color;
+            var currentColor = CurrentColor;
             return Mathf.Abs(currentColor.r - targetColor.r) < colorTolerance &&
                    Mathf.Abs(currentColor.g - targetColor.g) < colorTolerance &&
                    Mathf.Abs(currentColor.b - targetColor.b) < colorTolerance &&
                    Mathf.Abs(currentColor.a - targetColor.a) < colorTolerance;
         }
 
+        public void ApplyPaletteColor(PaletteColorOption option)
+        {
+            ApplyOption(ResolveLocalOption(option));
+        }
+
+        public bool MatchesOption(PaletteColorOption option)
+        {
+            return option.IsValid && option.Matches(targetVariantId, targetColorId);
+        }
+
+        public void PlayHintPulse()
+        {
+            for (var i = 0; i < applyTargets.Count; i++)
+            {
+                if (applyTargets[i] != null)
+                {
+                    applyTargets[i].PlayHintPulse();
+                }
+            }
+        }
+
         public void ResetSlot()
         {
-            currentColorIndex = 0;
-            availableColors.Clear();
-            UpdateColorDisplay();
+            currentOption = default;
+            RestoreBaseDisplay();
+
+            for (var i = 0; i < applyTargets.Count; i++)
+            {
+                if (applyTargets[i] != null)
+                {
+                    applyTargets[i].ResetTarget();
+                }
+            }
         }
 
         private void CycleColor()
@@ -115,51 +174,94 @@ namespace GameCreate3
                 return;
             }
 
-            if (dreamPaletteEnabled && availableColors.Count > 0)
+            if (dreamPaletteEnabled && usePaletteSelectionWhenDreamEnabled)
             {
-                currentColorIndex = (currentColorIndex + 1) % availableColors.Count;
+                Clicked?.Invoke(this);
             }
-            else
-            {
-                // 如果没有梦境色卡，使用默认颜色循环
-                currentColorIndex = (currentColorIndex + 1) % 8;
-            }
-
-            UpdateColorDisplay();
         }
 
-        private void UpdateColorDisplay()
+        private void ApplyOption(PaletteColorOption option)
+        {
+            currentOption = option;
+            var hasApplyTargets = applyTargets != null && applyTargets.Count > 0;
+
+            if (!option.IsValid && option.paletteSprite == null)
+            {
+                if (!hasApplyTargets)
+                {
+                    RestoreBaseDisplay();
+                }
+
+                for (var i = 0; i < applyTargets.Count; i++)
+                {
+                    if (applyTargets[i] != null)
+                    {
+                        applyTargets[i].ResetTarget();
+                    }
+                }
+
+                return;
+            }
+
+            if (!hasApplyTargets && colorImage != null)
+            {
+                colorImage.sprite = option.paletteSprite != null ? option.paletteSprite : baseDisplaySprite;
+                colorImage.color = option.paletteSprite != null
+                    ? Color.white
+                    : (option.fallbackColor.a > 0f ? option.fallbackColor : baseDisplayColor);
+                colorImage.preserveAspect = option.paletteSprite != null;
+            }
+
+            var isCorrect = IsCorrectColor();
+
+            for (var i = 0; i < applyTargets.Count; i++)
+            {
+                if (applyTargets[i] != null)
+                {
+                    applyTargets[i].ApplyVariant(option, isCorrect);
+                }
+            }
+        }
+
+        private PaletteColorOption ResolveLocalOption(PaletteColorOption option)
+        {
+            if (!option.IsValid || availableOptions == null || availableOptions.Count == 0)
+            {
+                return option;
+            }
+
+            for (var i = 0; i < availableOptions.Count; i++)
+            {
+                if (availableOptions[i].Matches(option))
+                {
+                    return availableOptions[i];
+                }
+            }
+
+            return option;
+        }
+
+        private void CacheBaseDisplay()
         {
             if (colorImage == null)
             {
                 return;
             }
 
-            if (dreamPaletteEnabled && availableColors.Count > 0)
-            {
-                colorImage.color = availableColors[currentColorIndex];
-            }
-            else
-            {
-                // 默认颜色
-                colorImage.color = GetDefaultColor(currentColorIndex);
-            }
+            baseDisplaySprite = colorImage.sprite;
+            baseDisplayColor = colorImage.color;
         }
 
-        private Color GetDefaultColor(int index)
+        private void RestoreBaseDisplay()
         {
-            switch (index)
+            if (colorImage == null)
             {
-                case 0: return Color.white;
-                case 1: return Color.red;
-                case 2: return Color.green;
-                case 3: return Color.blue;
-                case 4: return Color.yellow;
-                case 5: return Color.cyan;
-                case 6: return Color.magenta;
-                case 7: return Color.black;
-                default: return Color.white;
+                return;
             }
+
+            colorImage.sprite = baseDisplaySprite;
+            colorImage.color = baseDisplayColor;
+            colorImage.preserveAspect = baseDisplaySprite != null;
         }
     }
 }

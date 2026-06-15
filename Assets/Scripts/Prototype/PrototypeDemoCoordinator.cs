@@ -29,7 +29,7 @@ namespace GameCreate3
             {
             }
 
-            public void SetDreamPaletteColors(IReadOnlyList<Color> colors)
+            public void SetDreamPaletteColors(IReadOnlyList<PaletteColorOption> options)
             {
             }
 
@@ -40,7 +40,7 @@ namespace GameCreate3
 
         public sealed class DreamColorCollectController : MonoBehaviour
         {
-            public event System.Action<IReadOnlyList<Color>> Completed;
+            public event System.Action<IReadOnlyList<PaletteColorOption>> Completed;
 
             public void ResetStage()
             {
@@ -225,9 +225,9 @@ namespace GameCreate3
             SetStage2Active(true);
             MovePlayerTo(stage2Spawn);
             ApplyLayout(splitView: false);
-            ApplyStageLabel("第二章 阶段二：右屏配色");
+            ApplyStageLabel("第二章 阶段二：右屏换图");
             ApplyLeftState(false, "等待右屏再次卡住后解锁");
-            ApplyRightState(true, "先试着配色并提交");
+            ApplyRightState(true, "先试着替换组件并提交");
             stage2RightController?.SetDreamPaletteEnabled(false);
             currentState = ChapterState.Stage2RightFullScreen;
         }
@@ -238,20 +238,20 @@ namespace GameCreate3
             {
                 case ChapterState.Stage2RightFullScreen:
                     ApplyLayout(splitView: true);
-                    ApplyStageLabel("阶段二：进入梦境，收集正确颜色");
+                    ApplyStageLabel("阶段二：进入梦境，收集正确图卡");
                     if (stage2LeftController != null)
                     {
                         stage2LeftController.SetInteractive(true);
                     }
-                    ApplyLeftState(true, "收集正确颜色");
-                    ApplyRightState(false, "右屏暂时冻结，先去梦境寻找颜色");
+                    ApplyLeftState(true, "收集正确图卡");
+                    ApplyRightState(false, "右屏暂时冻结，先去梦境寻找正确样式");
                     currentState = ChapterState.Stage2LeftUnlocked;
                     break;
 
                 case ChapterState.Stage2RightAssisted:
                     if (!result.success)
                     {
-                        ApplyStageLabel("阶段二：使用梦境色卡完成配色");
+                        ApplyStageLabel("阶段二：使用梦境图卡完成替换");
                         return;
                     }
 
@@ -261,7 +261,7 @@ namespace GameCreate3
             }
         }
 
-        private void HandleStage2DreamComplete(IReadOnlyList<Color> colors)
+        private void HandleStage2DreamComplete(IReadOnlyList<PaletteColorOption> colors)
         {
             if (currentState != ChapterState.Stage2LeftUnlocked)
             {
@@ -270,9 +270,9 @@ namespace GameCreate3
 
             stage2RightController?.SetDreamPaletteColors(colors);
             stage2RightController?.SetDreamPaletteEnabled(true);
-            ApplyStageLabel("阶段二：回到右屏使用梦境色卡");
+            ApplyStageLabel("阶段二：回到右屏使用梦境图卡");
             ApplyLeftState(true, "梦境仍可自由移动");
-            ApplyRightState(true, "梦境色卡已解锁，选择颜色并应用到目标区域");
+            ApplyRightState(true, "梦境图卡已解锁，选择图卡并替换目标组件");
             currentState = ChapterState.Stage2RightAssisted;
         }
 

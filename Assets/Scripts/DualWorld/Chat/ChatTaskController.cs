@@ -95,11 +95,14 @@ namespace GameCreate3.DualWorld
             if (activeTask == null || EnsureChatBox() == null) return;
             var line = activeTask.PickPlayerLine(playerSubmitCount);
             playerSubmitCount++;
-            if (!string.IsNullOrEmpty(line))
-            {
-                chatBox.Append(new ChatLogEntry(ChatSpeaker.Player, line));
-                GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_SMS_Send_Success");
-            }
+            AppendPlayerLine(line);
+        }
+
+        public void AppendPlayerLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line) || EnsureChatBox() == null) return;
+            chatBox.Append(new ChatLogEntry(ChatSpeaker.Player, line));
+            GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_SMS_Send_Success");
         }
 
         public void AppendNpcLine(string line, ChatTaskPanelUI.Mood mood = ChatTaskPanelUI.Mood.Neutral, bool highlight = false)

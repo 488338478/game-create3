@@ -47,6 +47,8 @@ namespace GameCreate3
         [SerializeField] private float baseMeteorFallSpeed = 2.8f;
         [SerializeField] private float meteorFallAcceleration = 1.9f;
         [SerializeField] private float meteorGroundY = -3.2f;
+        [SerializeField] private LayerMask meteorGroundMask = ~0;
+        [SerializeField] private float meteorGroundProbePadding = 0.08f;
         [SerializeField] private List<MeteorDefinition> meteorDefinitions = new List<MeteorDefinition>();
 
         [Header("Resonance")]
@@ -61,6 +63,7 @@ namespace GameCreate3
         private readonly List<DreamColorPickup> meteorPool = new List<DreamColorPickup>();
         private readonly List<DreamColorPickup> activeMeteors = new List<DreamColorPickup>();
         private readonly List<Collider2D> playerColliders = new List<Collider2D>();
+        private readonly RaycastHit2D[] meteorGroundHits = new RaycastHit2D[8];
 
         public event Action<IReadOnlyList<PaletteColorOption>> Completed;
         public event Action<PaletteColorOption> ItemCollected;
@@ -167,8 +170,14 @@ namespace GameCreate3
                 }
 
                 var reachedGround = meteor.Tick(Time.deltaTime);
-                if (reachedGround || !meteor.IsActive)
+                var hitGroundCollider = HasHitGroundCollider(meteor);
+                if (reachedGround || hitGroundCollider || !meteor.IsActive)
                 {
+                    if (hitGroundCollider && meteor.IsActive)
+                    {
+                        meteor.Miss();
+                    }
+
                     activeMeteors.RemoveAt(i);
                 }
             }
@@ -228,6 +237,15 @@ namespace GameCreate3
                 return;
             }
 
+            var baseDrift = Mathf.Abs(definition.horizontalDrift);
+            if (baseDrift < 0.1f)
+            {
+                baseDrift = 1.25f;
+            }
+
+            // 固定为从右上往左下划过，始终向左侧漂移。
+            var drift = -baseDrift * UnityEngine.Random.Range(0.85f, 1.15f);
+
             pickup.Activate(
                 definition.option,
                 definition.resonant,
@@ -235,7 +253,7 @@ namespace GameCreate3
                 GetMeteorSpawnPosition(),
                 baseMeteorFallSpeed * Mathf.Max(0.1f, definition.fallSpeedMultiplier),
                 meteorFallAcceleration,
-                0f,
+                drift,
                 meteorGroundY);
             pickup.SetInteractive(interactive);
             activeMeteors.Add(pickup);
@@ -375,6 +393,53 @@ namespace GameCreate3
             return useMeteorRain &&
                    meteorDefinitions != null &&
                    meteorDefinitions.Count > 0;
+        }
+
+        private bool HasHitGroundCollider(DreamColorPickup meteor)
+        {
+            if (meteor == null || meteor.PickupCollider == null)
+            {
+                return false;
+            }
+
+            var start = meteor.PreviousPosition;
+            var end = meteor.transform.position;
+            var delta = end - start;
+            var distance = delta.magnitude;
+            if (distance <= 0.001f)
+            {
+                return false;
+            }
+
+            var hitCount = Physics2D.RaycastNonAlloc(
+                start,
+                delta / distance,
+                meteorGroundHits,
+                distance + meteorGroundProbePadding,
+                meteorGroundMask);
+
+            for (var i = 0; i < hitCount; i++)
+            {
+                var collider = meteorGroundHits[i].collider;
+                if (collider == null || collider == meteor.PickupCollider || collider.isTrigger)
+                {
+                    continue;
+                }
+
+                if (playerTransform != null && collider.transform.IsChildOf(playerTransform))
+                {
+                    continue;
+                }
+
+                if (collider.transform.IsChildOf(meteor.transform))
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private void ScheduleNextMeteorSpawn(bool immediate)

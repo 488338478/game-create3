@@ -130,12 +130,9 @@ namespace GameCreate3
                     _animator.SetTrigger(_jumpId);
             }
 
-            // ── 脚步声（着地且水平移动时按节奏播）+ 落地声 ─────────────
-            if (!_wasGrounded && isGrounded)
-            {
-                GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Land");
-            }
-
+            // ── 脚步声（着地且水平移动时按节奏播）──────────────────
+            // 落地声已移至 SideScrollCharacterControllerBase.FixedUpdate，
+            // 与地面检测 Sample() 同帧触发，避免在 Update 里晚一帧。
             if (isGrounded && hSpeed >= moveThreshold)
             {
                 _stepTimer -= Time.deltaTime;

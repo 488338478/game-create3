@@ -32,6 +32,8 @@ namespace GameCreate3
         private ICharacterInputSource activeInputSource;
         private PlayerInputSource playerInputSource;
         private bool inputEnabled = true;
+        // 落地声基线。初值 true：出生时若已落地不会误触发；出生在空中则落地会正常播。
+        private bool wasGroundedForSfx = true;
 
         public bool IsGrounded { get; private set; }
         public bool InputEnabled => inputEnabled;
@@ -71,6 +73,15 @@ namespace GameCreate3
             jumpMotor.Tick(IsGrounded, inputProxy.JumpPressed, inputProxy.JumpHeld);
             // 跳跃锁存被消费后立刻清掉，避免 jumpBuffer 自然衰减期间被多次重新填满。
             inputProxy.ConsumeJumpPressed();
+
+            // 落地声：和地面检测同一物理帧触发，零额外帧延迟（比放在 Update 里早一帧）。
+            // inputEnabled 作闸——死亡/重生接管期间（SetInputEnabled(false)）不播放，
+            // 避免泡泡搬运、瞬移过程中误触发落地声。
+            if (inputEnabled && !wasGroundedForSfx && IsGrounded)
+            {
+                GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Land");
+            }
+            wasGroundedForSfx = IsGrounded;
         }
 
         private void OnDestroy()
@@ -85,6 +96,12 @@ namespace GameCreate3
         public void SetInputEnabled(bool enabled)
         {
             inputEnabled = enabled;
+            // 重新接管输入时（如重生结束），把落地基线对齐到当前着地状态，
+            // 避免重生落点这一帧被判成"刚落地"而误播落地声。
+            if (enabled)
+            {
+                wasGroundedForSfx = groundDetector != null && groundDetector.IsGrounded;
+            }
             // 直接换 proxy 的源，不要走 SetInputSource —— 那个会把 disabled 写进 activeInputSource，
             // 导致下次 enable 时 activeInputSource ?? playerInputSource 仍取到 disabled，玩家永久锁定。
             inputProxy.SetInputSource(enabled ? (activeInputSource ?? playerInputSource) : disabledInputSource);

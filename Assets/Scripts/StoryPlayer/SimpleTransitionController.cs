@@ -191,9 +191,10 @@ namespace GameCreate3.StoryPlayer
                     break;
             }
 
+            var sf = transitionCanvas != null ? transitionCanvas.scaleFactor : 1f;
             transitionRect.anchoredPosition = new Vector2(
-                startPos.x * Screen.width,
-                startPos.y * Screen.height
+                startPos.x * Screen.width / sf,
+                startPos.y * Screen.height / sf
             );
         }
 
@@ -279,9 +280,10 @@ namespace GameCreate3.StoryPlayer
             var endOffset = isIn ? Vector2.zero : -direction;
 
             var currentOffset = Vector2.Lerp(startOffset, endOffset, progress);
+            var sf = transitionCanvas != null ? transitionCanvas.scaleFactor : 1f;
             transitionRect.anchoredPosition = new Vector2(
-                currentOffset.x * Screen.width,
-                currentOffset.y * Screen.height
+                currentOffset.x * Screen.width / sf,
+                currentOffset.y * Screen.height / sf
             );
 
             if (canvasGroup != null)

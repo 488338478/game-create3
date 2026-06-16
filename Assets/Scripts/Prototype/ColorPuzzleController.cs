@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using GameCreate3.DualWorld;
+using GameCreate3.Core.SceneRouting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,6 +29,17 @@ namespace GameCreate3
         [SerializeField] private List<ColorSlot> colorSlots = new List<ColorSlot>();
         [SerializeField] private CanvasGroup dreamPaletteGroup;
         [SerializeField] private ColorPaletteSwatch currentPaletteSwatch;
+        [SerializeField] private float submitToBossReplyDelaySec = 0.35f;
+        [SerializeField] private float successTransitionDelaySec = 1.1f;
+        [SerializeField] private string successSceneName = "Level2Cutscene";
+        [SerializeField] private List<string> playerSubmitLines = new List<string>
+        {
+            "老板，我改了一版，您看看。",
+            "这次我把颜色重新顺过了，您再看一眼？",
+            "我又调了一遍，这版会不会好点？",
+            "按您的意思往年轻一点改了，您看看行不行。",
+            "我再提一次，您帮我过下。"
+        };
         [SerializeField] private bool forceFirstFailure = true;
         [SerializeField] private float disabledAlpha = 0.42f;
         [SerializeField] private string initialBossLine = "排版可以了，写内容吧。";
@@ -46,9 +59,13 @@ namespace GameCreate3
         private bool forcedFailurePending = true;
         private int rejectLineIndex;
         private int approveLineIndex;
+        private int playerSubmitIndex;
         private bool hasCurrentPalette;
         private PaletteColorOption currentPaletteOption;
         private ChatTaskController chatTaskController;
+        private Coroutine pendingSubmitRoutine;
+        private Coroutine pendingSuccessTransitionRoutine;
+        private bool successTransitionQueued;
 
         public event Action<ColorSubmitResult> OnSubmitAttempted;
 
@@ -131,6 +148,8 @@ namespace GameCreate3
                 submitButton.onClick.RemoveListener(HandleSubmitClicked);
             }
 
+            CancelPendingSubmit();
+            CancelPendingSuccessTransition();
             UnbindRuntimeEvents();
         }
 
@@ -248,6 +267,7 @@ namespace GameCreate3
             if (success)
             {
                 ShowBossLine(result.feedbackLine, ChatTaskPanelUI.Mood.Approve);
+                QueueSuccessTransition();
             }
             else
             {
@@ -264,8 +284,20 @@ namespace GameCreate3
                 return;
             }
 
-            var result = TrySubmit();
-            OnSubmitAttempted?.Invoke(result);
+            AppendPlayerSubmitLine();
+
+            if (submitToBossReplyDelaySec > 0f && isActiveAndEnabled)
+            {
+                if (pendingSubmitRoutine != null)
+                {
+                    StopCoroutine(pendingSubmitRoutine);
+                }
+
+                pendingSubmitRoutine = StartCoroutine(DelayThenSubmit());
+                return;
+            }
+
+            SubmitAfterPlayerLine();
         }
 
         private string NextRejectLine()
@@ -287,9 +319,14 @@ namespace GameCreate3
             forcedFailurePending = forceFirstFailure;
             rejectLineIndex = 0;
             approveLineIndex = 0;
+            playerSubmitIndex = 0;
             ClearCurrentPalette();
             SetDreamPaletteEnabled(false);
             SetInteractable(true);
+            CancelPendingSubmit();
+            CancelPendingSuccessTransition();
+            successTransitionQueued = false;
+
             foreach (var slot in colorSlots)
             {
                 slot.ResetSlot();
@@ -528,6 +565,103 @@ namespace GameCreate3
             }
 
             return chatTaskController;
+        }
+
+        private void AppendPlayerSubmitLine()
+        {
+            var controller = EnsureChatTaskController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            var line = ResolvePlayerSubmitLine();
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                controller.AppendPlayerSubmit();
+                return;
+            }
+
+            controller.AppendPlayerLine(line);
+            playerSubmitIndex++;
+        }
+
+        private string ResolvePlayerSubmitLine()
+        {
+            if (playerSubmitLines == null || playerSubmitLines.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var index = Mathf.Clamp(playerSubmitIndex, 0, playerSubmitLines.Count - 1);
+            return playerSubmitLines[index];
+        }
+
+        private IEnumerator DelayThenSubmit()
+        {
+            yield return new WaitForSeconds(submitToBossReplyDelaySec);
+            pendingSubmitRoutine = null;
+            SubmitAfterPlayerLine();
+        }
+
+        private IEnumerator DelayThenGoSuccessScene()
+        {
+            if (successTransitionDelaySec > 0f)
+            {
+                yield return new WaitForSeconds(successTransitionDelaySec);
+            }
+
+            pendingSuccessTransitionRoutine = null;
+
+            if (!string.IsNullOrWhiteSpace(successSceneName))
+            {
+                SceneRouter.GoScene(successSceneName);
+            }
+        }
+
+        private void SubmitAfterPlayerLine()
+        {
+            if (!interactable)
+            {
+                return;
+            }
+
+            var result = TrySubmit();
+            OnSubmitAttempted?.Invoke(result);
+        }
+
+        private void QueueSuccessTransition()
+        {
+            if (successTransitionQueued || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            successTransitionQueued = true;
+            CancelPendingSuccessTransition();
+            pendingSuccessTransitionRoutine = StartCoroutine(DelayThenGoSuccessScene());
+        }
+
+        private void CancelPendingSubmit()
+        {
+            if (pendingSubmitRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(pendingSubmitRoutine);
+            pendingSubmitRoutine = null;
+        }
+
+        private void CancelPendingSuccessTransition()
+        {
+            if (pendingSuccessTransitionRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(pendingSuccessTransitionRoutine);
+            pendingSuccessTransitionRoutine = null;
         }
 
         private void EnsureHintLabel(Transform uiRoot)

@@ -21,12 +21,15 @@ namespace GameCreate3
         private bool active;
         private Sprite visualSprite;
         private Sprite baseSprite;
+        private Vector3 previousPosition;
 
         public PaletteColorOption Option => option;
         public Color Color => option.fallbackColor;
         public bool IsResonant => resonant;
         public bool IsCollected { get; private set; }
         public bool IsActive => active;
+        public Vector3 PreviousPosition => previousPosition;
+        public Collider2D PickupCollider => pickupCollider;
 
         private void Awake()
         {
@@ -68,6 +71,7 @@ namespace GameCreate3
             IsCollected = false;
 
             transform.position = spawnPosition;
+            previousPosition = spawnPosition;
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
             gameObject.SetActive(true);
@@ -99,7 +103,8 @@ namespace GameCreate3
 
             verticalSpeed += fallAcceleration * deltaTime;
 
-            var position = transform.position;
+            previousPosition = transform.position;
+            var position = previousPosition;
             position.x += horizontalDrift * deltaTime;
             position.y -= verticalSpeed * deltaTime;
             transform.position = position;

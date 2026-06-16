@@ -162,12 +162,9 @@ namespace GameCreate3.DualWorld
         {
             if (result.Success)
             {
-                Workspace?.ChatTaskController?.Raise(ChatTaskController.Event.Completed);
                 EnterPhase(SubLevelPhase.RealityTaskCompleted);
                 return;
             }
-
-            Workspace?.ChatTaskController?.Raise(ChatTaskController.Event.Failed);
 
             if (CurrentPhase == SubLevelPhase.RealityTaskActive && !dreamStartsUnlocked)
             {

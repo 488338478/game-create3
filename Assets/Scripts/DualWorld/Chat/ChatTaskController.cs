@@ -102,6 +102,7 @@ namespace GameCreate3.DualWorld
         {
             if (string.IsNullOrWhiteSpace(line) || EnsureChatBox() == null) return;
             chatBox.Append(new ChatLogEntry(ChatSpeaker.Player, line));
+            GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_SMS_Send_Success");
         }
 
         public void AppendNpcLine(string line, ChatTaskPanelUI.Mood mood = ChatTaskPanelUI.Mood.Neutral, bool highlight = false)
@@ -113,6 +114,8 @@ namespace GameCreate3.DualWorld
         private void AppendNpc(ChatTaskDefinition.NpcChatMessage message, ChatTaskPanelUI.Mood mood, bool highlight)
         {
             if (message == null || !message.HasContent) return;
+
+            GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_SMS_Receive_Notify");
 
             // text 与 sticker 都填时，拆成两条发：先文字气泡，表情气泡隔 npcMessageGapSec 再发。
             // 渲染层是"有 sticker 就只显示表情"的二选一，所以必须分条才能同时看到文字和表情。

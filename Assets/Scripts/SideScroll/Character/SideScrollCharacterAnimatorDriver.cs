@@ -41,6 +41,8 @@ namespace GameCreate3
         private bool     _wasGrounded;
         private int      _airTicks;
         private int      _facingSign = 1;   // 1=右, -1=左
+        private float    _stepTimer;        // 脚步声节奏计时
+        private const float StepInterval = 0.32f;
 
         private void Awake()
         {
@@ -94,6 +96,26 @@ namespace GameCreate3
                 _airTicks++;
                 if (_airTicks == 1)                     // 第一帧离地就触发
                     _animator.SetTrigger(_jumpId);
+            }
+
+            // ── 脚步声（着地且水平移动时按节奏播）+ 落地声 ─────────────
+            if (!_wasGrounded && isGrounded)
+            {
+                GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Land");
+            }
+
+            if (isGrounded && hSpeed >= moveThreshold)
+            {
+                _stepTimer -= Time.deltaTime;
+                if (_stepTimer <= 0f)
+                {
+                    GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Footstep_Step");
+                    _stepTimer = StepInterval;
+                }
+            }
+            else
+            {
+                _stepTimer = 0f;
             }
 
             _wasGrounded = isGrounded;

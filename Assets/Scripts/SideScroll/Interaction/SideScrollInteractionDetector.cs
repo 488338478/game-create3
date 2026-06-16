@@ -56,6 +56,7 @@ namespace GameCreate3
             if (target != null && target.CanInteract(interactor))
             {
                 target.Interact(interactor);
+                GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Interact");
             }
         }
 

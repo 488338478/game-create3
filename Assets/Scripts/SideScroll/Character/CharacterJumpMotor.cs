@@ -37,6 +37,7 @@ namespace GameCreate3
             if (jumpBufferCounter > 0f && coyoteCounter > 0f)
             {
                 velocity.y = config.jumpForce;
+                GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Jump");
                 jumpBufferCounter = 0f;
                 coyoteCounter = 0f;
             }

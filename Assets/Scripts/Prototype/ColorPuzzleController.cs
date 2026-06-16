@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using GameCreate3.DualWorld;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GameCreate3
@@ -259,6 +260,9 @@ namespace GameCreate3
 
         private void HandleSubmitClicked()
         {
+            // 点完清掉选中，避免 Automatic 导航下按 Space/Enter 再次触发本按钮。
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+
             if (!interactable)
             {
                 return;

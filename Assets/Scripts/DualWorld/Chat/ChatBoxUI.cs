@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GameCreate3.DualWorld
@@ -53,6 +54,7 @@ namespace GameCreate3.DualWorld
 
         private void HandleSubmitClicked()
         {
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             SubmitRequested?.Invoke();
         }
     }

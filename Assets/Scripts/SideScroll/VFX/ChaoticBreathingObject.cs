@@ -13,6 +13,7 @@ namespace GameCreate3.SideScroll.VFX
     {
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int FlashId = Shader.PropertyToID("_Flash");
 
         [Header("作用范围")]
         [Tooltip("为空时使用当前物体。位移会作用在这个 Transform 上。")]
@@ -193,10 +194,18 @@ namespace GameCreate3.SideScroll.VFX
 
         private void ApplyBrightness(float multiplier)
         {
+            // multiplier <= 1 darkens the vertex color; multiplier > 1 drives a
+            // shader "flash" that lifts the texture pixels toward white, so a
+            // full-white sprite can still visibly brighten without bloom/HDR.
+            float flash = Mathf.Clamp01(multiplier - 1f);
             for (int i = 0; i < spriteRenderers.Length; i++)
             {
-                if (spriteRenderers[i] == null) continue;
-                spriteRenderers[i].color = ApplyBrightnessToColor(spriteBaseColors[i], multiplier);
+                var sprite = spriteRenderers[i];
+                if (sprite == null) continue;
+                sprite.color = ApplyBrightnessToColor(spriteBaseColors[i], multiplier);
+                sprite.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetFloat(FlashId, flash);
+                sprite.SetPropertyBlock(propertyBlock);
             }
 
             for (int i = 0; i < graphics.Length; i++)
@@ -227,7 +236,12 @@ namespace GameCreate3.SideScroll.VFX
         {
             for (int i = 0; i < spriteRenderers.Length; i++)
             {
-                if (spriteRenderers[i] != null) spriteRenderers[i].color = spriteBaseColors[i];
+                var sprite = spriteRenderers[i];
+                if (sprite == null) continue;
+                sprite.color = spriteBaseColors[i];
+                sprite.GetPropertyBlock(propertyBlock);
+                propertyBlock.SetFloat(FlashId, 0f);
+                sprite.SetPropertyBlock(propertyBlock);
             }
 
             for (int i = 0; i < graphics.Length; i++)

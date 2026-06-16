@@ -422,10 +422,24 @@ namespace GameCreate3
             }
 
             var animator = explicitAnimator != null ? explicitAnimator : player.GetComponentInChildren<Animator>(true);
-            if (animator != null)
+            if (animator != null && HasParameter(animator, triggerName))
             {
                 animator.SetTrigger(triggerName);
             }
+        }
+
+        private static bool HasParameter(Animator animator, string parameterName)
+        {
+            var parameters = animator.parameters;
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                if (parameters[i].name == parameterName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

@@ -17,6 +17,10 @@ PrefabInstance:
       value: note
       objectReference: {fileID: 0}
     - target: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_Name
       value: note Variant
       objectReference: {fileID: 0}
@@ -90,19 +94,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_Size.y
-      value: 1.712444
+      value: 0.4028492
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_Offset.x
-      value: -1.3981376
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_Offset.y
-      value: 0.9523534
+      value: 0.6547973
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_IsTrigger
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
+      propertyPath: m_UsedByEffector
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_SpriteTilingProperty.pivot.x
@@ -122,11 +130,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
-      value: 5.84
+      value: 1.28
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.y
-      value: 4.98
+      value: 1.66
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_SpriteTilingProperty.adaptiveTilingThreshold
@@ -141,6 +149,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8473306966968837605}
+    - targetCorrespondingSourceObject: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8473306966968837606}
+    - targetCorrespondingSourceObject: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8473306966968837607}
   m_SourcePrefab: {fileID: 100100000, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
 --- !u!1 &3352607458857409064 stripped
 GameObject:
@@ -165,3 +179,49 @@ MonoBehaviour:
   randomize: 0
   speedRange: {x: 0.8, y: 1.6}
   loopHeightRange: {x: 2, y: 4}
+  sprites:
+  - {fileID: 21300000, guid: 70d1a605bc0a4594baf2bb3722927d3f, type: 3}
+  - {fileID: 21300000, guid: 454b1376e1deefe43a358b8cf44e5e30, type: 3}
+  - {fileID: 21300000, guid: 3131e46f673a73c48b6b9be1980e522c, type: 3}
+--- !u!50 &8473306966968837606
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3352607458857409064}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 1
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
+--- !u!251 &8473306966968837607
+PlatformEffector2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3352607458857409064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_UseOneWay: 1
+  m_UseOneWayGrouping: 0
+  m_UseSideFriction: 0
+  m_UseSideBounce: 0
+  m_SurfaceArc: 180
+  m_RotationalOffset: 0

@@ -42,6 +42,7 @@ namespace GameCreate3
         private int      _airTicks;
         private int      _facingSign = 1;   // 1=右, -1=左
         private float    _stepTimer;        // 脚步声节奏计时
+        private bool     _frozen;           // 被泡泡等外部接管时锁死，不再驱动 Animator
         private const float StepInterval = 0.32f;
 
         private void Awake()
@@ -60,8 +61,39 @@ namespace GameCreate3
                 facingTarget = transform;
         }
 
+        /// <summary>
+        /// 外部接管时冻结/解冻动画驱动。
+        /// 冻结期间 Update 完全不写 Animator（Speed/Jump 都不动），
+        /// 角色动作保持在接管方设置的状态（如 Death）或自然回到 Idle，避免在泡泡里乱切。
+        /// 由 <see cref="DeathRespawnTriggerZone"/>（重生泡泡）与 <see cref="SineMover"/>（终点泡泡）调用。
+        /// </summary>
+        public void SetAnimationFrozen(bool frozen)
+        {
+            if (_frozen == frozen) return;
+            _frozen = frozen;
+
+            if (_animator == null) return;
+
+            if (frozen)
+            {
+                // 锁死前清零移动参数、清掉残留的 Jump 触发，给接管方一个干净的基线。
+                _animator.SetFloat(_speedId, 0f);
+                _animator.ResetTrigger(_jumpId);
+                _stepTimer = 0f;
+            }
+            else
+            {
+                // 解冻时重置落地/腾空基线，避免接管结束瞬间误触发 Jump 或落地音。
+                var grounded = groundDetector != null && groundDetector.IsGrounded;
+                _wasGrounded = grounded;
+                _airTicks = grounded ? 0 : jumpGraceTicks + 1;
+                _stepTimer = 0f;
+            }
+        }
+
         private void Update()
         {
+            if (_frozen) return;
             if (body == null) return;
 
             var vx = body.velocity.x;

@@ -11,6 +11,8 @@ namespace GameCreate3
     ///   - 若开启 randomize，会在 OnEnable 时为每个实例独立摇 speed/loopHeight，
     ///     避免一堆同源 Spawn 的对象做完全一致的运动（视觉上一坨）。
     ///   - startPhase01 用来把若干同时生成的实例错开高度，看起来已经在飘。
+    ///   - 若对象挂有 Rigidbody2D（如单向平台需要物理参与），会自动切到
+    ///     FixedUpdate + MovePosition，确保 PlatformEffector2D 正常工作。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RisingLoopMover : MonoBehaviour
@@ -30,8 +32,20 @@ namespace GameCreate3
         [SerializeField] private Vector2 speedRange = new Vector2(0.8f, 1.6f);
         [SerializeField] private Vector2 loopHeightRange = new Vector2(2.0f, 4.0f);
 
+        [Header("Sprite cycle")]
+        [SerializeField, Tooltip("每次回到起点时切换到下一个 sprite，循环。")]
+        private Sprite[] sprites;
+
         private Vector3 basePos;
         private bool initialized;
+        private SpriteRenderer spriteRenderer;
+        private int spriteIndex;
+        private Rigidbody2D rb;
+        private bool usePhysicsMovement;
+
+        public Vector3 BasePosition => basePos;
+        public int CurrentSpriteIndex => spriteIndex;
+        public bool UsePhysicsMovement => usePhysicsMovement;
 
         private void OnEnable()
         {
@@ -49,20 +63,63 @@ namespace GameCreate3
             basePos.y += loopHeight * Mathf.Clamp01(startPhase01);
             transform.position = basePos;
 
+            spriteRenderer = GetComponent<SpriteRenderer>();
+            rb = GetComponent<Rigidbody2D>();
+            usePhysicsMovement = rb != null;
+            spriteIndex = 0;
+            if (sprites is { Length: > 0 } && spriteRenderer != null)
+            {
+                spriteRenderer.sprite = sprites[0];
+            }
+
             initialized = true;
         }
 
         private void Update()
         {
             if (!initialized) return;
+            if (usePhysicsMovement) return; // 走 FixedUpdate
+            MoveOneStep(Time.deltaTime);
+        }
 
+        private void FixedUpdate()
+        {
+            if (!initialized) return;
+            if (!usePhysicsMovement) return; // 走 Update
+            MoveOneStep(Time.fixedDeltaTime);
+        }
+
+        public void MoveOneStep(float dt)
+        {
             var p = transform.position;
-            p.y += speed * Time.deltaTime;
+            p.y += speed * dt;
             if (p.y - basePos.y >= loopHeight)
             {
                 p.y = basePos.y;
+                AdvanceSprite();
             }
-            transform.position = p;
+            ApplyPosition(p);
         }
+
+        private void AdvanceSprite()
+        {
+            if (sprites is not { Length: > 0 } || spriteRenderer == null) return;
+            spriteIndex = (spriteIndex + 1) % sprites.Length;
+            spriteRenderer.sprite = sprites[spriteIndex];
+        }
+
+        private void ApplyPosition(Vector3 pos)
+        {
+            if (rb != null)
+                rb.MovePosition(pos);
+            else
+                transform.position = pos;
+        }
+
+        // 暴露给单元测试
+        public void SetSpeedForTest(float value) => speed = value;
+        public void SetLoopHeightForTest(float value) => loopHeight = value;
+        public void SetSpritesForTest(Sprite[] value) => sprites = value;
+        public void SetStartPhase01ForTest(float value) => startPhase01 = value;
     }
 }

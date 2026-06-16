@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" font-family="Microsoft YaHei, PingFang SC, sans-serif">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="540" fill="#F5F6FA"/>
+
+  <!-- Title -->
+  <text x="480" y="35" text-anchor="middle" fill="#2C3E50" font-size="20" font-weight="bold">CanvasScaler matchWidthOrHeight 策略对比</text>
+
+  <!-- === LEFT: matchWidthOrHeight = 0.5 (当前) === -->
+  <text x="240" y="70" text-anchor="middle" fill="#E74C3C" font-size="16" font-weight="bold">❌ 当前: match = 0.5</text>
+  <text x="240" y="90" text-anchor="middle" fill="#888" font-size="12">宽高各匹配 50%，16:10 下变形</text>
+
+  <!-- Screen frame left -->
+  <rect x="40" y="105" width="400" height="334" rx="4" fill="#1A1A1A" stroke="#CCC" stroke-width="1"/>
+
+  <!-- Canvas content - match=0.5 on 16:10 (stretched) -->
+  <g transform="translate(60, 125)">
+    <!-- HUD bar - stretched -->
+    <rect x="0" y="0" width="360" height="36" rx="3" fill="#E74C3C" opacity="0.7"/>
+    <text x="180" y="23" text-anchor="middle" fill="#FFF" font-size="11">任务提示文字被横向拉伸</text>
+
+    <!-- Game view area - stretched wider -->
+    <rect x="10" y="50" width="340" height="150" rx="3" fill="#3498DB" opacity="0.3"/>
+    <text x="180" y="130" text-anchor="middle" fill="#3498DB" font-size="13" opacity="0.7">中间内容区域</text>
+    <text x="180" y="148" text-anchor="middle" fill="#3498DB" font-size="11" opacity="0.5">宽高比失真</text>
+
+    <!-- Button area -->
+    <rect x="100" y="215" width="160" height="36" rx="3" fill="#27AE60" opacity="0.6"/>
+    <text x="180" y="238" text-anchor="middle" fill="#FFF" font-size="12">按钮被拉宽 →</text>
+
+    <!-- Footer -->
+    <rect x="0" y="268" width="360" height="24" rx="3" fill="#95A5A6" opacity="0.5"/>
+    <text x="180" y="284" text-anchor="middle" fill="#FFF" font-size="10">底部信息栏</text>
+  </g>
+
+  <!-- Stretch warning arrows -->
+  <path d="M60,200 L20,200" stroke="#E74C3C" stroke-width="2" marker-end="url(#arrLeft)"/>
+  <path d="M420,200 L460,200" stroke="#E74C3C" stroke-width="2" marker-end="url(#arrRight)"/>
+  <defs>
+    <marker id="arrLeft" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6" fill="#E74C3C"/></marker>
+    <marker id="arrRight" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#E74C3C"/></marker>
+    <marker id="arrRightG" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#27AE60"/></marker>
+  </defs>
+  <text x="240" y="460" text-anchor="middle" fill="#E74C3C" font-size="11">← 横向拉伸 →</text>
+
+  <!-- === ARROW between === -->
+  <text x="480" y="300" text-anchor="middle" fill="#8E44AD" font-size="28">→</text>
+
+  <!-- === RIGHT: matchWidthOrHeight = 1.0 === -->
+  <text x="720" y="70" text-anchor="middle" fill="#27AE60" font-size="16" font-weight="bold">✅ 改为: match = 1.0</text>
+  <text x="720" y="90" text-anchor="middle" fill="#888" font-size="12">完全按高度匹配，宽度自适应</text>
+
+  <!-- Screen frame right -->
+  <rect x="520" y="105" width="400" height="334" rx="4" fill="#1A1A1A" stroke="#CCC" stroke-width="1"/>
+
+  <!-- Canvas content - match=1.0 on 16:10 (correct) -->
+  <g transform="translate(540, 125)">
+    <!-- HUD bar - correct -->
+    <rect x="0" y="0" width="360" height="36" rx="3" fill="#27AE60" opacity="0.7"/>
+    <text x="180" y="23" text-anchor="middle" fill="#FFF" font-size="11">任务提示文字比例正确</text>
+
+    <!-- Game view area - correct aspect -->
+    <rect x="60" y="50" width="240" height="150" rx="3" fill="#3498DB" opacity="0.3"/>
+    <text x="180" y="130" text-anchor="middle" fill="#3498DB" font-size="13" opacity="0.7">中间内容区域</text>
+    <text x="180" y="148" text-anchor="middle" fill="#3498DB" font-size="11" opacity="0.5">比例正确 ✓</text>
+
+    <!-- Button area - correct -->
+    <rect x="100" y="215" width="160" height="36" rx="3" fill="#27AE60" opacity="0.6"/>
+    <text x="180" y="238" text-anchor="middle" fill="#FFF" font-size="12">按钮大小正确 ✓</text>
+
+    <!-- Footer -->
+    <rect x="0" y="268" width="360" height="24" rx="3" fill="#95A5A6" opacity="0.5"/>
+    <text x="180" y="284" text-anchor="middle" fill="#FFF" font-size="10">底部信息栏</text>
+  </g>
+
+  <!-- OK checkmarks -->
+  <text x="720" y="460" text-anchor="middle" fill="#27AE60" font-size="11">✓ 竖直方向完美匹配</text>
+
+  <!-- Bottom summary -->
+  <rect x="140" y="490" width="680" height="38" rx="6" fill="#2C3E50"/>
+  <text x="480" y="510" text-anchor="middle" fill="#FFF" font-size="13">CanvasScaler.referenceResolution 保持 (1920,1080)，仅改 matchWidthOrHeight: 0.5 → 1.0</text>
+  <text x="480" y="526" text-anchor="middle" fill="#BDC3C7" font-size="11">需检查所有 UI prefab 锚点：左右边缘元素用 anchorMin.x=0 / anchorMax.x=1 自适应</text>
+</svg>

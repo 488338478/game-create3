@@ -34,6 +34,10 @@ namespace GameCreate3
         [SerializeField] private float cycles    = 1f;
         [SerializeField] private Mode  mode      = Mode.Once;
 
+        [Header("接管期间锁定动画")]
+        [Tooltip("移动期间冻结被搬运角色的 SideScrollCharacterAnimatorDriver，避免在泡泡里乱切动画。\nLoop 模式下保持冻结；Once/PingPong 结束后自动解冻。仅对带有该组件的 subject 生效。")]
+        [SerializeField] private bool freezeCarriedAnimators = true;
+
         private List<Vector3> originPositions = new List<Vector3>();
         private Coroutine moveCoroutine;
 
@@ -50,6 +54,17 @@ namespace GameCreate3
         public void Trigger()
         {
             if (moveCoroutine != null) StopCoroutine(moveCoroutine);
+
+            // 先把玩家瞬移到自身位置，后续动画从该点出发
+            for (int i = 0; i < subjects.Count; i++)
+            {
+                if (subjects[i] != null && subjects[i].TryGetComponent<SideScrollCharacterControllerBase>(out _))
+                {
+                    subjects[i].position = transform.position;
+                }
+            }
+
+            SetCarriedAnimatorsFrozen(true);
             moveCoroutine = mode switch
             {
                 Mode.Once     => StartCoroutine(MoveOnce()),
@@ -65,6 +80,19 @@ namespace GameCreate3
             if (moveCoroutine != null) { StopCoroutine(moveCoroutine); moveCoroutine = null; }
             for (int i = 0; i < subjects.Count; i++)
                 if (subjects[i] != null) subjects[i].position = originPositions[i];
+            SetCarriedAnimatorsFrozen(false);
+        }
+
+        /// <summary>冻结/解冻被搬运角色的动画驱动（仅对带有 SideScrollCharacterAnimatorDriver 的 subject 生效）。</summary>
+        private void SetCarriedAnimatorsFrozen(bool frozen)
+        {
+            if (!freezeCarriedAnimators) return;
+            foreach (var s in subjects)
+            {
+                if (s == null) continue;
+                var driver = s.GetComponentInChildren<GameCreate3.SideScrollCharacterAnimatorDriver>(true);
+                if (driver != null) driver.SetAnimationFrozen(frozen);
+            }
         }
 
         // ── 轨迹核心 ────────────────────────────────────────────────
@@ -116,6 +144,7 @@ namespace GameCreate3
             var froms  = CurrentPositions();
             var offset = dest - froms[0];          // 以第一个物件为基准算偏移
             yield return MoveTo(froms, offset);
+            SetCarriedAnimatorsFrozen(false);
             moveCoroutine = null;
         }
 
@@ -129,6 +158,7 @@ namespace GameCreate3
             var returnFroms  = CurrentPositions();
             var returnOffset = froms[0] - returnFroms[0];
             yield return MoveTo(returnFroms, returnOffset);
+            SetCarriedAnimatorsFrozen(false);
             moveCoroutine = null;
         }
 

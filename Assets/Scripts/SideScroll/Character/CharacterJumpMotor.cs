@@ -23,6 +23,7 @@ namespace GameCreate3
             config = value;
         }
 
+        /// <param name="jumpHeld">[已废弃] 跳跃改为固定高度，不再根据按住时长调节。</param>
         public void Tick(bool isGrounded, bool jumpPressed, bool jumpHeld)
         {
             if (targetBody == null || config == null)
@@ -40,11 +41,6 @@ namespace GameCreate3
                 GameCreate3.Core.GameAudioService.Instance?.PlaySFX("SFX_Jump");
                 jumpBufferCounter = 0f;
                 coyoteCounter = 0f;
-            }
-
-            if (!jumpHeld && velocity.y > 0f)
-            {
-                velocity.y *= 0.92f;
             }
 
             if (velocity.y < 0f)

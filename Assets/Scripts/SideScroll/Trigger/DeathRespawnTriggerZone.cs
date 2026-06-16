@@ -65,6 +65,7 @@ namespace GameCreate3
         {
             var playerTransform = player.transform;
             var body = player.GetComponent<Rigidbody2D>();
+            var animatorDriver = player.GetComponentInChildren<SideScrollCharacterAnimatorDriver>(true);
             var colliders = player.GetComponentsInChildren<Collider2D>(true);
             var colliderStates = new bool[colliders.Length];
 
@@ -98,6 +99,10 @@ namespace GameCreate3
                 body.angularVelocity = 0f;
                 body.simulated = false;
             }
+
+            // 接管开始：锁死动画驱动，泡泡搬运期间不再被 Speed/Jump 乱切。
+            if (animatorDriver != null)
+                animatorDriver.SetAnimationFrozen(true);
 
             TriggerAnimation(player, playerAnimator, deathTrigger);
 
@@ -139,6 +144,9 @@ namespace GameCreate3
             }
 
             player.SetInputEnabled(previousInputEnabled);
+            // 接管结束：解冻后再播放重生动画，之后交还给正常驱动。
+            if (animatorDriver != null)
+                animatorDriver.SetAnimationFrozen(false);
             TriggerAnimation(player, playerAnimator, respawnTrigger);
             RestoreCameraFollow(playerTransform);
             RestoreCatCar(catCarHomePosition);

@@ -247,11 +247,29 @@ namespace GameCreate3.DualWorld
 
             if (rect.TryGetComponent<AlignmentTargetUnlocker>(out var unlocker))
             {
+                // 带 Unlocker 时由 PopRoutine 把所有子 Graphic 的 alpha lerp 到 1 收尾。
                 unlocker.Play();
             }
             else
             {
                 rect.gameObject.SetActive(true);
+                SetTargetFullyOpaque(rect);
+            }
+        }
+
+        // 没有 Unlocker 动画时，激活后直接把整棵 target 子树的 Graphic alpha 拉到 1，
+        // 与 PopRoutine 的收尾状态保持一致，保证所有 target 解锁后 alpha 都是 1。
+        private static void SetTargetFullyOpaque(RectTransform rect)
+        {
+            if (rect == null) return;
+            var graphics = rect.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+            for (var i = 0; i < graphics.Length; i++)
+            {
+                var g = graphics[i];
+                if (g == null) continue;
+                var c = g.color;
+                c.a = 1f;
+                g.color = c;
             }
         }
 
@@ -274,17 +292,8 @@ namespace GameCreate3.DualWorld
                 if (block != null) block.SetAssistEnabled(enabled);
             }
 
-            // 视觉反馈：辅助模式下把已激活的 target 调亮一点；未激活的 target 还是隐藏，不动它们。
-            for (var i = 0; i < targetRects.Count; i++)
-            {
-                if (targetRects[i] == null) continue;
-                if (!targetRects[i].gameObject.activeSelf) continue;
-                if (targetRects[i].TryGetComponent<UnityEngine.UI.Image>(out var img))
-                {
-                    var c = img.color;
-                    img.color = new Color(c.r, c.g, c.b, enabled ? 0.95f : 0.7f);
-                }
-            }
+            // target 一旦解锁就保持 alpha=1（见 UnlockTarget），不再随辅助模式调暗/调亮，
+            // 否则按解锁时机不同会出现 0.4/0.7/0.95 三档 alpha，看起来颜色深浅不一致。
         }
 
         public void SetInteractable(bool enabled)

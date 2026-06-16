@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace GameCreate3.SideScroll.VFX
@@ -47,20 +46,6 @@ namespace GameCreate3.SideScroll.VFX
             new Keyframe(1f, 1f)
         );
 
-        [Header("2D 光照增强")]
-        [Tooltip("可选。给物体或子物体挂一个 Light2D 后拖进来，可以让纯白/高亮素材也明显变亮。为空时会自动找子物体里的 Light2D。")]
-        [SerializeField] private Light2D breathingLight;
-
-        [SerializeField] private bool animateLightIntensity = true;
-
-        [Tooltip("最暗时 Light2D 的强度倍率。")]
-        [Min(0f)]
-        [SerializeField] private float lightDarkMultiplier = 0.7f;
-
-        [Tooltip("最亮时 Light2D 的强度倍率。")]
-        [Min(0f)]
-        [SerializeField] private float lightBrightMultiplier = 1.8f;
-
         [Header("位置呼吸")]
         [SerializeField] private bool animatePosition = true;
 
@@ -97,7 +82,6 @@ namespace GameCreate3.SideScroll.VFX
         private Renderer[] meshRenderers = System.Array.Empty<Renderer>();
         private Color[] rendererBaseColors = System.Array.Empty<Color>();
         private MaterialPropertyBlock propertyBlock;
-        private float baseLightIntensity;
 
         private void Awake()
         {
@@ -107,10 +91,6 @@ namespace GameCreate3.SideScroll.VFX
             }
 
             propertyBlock = new MaterialPropertyBlock();
-            if (breathingLight == null)
-            {
-                breathingLight = GetComponentInChildren<Light2D>(true);
-            }
             CacheTargets();
         }
 
@@ -122,11 +102,6 @@ namespace GameCreate3.SideScroll.VFX
             if (randomizePhaseOnEnable)
             {
                 timeOffset = Random.Range(0f, 1000f);
-            }
-
-            if (breathingLight != null)
-            {
-                baseLightIntensity = breathingLight.intensity;
             }
         }
 
@@ -225,11 +200,6 @@ namespace GameCreate3.SideScroll.VFX
                 propertyBlock.SetColor(BaseColorId, color);
                 rendererTarget.SetPropertyBlock(propertyBlock);
             }
-
-            if (animateLightIntensity && breathingLight != null)
-            {
-                breathingLight.intensity = baseLightIntensity * EvaluateLightMultiplier(multiplier);
-            }
         }
 
         private void RestoreBrightness()
@@ -259,21 +229,6 @@ namespace GameCreate3.SideScroll.VFX
                 propertyBlock.SetColor(BaseColorId, rendererBaseColors[i]);
                 rendererTarget.SetPropertyBlock(propertyBlock);
             }
-
-            if (breathingLight != null)
-            {
-                breathingLight.intensity = baseLightIntensity;
-            }
-        }
-
-        private float EvaluateLightMultiplier(float colorMultiplier)
-        {
-            float range = brightMultiplier - darkMultiplier;
-            float normalized = Mathf.Abs(range) > 0.0001f
-                ? Mathf.InverseLerp(darkMultiplier, brightMultiplier, colorMultiplier)
-                : 1f;
-
-            return Mathf.Lerp(lightDarkMultiplier, lightBrightMultiplier, normalized);
         }
 
         private void ApplyPosition(float now, float deltaTime)

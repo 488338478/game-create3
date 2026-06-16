@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls -la \"C:\\\\Users\\\\48833\\\\Desktop\\\\vivix 工作\\\\animal showcase\" 2>/dev/null && echo \"---EXISTS---\" || echo \"---NOT FOUND---\")"
-    ]
-  }
-}

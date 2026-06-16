@@ -44,6 +44,53 @@ namespace GameCreate3.DualWorld
         public int SnappedCount => snappedBlockIndices.Count;
         public int TotalBlocks => blocks.Count;
 
+        public void GetConfiguredInteractIds(List<string> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            results.Clear();
+
+            for (var i = 0; i < unlockMap.Count; i++)
+            {
+                var interactId = unlockMap[i].interactId;
+                if (string.IsNullOrWhiteSpace(interactId) || results.Contains(interactId))
+                {
+                    continue;
+                }
+
+                results.Add(interactId);
+            }
+        }
+
+        public void GetInteractIdsForBlockIndex(int blockIndex, List<string> results)
+        {
+            if (results == null)
+            {
+                return;
+            }
+
+            results.Clear();
+
+            for (var i = 0; i < unlockMap.Count; i++)
+            {
+                if (unlockMap[i].blockIndex != blockIndex)
+                {
+                    continue;
+                }
+
+                var interactId = unlockMap[i].interactId;
+                if (string.IsNullOrWhiteSpace(interactId) || results.Contains(interactId))
+                {
+                    continue;
+                }
+
+                results.Add(interactId);
+            }
+        }
+
         private void Awake()
         {
             taskStartTime = Time.time;

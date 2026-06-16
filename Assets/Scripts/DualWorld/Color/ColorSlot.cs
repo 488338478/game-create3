@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,6 +10,7 @@ namespace GameCreate3
     {
         [SerializeField] private Image colorImage;
         [SerializeField] private Button colorButton;
+        [SerializeField] private int blockIndex = -1;
         [SerializeField] private int targetVariantId = -1;
         [SerializeField] private string targetColorId = string.Empty;
         [SerializeField] private Color targetColor;
@@ -24,6 +26,7 @@ namespace GameCreate3
         private Color baseDisplayColor = Color.white;
 
         public event System.Action<ColorSlot> Clicked;
+        public event System.Action<ColorSlot> StateChanged;
 
         public Color CurrentColor => colorImage != null ? colorImage.color : currentOption.fallbackColor;
         public string CurrentColorId => currentOption.colorId;
@@ -142,13 +145,37 @@ namespace GameCreate3
             return option.IsValid && option.Matches(targetVariantId, targetColorId);
         }
 
-        public void PlayHintPulse()
+        public bool TryGetBlockIndex(out int resolvedBlockIndex)
         {
+            if (blockIndex >= 0)
+            {
+                resolvedBlockIndex = blockIndex;
+                return true;
+            }
+
+            if (targetVariantId > 0)
+            {
+                resolvedBlockIndex = targetVariantId - 1;
+                return true;
+            }
+
+            if (TryParseBlockIndexFromName(gameObject.name, out resolvedBlockIndex))
+            {
+                return true;
+            }
+
+            resolvedBlockIndex = -1;
+            return false;
+        }
+
+        public void PlayHintPulse(PaletteColorOption option)
+        {
+            var resolvedOption = ResolveLocalOption(option);
             for (var i = 0; i < applyTargets.Count; i++)
             {
                 if (applyTargets[i] != null)
                 {
-                    applyTargets[i].PlayHintPulse();
+                    applyTargets[i].PlayHintPulse(resolvedOption);
                 }
             }
         }
@@ -165,6 +192,8 @@ namespace GameCreate3
                     applyTargets[i].ResetTarget();
                 }
             }
+
+            StateChanged?.Invoke(this);
         }
 
         private void CycleColor()
@@ -200,6 +229,8 @@ namespace GameCreate3
                     }
                 }
 
+                StateChanged?.Invoke(this);
+
                 return;
             }
 
@@ -221,6 +252,8 @@ namespace GameCreate3
                     applyTargets[i].ApplyVariant(option, isCorrect);
                 }
             }
+
+            StateChanged?.Invoke(this);
         }
 
         private PaletteColorOption ResolveLocalOption(PaletteColorOption option)
@@ -262,6 +295,41 @@ namespace GameCreate3
             colorImage.sprite = baseDisplaySprite;
             colorImage.color = baseDisplayColor;
             colorImage.preserveAspect = baseDisplaySprite != null;
+        }
+
+        private static bool TryParseBlockIndexFromName(string value, out int parsedIndex)
+        {
+            parsedIndex = -1;
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            const string prefix = "Target_";
+            var marker = value.IndexOf(prefix, System.StringComparison.OrdinalIgnoreCase);
+            if (marker < 0)
+            {
+                return false;
+            }
+
+            var start = marker + prefix.Length;
+            var end = start;
+            while (end < value.Length && char.IsDigit(value[end]))
+            {
+                end++;
+            }
+
+            if (end <= start)
+            {
+                return false;
+            }
+
+            return int.TryParse(
+                value.Substring(start, end - start),
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out parsedIndex);
         }
     }
 }

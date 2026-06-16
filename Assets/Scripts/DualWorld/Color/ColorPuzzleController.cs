@@ -210,9 +210,34 @@ namespace GameCreate3
                 var slot = colorSlots[i];
                 if (slot != null && slot.MatchesOption(option))
                 {
-                    slot.PlayHintPulse();
+                    slot.PlayHintPulse(option);
                 }
             }
+        }
+
+        public bool TryResolveBlockIndex(PaletteColorOption option, out int blockIndex)
+        {
+            blockIndex = -1;
+            if (!option.IsValid)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < colorSlots.Count; i++)
+            {
+                var slot = colorSlots[i];
+                if (slot == null || !slot.MatchesOption(option))
+                {
+                    continue;
+                }
+
+                if (slot.TryGetBlockIndex(out blockIndex))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public void SetInteractable(bool enabled)

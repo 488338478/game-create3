@@ -8,6 +8,16 @@ namespace GameCreate3
 {
     public sealed class ColorApplyTarget : MonoBehaviour
     {
+        private sealed class VisualSnapshot
+        {
+            public Color[] imageColors = Array.Empty<Color>();
+            public Color[] spriteColors = Array.Empty<Color>();
+            public Sprite[] imageSprites = Array.Empty<Sprite>();
+            public Sprite[] rendererSprites = Array.Empty<Sprite>();
+            public bool[] activeStates = Array.Empty<bool>();
+            public Vector3 scale = Vector3.one;
+        }
+
         [Serializable]
         private sealed class VisualVariant
         {
@@ -27,7 +37,6 @@ namespace GameCreate3
         [SerializeField] private float correctScaleBoost = 0.08f;
         [SerializeField] private float correctPulseDuration = 0.26f;
         [SerializeField] private float hintWhiteLift = 0.35f;
-        [SerializeField] private float hintScaleBoost = 0.06f;
         [SerializeField] private float hintPulseDuration = 0.22f;
 
         private Color[] baseImageColors = System.Array.Empty<Color>();
@@ -127,7 +136,7 @@ namespace GameCreate3
             RestoreBaseState();
         }
 
-        public void PlayHintPulse()
+        public void PlayHintPulse(PaletteColorOption option)
         {
             if (!isActiveAndEnabled)
             {
@@ -139,7 +148,7 @@ namespace GameCreate3
                 StopCoroutine(hintRoutine);
             }
 
-            hintRoutine = StartCoroutine(HintPulseRoutine());
+            hintRoutine = StartCoroutine(HintPulseRoutine(option));
         }
 
         private IEnumerator PulseCorrectTarget()
@@ -159,21 +168,15 @@ namespace GameCreate3
             pulseRoutine = null;
         }
 
-        private IEnumerator HintPulseRoutine()
+        private IEnumerator HintPulseRoutine(PaletteColorOption option)
         {
-            var currentImageColors = new Color[images.Length];
-            var currentSpriteColors = new Color[spriteRenderers.Length];
-            var currentScale = pulseRoot != null ? pulseRoot.localScale : Vector3.one;
+            var currentSnapshot = CaptureCurrentState();
+            ApplyHintPreview(option);
 
-            for (var i = 0; i < images.Length; i++)
-            {
-                currentImageColors[i] = images[i] != null ? images[i].color : Color.white;
-            }
-
-            for (var i = 0; i < spriteRenderers.Length; i++)
-            {
-                currentSpriteColors[i] = spriteRenderers[i] != null ? spriteRenderers[i].color : Color.white;
-            }
+            var previewSnapshot = CaptureCurrentState();
+            var previewColor = ResolveHintPreviewColor(option);
+            var previewHighlight = Color.Lerp(previewColor, Color.white, hintWhiteLift);
+            previewHighlight.a = 1f;
 
             var elapsed = 0f;
             while (elapsed < hintPulseDuration)
@@ -186,7 +189,12 @@ namespace GameCreate3
                 {
                     if (images[i] != null)
                     {
-                        images[i].color = Color.Lerp(currentImageColors[i], Color.white, hintWhiteLift * wave);
+                        var tintedColor = previewHighlight;
+                        tintedColor.a = i < previewSnapshot.imageColors.Length ? previewSnapshot.imageColors[i].a : 1f;
+                        images[i].color = Color.Lerp(
+                            i < previewSnapshot.imageColors.Length ? previewSnapshot.imageColors[i] : Color.white,
+                            tintedColor,
+                            wave);
                     }
                 }
 
@@ -194,40 +202,87 @@ namespace GameCreate3
                 {
                     if (spriteRenderers[i] != null)
                     {
-                        spriteRenderers[i].color = Color.Lerp(currentSpriteColors[i], Color.white, hintWhiteLift * wave);
+                        var tintedColor = previewHighlight;
+                        tintedColor.a = i < previewSnapshot.spriteColors.Length ? previewSnapshot.spriteColors[i].a : 1f;
+                        spriteRenderers[i].color = Color.Lerp(
+                            i < previewSnapshot.spriteColors.Length ? previewSnapshot.spriteColors[i] : Color.white,
+                            tintedColor,
+                            wave);
                     }
-                }
-
-                if (pulseRoot != null)
-                {
-                    pulseRoot.localScale = currentScale * (1f + hintScaleBoost * wave);
                 }
 
                 yield return null;
             }
 
-            for (var i = 0; i < images.Length; i++)
-            {
-                if (images[i] != null)
-                {
-                    images[i].color = currentImageColors[i];
-                }
-            }
-
-            for (var i = 0; i < spriteRenderers.Length; i++)
-            {
-                if (spriteRenderers[i] != null)
-                {
-                    spriteRenderers[i].color = currentSpriteColors[i];
-                }
-            }
-
-            if (pulseRoot != null)
-            {
-                pulseRoot.localScale = currentScale;
-            }
-
+            RestoreSnapshot(currentSnapshot);
             hintRoutine = null;
+        }
+
+        private static Color ResolveHintPreviewColor(PaletteColorOption option)
+        {
+            if (option.paletteSprite != null && TrySampleSpriteColor(option.paletteSprite, out var spriteColor))
+            {
+                return spriteColor;
+            }
+
+            if (option.fallbackColor.a > 0.001f || option.fallbackColor.maxColorComponent > 0.001f)
+            {
+                var fallbackColor = option.fallbackColor;
+                fallbackColor.a = 1f;
+                return fallbackColor;
+            }
+
+            return Color.white;
+        }
+
+        private static bool TrySampleSpriteColor(Sprite sprite, out Color sampledColor)
+        {
+            sampledColor = default;
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            var texture = sprite.texture;
+            if (texture == null || !texture.isReadable)
+            {
+                return false;
+            }
+
+            var rect = sprite.rect;
+            var startX = Mathf.RoundToInt(rect.xMin);
+            var endX = Mathf.RoundToInt(rect.xMax);
+            var startY = Mathf.RoundToInt(rect.yMin);
+            var endY = Mathf.RoundToInt(rect.yMax);
+            var stepX = Mathf.Max(1, Mathf.RoundToInt(rect.width / 8f));
+            var stepY = Mathf.Max(1, Mathf.RoundToInt(rect.height / 8f));
+
+            var weightedSum = Vector4.zero;
+            var alphaWeight = 0f;
+
+            for (var y = startY; y < endY; y += stepY)
+            {
+                for (var x = startX; x < endX; x += stepX)
+                {
+                    var pixel = texture.GetPixel(x, y);
+                    if (pixel.a <= 0.05f)
+                    {
+                        continue;
+                    }
+
+                    weightedSum += (Vector4)pixel * pixel.a;
+                    alphaWeight += pixel.a;
+                }
+            }
+
+            if (alphaWeight <= 0.001f)
+            {
+                return false;
+            }
+
+            sampledColor = weightedSum / alphaWeight;
+            sampledColor.a = 1f;
+            return true;
         }
 
         private void CacheBaseState(bool forceRefresh = false)
@@ -327,6 +382,97 @@ namespace GameCreate3
             }
         }
 
+        private VisualSnapshot CaptureCurrentState()
+        {
+            var snapshot = new VisualSnapshot
+            {
+                imageColors = new Color[images.Length],
+                spriteColors = new Color[spriteRenderers.Length],
+                imageSprites = new Sprite[images.Length],
+                rendererSprites = new Sprite[spriteRenderers.Length],
+                activeStates = new bool[trackedVariantObjects.Length],
+                scale = pulseRoot != null ? pulseRoot.localScale : Vector3.one
+            };
+
+            for (var i = 0; i < images.Length; i++)
+            {
+                if (images[i] == null)
+                {
+                    continue;
+                }
+
+                snapshot.imageColors[i] = images[i].color;
+                snapshot.imageSprites[i] = images[i].sprite;
+            }
+
+            for (var i = 0; i < spriteRenderers.Length; i++)
+            {
+                if (spriteRenderers[i] == null)
+                {
+                    continue;
+                }
+
+                snapshot.spriteColors[i] = spriteRenderers[i].color;
+                snapshot.rendererSprites[i] = spriteRenderers[i].sprite;
+            }
+
+            for (var i = 0; i < trackedVariantObjects.Length; i++)
+            {
+                snapshot.activeStates[i] = trackedVariantObjects[i] != null && trackedVariantObjects[i].activeSelf;
+            }
+
+            return snapshot;
+        }
+
+        private void RestoreSnapshot(VisualSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < images.Length; i++)
+            {
+                if (images[i] == null || i >= snapshot.imageColors.Length)
+                {
+                    continue;
+                }
+
+                images[i].color = snapshot.imageColors[i];
+                if (i < snapshot.imageSprites.Length)
+                {
+                    images[i].sprite = snapshot.imageSprites[i];
+                }
+            }
+
+            for (var i = 0; i < spriteRenderers.Length; i++)
+            {
+                if (spriteRenderers[i] == null || i >= snapshot.spriteColors.Length)
+                {
+                    continue;
+                }
+
+                spriteRenderers[i].color = snapshot.spriteColors[i];
+                if (i < snapshot.rendererSprites.Length)
+                {
+                    spriteRenderers[i].sprite = snapshot.rendererSprites[i];
+                }
+            }
+
+            for (var i = 0; i < trackedVariantObjects.Length && i < snapshot.activeStates.Length; i++)
+            {
+                if (trackedVariantObjects[i] != null)
+                {
+                    trackedVariantObjects[i].SetActive(snapshot.activeStates[i]);
+                }
+            }
+
+            if (pulseRoot != null)
+            {
+                pulseRoot.localScale = snapshot.scale;
+            }
+        }
+
         private bool ApplyConfiguredVariant(PaletteColorOption option)
         {
             if (!option.IsValid || variants == null || variants.Count == 0)
@@ -394,6 +540,22 @@ namespace GameCreate3
             }
 
             return true;
+        }
+
+        private void ApplyHintPreview(PaletteColorOption option)
+        {
+            if (ApplyConfiguredVariant(option))
+            {
+                return;
+            }
+
+            if (option.paletteSprite != null)
+            {
+                ApplySpriteFallback(option.paletteSprite, true);
+                return;
+            }
+
+            ApplyTintFallback(option.fallbackColor, false);
         }
 
         private void ApplyTintFallback(Color color, bool isCorrect)

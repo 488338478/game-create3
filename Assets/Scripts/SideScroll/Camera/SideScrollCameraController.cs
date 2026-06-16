@@ -13,8 +13,15 @@ namespace GameCreate3
         [SerializeField, Range(0f, 0.4f)] private float deadZoneHeight = 0.12f;
         [SerializeField, Range(0.4f, 1f)] private float softZoneWidth = 0.82f;
         [SerializeField, Range(0.4f, 1f)] private float softZoneHeight = 0.82f;
+        [Header("Scene Overrides")]
+        [SerializeField] private bool lockVerticalFollowToInitialTarget;
 
         private CameraConfig currentZoneConfig;
+        private Transform originalFollowTarget;
+        private Transform verticalFollowProxy;
+        private bool verticalLockCaptured;
+        private float lockedFollowY;
+
         public CameraConfig CurrentConfig => currentZoneConfig != null ? currentZoneConfig : defaultConfig;
         public CinemachineVirtualCamera VirtualCamera
         {
@@ -46,14 +53,48 @@ namespace GameCreate3
             {
                 ApplyConfig(defaultConfig);
             }
+
+            RefreshFollowBinding();
+        }
+
+        private void LateUpdate()
+        {
+            RefreshFollowBinding();
         }
 
         public void SetFollowTarget(Transform target)
         {
-            if (virtualCamera != null && virtualCamera.Follow == null)
+            ResolveVirtualCamera();
+            originalFollowTarget = target;
+            verticalLockCaptured = false;
+
+            if (virtualCamera == null)
             {
-                virtualCamera.Follow = target;
+                return;
             }
+
+            if (!lockVerticalFollowToInitialTarget)
+            {
+                if (virtualCamera.Follow == null || virtualCamera.Follow == verticalFollowProxy)
+                {
+                    virtualCamera.Follow = target;
+                }
+                return;
+            }
+
+            if (target == null)
+            {
+                if (virtualCamera.Follow == verticalFollowProxy)
+                {
+                    virtualCamera.Follow = null;
+                }
+                return;
+            }
+
+            EnsureVerticalFollowProxy();
+            CaptureVerticalLock(target);
+            UpdateVerticalFollowProxy();
+            virtualCamera.Follow = verticalFollowProxy;
         }
 
         public void EnsureConfinerBinding()
@@ -161,6 +202,72 @@ namespace GameCreate3
             {
                 virtualCamera = GetComponentInChildren<CinemachineVirtualCamera>(true);
             }
+        }
+
+        private void RefreshFollowBinding()
+        {
+            ResolveVirtualCamera();
+            if (virtualCamera == null || !lockVerticalFollowToInitialTarget)
+            {
+                return;
+            }
+
+            if (originalFollowTarget == null && virtualCamera.Follow != null && virtualCamera.Follow != verticalFollowProxy)
+            {
+                originalFollowTarget = virtualCamera.Follow;
+                verticalLockCaptured = false;
+            }
+
+            if (originalFollowTarget == null)
+            {
+                return;
+            }
+
+            EnsureVerticalFollowProxy();
+            if (!verticalLockCaptured)
+            {
+                CaptureVerticalLock(originalFollowTarget);
+            }
+
+            UpdateVerticalFollowProxy();
+            if (virtualCamera.Follow != verticalFollowProxy)
+            {
+                virtualCamera.Follow = verticalFollowProxy;
+            }
+        }
+
+        private void EnsureVerticalFollowProxy()
+        {
+            if (verticalFollowProxy != null)
+            {
+                return;
+            }
+
+            var proxyObject = new GameObject("VerticalFollowProxy");
+            proxyObject.transform.SetParent(transform, false);
+            verticalFollowProxy = proxyObject.transform;
+        }
+
+        private void CaptureVerticalLock(Transform target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            lockedFollowY = target.position.y;
+            verticalLockCaptured = true;
+        }
+
+        private void UpdateVerticalFollowProxy()
+        {
+            if (verticalFollowProxy == null || originalFollowTarget == null)
+            {
+                return;
+            }
+
+            var targetPosition = originalFollowTarget.position;
+            verticalFollowProxy.position = new Vector3(targetPosition.x, lockedFollowY, targetPosition.z);
         }
 
         private static float ClampOrthographicSizeToBounds(Collider2D bounds, float requestedSize)

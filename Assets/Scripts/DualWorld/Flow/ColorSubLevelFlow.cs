@@ -36,10 +36,12 @@ namespace GameCreate3.DualWorld
         private int realityFailCount;
         private float realityTaskStartTime;
         private global::GameCreate3.PaletteColorOption currentDreamPalette;
+        private DreamColorHintRouter dreamHintRouter;
 
         protected override void OnInitialized()
         {
             ResolveRuntimeReferences();
+            ResolveHintRouter();
 
             if (realityTask != null) realityTask.OnSubmitAttempted += HandleRealityTaskSubmit;
             if (dreamCollector != null) dreamCollector.Completed += HandleDreamCollectorCompleted;
@@ -82,6 +84,7 @@ namespace GameCreate3.DualWorld
                     dreamCollector?.ResetStage();
                     dreamCollector?.SetInteractive(dreamStartsUnlocked);
                     realityTask?.SetDreamPaletteEnabled(dreamStartsUnlocked);
+                    dreamHintRouter?.RefreshMutedState();
                     Workspace?.PlayerController?.SetInputEnabled(true);
                     if (dreamStartsUnlocked)
                     {
@@ -307,6 +310,26 @@ namespace GameCreate3.DualWorld
                 var meteorRoot = dreamRoot != null ? dreamRoot.transform : dreamCollector.transform;
                 dreamCollector.SetMeteorContainer(meteorRoot);
             }
+        }
+
+        private void ResolveHintRouter()
+        {
+            if (Workspace == null)
+            {
+                return;
+            }
+
+            if (dreamHintRouter == null)
+            {
+                dreamHintRouter = Workspace.GetComponent<DreamColorHintRouter>();
+                if (dreamHintRouter == null)
+                {
+                    dreamHintRouter = Workspace.gameObject.AddComponent<DreamColorHintRouter>();
+                }
+            }
+
+            var alignmentTask = Workspace.GetComponentInChildren<RealityAlignmentTask>(true);
+            dreamHintRouter.Initialize(Workspace, dreamCollector, realityTask, alignmentTask);
         }
 
         private void TrackCollectedDreamColor(global::GameCreate3.PaletteColorOption option)

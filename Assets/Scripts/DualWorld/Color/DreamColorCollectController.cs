@@ -46,6 +46,7 @@ namespace GameCreate3
         [SerializeField] private int maxActiveMeteors = 4;
         [SerializeField] private float baseMeteorFallSpeed = 2.8f;
         [SerializeField] private float meteorFallAcceleration = 1.9f;
+        [SerializeField] private float runtimeMeteorColliderRadius = 0.18f;
         [SerializeField] private float meteorGroundY = -3.2f;
         [SerializeField] private LayerMask meteorGroundMask = ~0;
         [SerializeField] private float meteorGroundProbePadding = 0.08f;
@@ -614,7 +615,7 @@ namespace GameCreate3
             spriteRenderer.sortingOrder = 24;
 
             var collider = visual.AddComponent<CircleCollider2D>();
-            collider.radius = 0.35f;
+            collider.radius = Mathf.Max(0.02f, runtimeMeteorColliderRadius);
 
             var pickup = root.AddComponent<DreamColorPickup>();
             pickup.ReturnToPool();

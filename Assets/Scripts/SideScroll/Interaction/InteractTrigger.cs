@@ -15,6 +15,8 @@ namespace GameCreate3
 
         private bool consumed;
 
+        public string InteractId => interactId;
+
         public override bool CanInteract(GameObject interactor)
         {
             return base.CanInteract(interactor) && (!oneShot || !consumed);

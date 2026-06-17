@@ -460,7 +460,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   playBgmOnAwake: 1
-  defaultBgmId: 
+  defaultBgmClip: {fileID: 0}
   defaultBgmLoop: 1
   defaultBgmVolumeScale: 1
   bgmSource: {fileID: 2568180548510230053}

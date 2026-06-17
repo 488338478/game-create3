@@ -1,57 +1,14 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace GameCreate3
 {
+    /// <summary>
+    /// 原型演示协调器 —— 仅用于旧原型场景 Chapter2Prototype。
+    /// 颜色子关已迁移至 DualWorld/Color/ 和 DualWorld/Flow/ColorSubLevelFlow，此处只保留阶段一演示逻辑。
+    /// </summary>
     public sealed class PrototypeDemoCoordinator : MonoBehaviour
     {
-        public readonly struct ColorSubmitResult
-        {
-            public ColorSubmitResult(bool success)
-            {
-                this.success = success;
-            }
-
-            public bool success { get; }
-        }
-
-        public sealed class ColorPuzzleController : MonoBehaviour
-        {
-            public event System.Action<ColorSubmitResult> OnSubmitAttempted;
-
-            public void ResetPuzzle()
-            {
-                _ = OnSubmitAttempted;
-            }
-
-            public void SetDreamPaletteEnabled(bool enabled)
-            {
-            }
-
-            public void SetDreamPaletteColors(IReadOnlyList<PaletteColorOption> options)
-            {
-            }
-
-            public void SetInteractable(bool interactable)
-            {
-            }
-        }
-
-        public sealed class DreamColorCollectController : MonoBehaviour
-        {
-            public event System.Action<IReadOnlyList<PaletteColorOption>> Completed;
-
-            public void ResetStage()
-            {
-                _ = Completed;
-            }
-
-            public void SetInteractive(bool interactive)
-            {
-            }
-        }
-
         [Header("Camera")]
         [SerializeField] private Camera worldCamera;
         [SerializeField] private SideScrollCameraFollow cameraFollow;
@@ -82,8 +39,6 @@ namespace GameCreate3
         [SerializeField] private LayoutPuzzleController stage1RightController;
         [SerializeField] private DreamGoalTrigger stage1DreamController;
         [SerializeField] private LeftWorldActivationController stage1LeftController;
-        [SerializeField] private PrototypeDemoCoordinator.ColorPuzzleController stage2RightController;
-        [SerializeField] private PrototypeDemoCoordinator.DreamColorCollectController stage2LeftController;
 
         private ChapterState currentState;
         private bool subscriptionsBound;
@@ -124,9 +79,7 @@ namespace GameCreate3
             GameObject runtimeStage2RightRoot,
             LayoutPuzzleController runtimeStage1RightController,
             DreamGoalTrigger runtimeStage1DreamController,
-            LeftWorldActivationController runtimeStage1LeftController,
-            PrototypeDemoCoordinator.ColorPuzzleController runtimeStage2RightController,
-            PrototypeDemoCoordinator.DreamColorCollectController runtimeStage2LeftController)
+            LeftWorldActivationController runtimeStage1LeftController)
         {
             worldCamera = runtimeWorldCamera;
             cameraFollow = runtimeCameraFollow;
@@ -149,8 +102,6 @@ namespace GameCreate3
             stage1RightController = runtimeStage1RightController;
             stage1DreamController = runtimeStage1DreamController;
             stage1LeftController = runtimeStage1LeftController;
-            stage2RightController = runtimeStage2RightController;
-            stage2LeftController = runtimeStage2LeftController;
 
             if (isActiveAndEnabled)
             {
@@ -167,8 +118,6 @@ namespace GameCreate3
 
             stage1RightController?.ResetPuzzle();
             stage1DreamController?.ResetGoal();
-            stage2RightController?.ResetPuzzle();
-            stage2LeftController?.ResetStage();
             SetStage1Active(true);
             SetStage2Active(false);
             MovePlayerTo(stage1Spawn);
@@ -199,7 +148,7 @@ namespace GameCreate3
                     }
 
                     currentState = ChapterState.Stage1Complete;
-                    EnterStage2();
+                    FinishChapter();
                     break;
             }
         }
@@ -219,63 +168,6 @@ namespace GameCreate3
             currentState = ChapterState.Stage1RightAssisted;
         }
 
-        private void EnterStage2()
-        {
-            SetStage1Active(false);
-            SetStage2Active(true);
-            MovePlayerTo(stage2Spawn);
-            ApplyLayout(splitView: false);
-            ApplyStageLabel("第二章 阶段二：右屏换图");
-            ApplyLeftState(false, "等待右屏再次卡住后解锁");
-            ApplyRightState(true, "先试着替换组件并提交");
-            stage2RightController?.SetDreamPaletteEnabled(false);
-            currentState = ChapterState.Stage2RightFullScreen;
-        }
-
-        private void HandleStage2Submit(PrototypeDemoCoordinator.ColorSubmitResult result)
-        {
-            switch (currentState)
-            {
-                case ChapterState.Stage2RightFullScreen:
-                    ApplyLayout(splitView: true);
-                    ApplyStageLabel("阶段二：进入梦境，收集正确图卡");
-                    if (stage2LeftController != null)
-                    {
-                        stage2LeftController.SetInteractive(true);
-                    }
-                    ApplyLeftState(true, "收集正确图卡");
-                    ApplyRightState(false, "右屏暂时冻结，先去梦境寻找正确样式");
-                    currentState = ChapterState.Stage2LeftUnlocked;
-                    break;
-
-                case ChapterState.Stage2RightAssisted:
-                    if (!result.success)
-                    {
-                        ApplyStageLabel("阶段二：使用梦境图卡完成替换");
-                        return;
-                    }
-
-                    currentState = ChapterState.Stage2Complete;
-                    FinishChapter();
-                    break;
-            }
-        }
-
-        private void HandleStage2DreamComplete(IReadOnlyList<PaletteColorOption> colors)
-        {
-            if (currentState != ChapterState.Stage2LeftUnlocked)
-            {
-                return;
-            }
-
-            stage2RightController?.SetDreamPaletteColors(colors);
-            stage2RightController?.SetDreamPaletteEnabled(true);
-            ApplyStageLabel("阶段二：回到右屏使用梦境图卡");
-            ApplyLeftState(true, "梦境仍可自由移动");
-            ApplyRightState(true, "梦境图卡已解锁，选择图卡并替换目标组件");
-            currentState = ChapterState.Stage2RightAssisted;
-        }
-
         private void FinishChapter()
         {
             ApplyLayout(splitView: true);
@@ -284,7 +176,7 @@ namespace GameCreate3
             ApplyRightState(false, "本章完成");
             if (completionLabel != null)
             {
-                completionLabel.text = "第二章大原型已完成";
+                completionLabel.text = "第二章原型已完成";
                 completionLabel.gameObject.SetActive(true);
             }
 
@@ -305,16 +197,6 @@ namespace GameCreate3
                 stage1DreamController.Completed += HandleStage1DreamComplete;
             }
 
-            if (stage2RightController != null)
-            {
-                stage2RightController.OnSubmitAttempted += HandleStage2Submit;
-            }
-
-            if (stage2LeftController != null)
-            {
-                stage2LeftController.Completed += HandleStage2DreamComplete;
-            }
-
             subscriptionsBound = true;
         }
 
@@ -333,16 +215,6 @@ namespace GameCreate3
             if (stage1DreamController != null)
             {
                 stage1DreamController.Completed -= HandleStage1DreamComplete;
-            }
-
-            if (stage2RightController != null)
-            {
-                stage2RightController.OnSubmitAttempted -= HandleStage2Submit;
-            }
-
-            if (stage2LeftController != null)
-            {
-                stage2LeftController.Completed -= HandleStage2DreamComplete;
             }
 
             subscriptionsBound = false;
@@ -403,11 +275,6 @@ namespace GameCreate3
                 stage1LeftController.SetInteractive(interactable);
             }
 
-            if (stage2LeftController != null && stage2LeftRoot != null && stage2LeftRoot.activeSelf)
-            {
-                stage2LeftController.SetInteractive(interactable);
-            }
-
             if (leftMask != null)
             {
                 leftMask.color = interactable
@@ -427,11 +294,6 @@ namespace GameCreate3
             if (stage1RightRoot != null && stage1RightRoot.activeSelf)
             {
                 stage1RightController?.SetInteractable(interactable);
-            }
-
-            if (stage2RightRoot != null && stage2RightRoot.activeSelf)
-            {
-                stage2RightController?.SetInteractable(interactable);
             }
 
             if (rightMask != null)
@@ -496,10 +358,6 @@ namespace GameCreate3
             Stage1LeftUnlocked,
             Stage1RightAssisted,
             Stage1Complete,
-            Stage2RightFullScreen,
-            Stage2LeftUnlocked,
-            Stage2RightAssisted,
-            Stage2Complete,
             ChapterComplete
         }
     }

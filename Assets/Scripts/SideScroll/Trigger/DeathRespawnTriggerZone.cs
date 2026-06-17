@@ -27,12 +27,16 @@ namespace GameCreate3
         [SerializeField] private float arcHeight = 2.2f;
         [SerializeField] private float waveAmplitude = 0.22f;
         [SerializeField] private float waveCyclesPerSecond = 4f;
+        [SerializeField] private float waveAmplitudeMin = 0.04f;
 
         [Header("Camera")]
         [SerializeField] private CinemachineVirtualCamera virtualCamera;
         [SerializeField] private Transform cameraFollowProxy;
         [SerializeField] private float cameraBlendToCatCarDuration = 0.35f;
         [SerializeField] private float cameraBlendToPlayerDuration = 0.35f;
+
+        [Header("Respawn bubble")]
+        [SerializeField] private Animator respawnBubble;
 
         private Coroutine activeRoutine;
         private Coroutine activeCameraBlend;
@@ -106,6 +110,12 @@ namespace GameCreate3
 
             TriggerAnimation(player, playerAnimator, deathTrigger);
 
+            if (respawnBubble != null)
+            {
+                respawnBubble.gameObject.SetActive(true);
+                respawnBubble.Play("bubble_split", 0, 0f);
+            }
+
             StartCameraBlend(cameraToBlend, catCar, cameraBlendToCatCarDuration);
 
             var pickupPoint = playerTransform.position;
@@ -123,6 +133,7 @@ namespace GameCreate3
 
             var target = ResolveRespawnTarget(playerTransform.position);
             var start = HasCarrierSlot ? catCarRenderSlot.position : playerTransform.position;
+
             yield return MovePlayerToTarget(playerTransform, start, target);
 
             playerTransform.position = target;
@@ -150,6 +161,11 @@ namespace GameCreate3
             TriggerAnimation(player, playerAnimator, respawnTrigger);
             RestoreCameraFollow(playerTransform);
             RestoreCatCar(catCarHomePosition);
+
+            if (respawnBubble != null)
+            {
+                respawnBubble.gameObject.SetActive(false);
+            }
 
             activeRoutine = null;
         }
@@ -311,7 +327,7 @@ namespace GameCreate3
 
             while (elapsed < safeDuration)
             {
-                var offsetY = EvaluateWaveOffset(elapsed, 1f);
+                var offsetY = Mathf.Sin(elapsed * Mathf.PI * 2f * waveCyclesPerSecond) * waveAmplitudeMin;
                 if (catCar != null)
                 {
                     catCar.position = basePosition + Vector3.up * offsetY;
@@ -400,7 +416,7 @@ namespace GameCreate3
             var basePosition = Vector3.Lerp(start, end, Smooth01(t));
             var arcFactor = 4f * t * (1f - t);
             var arc = arcHeight * arcFactor;
-            var wave = EvaluateWaveOffset(elapsed, arcFactor);
+            var wave = Mathf.Sin(elapsed * Mathf.PI * 2f * waveCyclesPerSecond) * waveAmplitudeMin * arcFactor;
             basePosition.y += arc + wave;
             return basePosition;
         }
@@ -408,13 +424,9 @@ namespace GameCreate3
         private Vector3 EvaluateWave(Vector3 start, Vector3 end, float t, float elapsed)
         {
             var basePosition = Vector3.Lerp(start, end, Smooth01(t));
-            basePosition.y += EvaluateWaveOffset(elapsed, 1f);
+            var amplitude = Mathf.Lerp(waveAmplitude, waveAmplitudeMin, t);
+            basePosition.y += Mathf.Sin(elapsed * Mathf.PI * 2f * waveCyclesPerSecond) * amplitude;
             return basePosition;
-        }
-
-        private float EvaluateWaveOffset(float elapsed, float amplitudeScale)
-        {
-            return Mathf.Sin(elapsed * Mathf.PI * 2f * waveCyclesPerSecond) * waveAmplitude * amplitudeScale;
         }
 
         private static float Smooth01(float value)
@@ -449,5 +461,6 @@ namespace GameCreate3
 
             return false;
         }
+
     }
 }

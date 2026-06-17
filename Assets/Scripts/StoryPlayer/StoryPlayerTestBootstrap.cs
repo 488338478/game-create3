@@ -85,7 +85,8 @@ namespace GameCreate3.StoryPlayer
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080);
                 scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-                scaler.matchWidthOrHeight = 1f;
+                // 按宽度匹配：16:10 等更高屏幕下横向布局与 16:9 像素一致，多出的高度仅作留白。
+                scaler.matchWidthOrHeight = 0f;
 
                 canvasObj.AddComponent<GraphicRaycaster>();
             }

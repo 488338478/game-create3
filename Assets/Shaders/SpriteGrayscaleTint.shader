@@ -48,26 +48,62 @@ Shader "Game/Sprites/GrayscaleTint"
             fixed4 _FlashColor;
             fixed _FlashAmount;
 
+            // ── sRGB ↔ Linear ──────────────────────────────
+            fixed3 SrgbToLinear(fixed3 c)
+            {
+                // IEC 61966-2-1: 分两段，避免暗部偏色
+                return (c <= 0.04045) ? (c / 12.92) : pow((c + 0.055) / 1.055, 2.4);
+            }
+
+            fixed3 LinearToSrgb(fixed3 c)
+            {
+                return (c <= 0.0031308) ? (c * 12.92) : (1.055 * pow(c, 1.0 / 2.4) - 0.055);
+            }
+
             fixed4 frag(v2f IN) : SV_Target
             {
                 fixed4 color = SampleSpriteTexture(IN.texcoord) * IN.color;
-                fixed gray = dot(color.rgb, fixed3(0.299, 0.587, 0.114));
                 fixed fade = saturate(_GrayscaleAmount);
-                fixed3 grayscaleRgb = gray.xxx;
 
-                // 目标是“褪色”而不是“黑白”：
-                // 1. 明显降低饱和度
-                // 2. 轻微降低亮度
-                // 3. 始终保留原图颜色关系，不往纯白推
-                fixed desaturateAmount = fade * 0.65;
-                fixed brightnessScale = lerp(1.0, _Brightness, fade);
-                fixed3 mutedRgb = lerp(color.rgb, grayscaleRgb, desaturateAmount) * brightnessScale;
+                // ── 1. sRGB → 线性空间 ──
+                fixed3 linRgb = SrgbToLinear(color.rgb);
 
-                // 闪烁提示仍然按目标色覆盖，但保留一点原图明暗关系。
-                fixed3 flashBaseRgb = lerp(mutedRgb, grayscaleRgb, 0.35);
+                // ── 2. CIE 1931 相对亮度 ──
+                //     绿 71.52% + 红 21.26% + 蓝 7.22%
+                //     比 BT.601(0.299,0.587,0.114) 更贴合人眼光谱
+                fixed luminance = dot(linRgb, fixed3(0.2126, 0.7152, 0.0722));
+
+                // ── 3. Helmholtz–Kohlrausch 补偿 ──
+                //     高饱和色感知亮度 > 物理亮度，最多提亮 12%
+                fixed maxC = max(linRgb.r, max(linRgb.g, linRgb.b));
+                fixed minC = min(linRgb.r, min(linRgb.g, linRgb.b));
+                fixed saturation = (maxC > 0.0001) ? ((maxC - minC) / maxC) : 0.0;
+                fixed perceived = luminance * (1.0 + saturation * 0.12);
+
+                // ── 4. 柔和 S 曲线（中间调对比保留）──
+                //     y = x + contrast * (x - x²) * (0.5 - x) * 4
+                //     中间调 (0.25/0.75) 处 ±contrast，黑/白/中灰点不变
+                fixed sCurve = perceived + 0.06
+                    * (perceived - perceived * perceived)
+                    * (0.5 - perceived) * 4.0;
+
+                fixed grayLinear = saturate(sCurve);
+
+                // ── 5. 线性 → sRGB ──
+                fixed graySRgb = LinearToSrgb(fixed3(grayLinear, grayLinear, grayLinear)).r;
+
+                // ── 6. lerp 原色 → 灰度 (t = fade) ──
+                fixed3 mutedRgb = lerp(color.rgb, graySRgb.xxx, fade);
+
+                // ── 亮度微调（保留 _Brightness 供外部控制）──
+                mutedRgb *= lerp(1.0, _Brightness, fade);
+
+                // ── 7. 闪烁提示叠加（保留原逻辑）──
+                fixed3 flashBaseRgb = lerp(mutedRgb, graySRgb.xxx, 0.35);
                 fixed3 flashRgb = flashBaseRgb * _FlashColor.rgb;
                 fixed3 finalRgb = lerp(mutedRgb, flashRgb, saturate(_FlashAmount));
                 finalRgb *= color.a;
+
                 return fixed4(finalRgb, color.a);
             }
             ENDCG

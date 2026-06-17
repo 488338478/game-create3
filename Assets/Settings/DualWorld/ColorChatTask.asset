@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 857037052abcd9f409bfc5960a8290bd, type: 3}
+  m_Name: ColorChatTask
+  m_EditorClassIdentifier:
+  taskId: color.right
+  title: "配色任务"
+  initialMessage:
+    text: "排版可以了，写内容吧。颜色别给我整得老气横秋的，年轻点。"
+    sticker: {fileID: 0}
+  highlightInitial: 0
+  failureMessages:
+  - text: "写的什么玩意，审美呢？"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "211就这水平？"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "你是老太太吗，年轻点！"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "这配色谁教你的，土得掉渣。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "我说了要年轻化，你这是年轻吗？我看像老干部。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "颜色是用来吸睛的，不是用来催眠的。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "别跟我说这是流行色，流行色不是乱窜。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "重来。对比度、饱和度、明度，三样都不对。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  - text: "别老是换一两个色戳一下就交，要做就做整套。"
+    sticker: {fileID: 21300000, guid: 26afbe578e54d9c44aed0c9787251f50, type: 3}
+  - text: "前面那么多版你自己没看吗？越改越糟。"
+    sticker: {fileID: 21300000, guid: ae6c857d94eb30346be17075b630d170, type: 3}
+  successMessages:
+  - text: "还得是高材生，可以可以。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  - text: "这版顺眼多了，早这样不就省事了。"
+    sticker: {fileID: 21300000, guid: 2f8312bed5ef921429b792a4a6025919, type: 3}
+  - text: "颜色这回对了，发吧。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  - text: "这组配色跟品牌调性对上了，过。"
+    sticker: {fileID: 21300000, guid: 2f8312bed5ef921429b792a4a6025919, type: 3}
+  - text: "终于像样了，存一下。记住这感觉。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  - text: "这个方向就对了，别下次又给我打回原形。"
+    sticker: {fileID: 21300000, guid: 2f8312bed5ef921429b792a4a6025919, type: 3}
+  - text: "行，这次没让我白盯着。干得不错。"
+    sticker: {fileID: 21300000, guid: c5e9ae24759b4cd4099dfec781ad02d5, type: 3}
+  playerSubmitLines:
+  - "老板，我改了一版，您看看。"
+  - "这次我把颜色重新顺过了，您再看一眼？"
+  - "我又调了一遍，这版会不会好点？"
+  - "按您的意思往年轻一点改了，您看看行不行。"
+  - "我再提一次，您帮我过下。"
+  - "饱和度和明度我都调了，这次应该稳了吧？"
+  - "我参考了您上次说的方向，您再看看……"
+  - "对比度我拉大了，不会再像上一版那样了。"
+  - "这版我真的很认真，您看能过吗？"
+  - "最后这版，您就看一眼……"
+  highlightFailure: 0
+  highlightSuccess: 1

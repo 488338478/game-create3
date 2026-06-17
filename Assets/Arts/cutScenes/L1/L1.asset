@@ -19,7 +19,7 @@ MonoBehaviour:
     backgroundImage: {fileID: 21300000, guid: ca3d110f2b4c23a4b8b4b79ec7f278c7, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks: []
-    displayDuration: 0
+    displayDuration: 3
     waitForInput: 0
     elements: []
     transitionIn: 1
@@ -82,7 +82,7 @@ MonoBehaviour:
       speakerFontSize: 0
       speakerColor: {r: 0, g: 0, b: 0, a: 0}
       speakerAlignment: 0
-    displayDuration: 0
+    displayDuration: 3
     waitForInput: 0
     elements: []
     transitionIn: 1
@@ -100,7 +100,7 @@ MonoBehaviour:
     backgroundImage: {fileID: 21300000, guid: 062d8aaf738bf004a99d254aecd8c37e, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks: []
-    displayDuration: 0
+    displayDuration: 7
     waitForInput: 0
     elements: []
     transitionIn: 1
@@ -121,7 +121,7 @@ MonoBehaviour:
     backgroundImage: {fileID: 21300000, guid: 1683e775d1c7dec4697190e2c673bf6a, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks: []
-    displayDuration: 0
+    displayDuration: 7
     waitForInput: 0
     elements: []
     transitionIn: 1
@@ -142,7 +142,7 @@ MonoBehaviour:
     backgroundImage: {fileID: 21300000, guid: 622725cc44995fe43aee6fb7f63c97c4, type: 3}
     foregroundImage: {fileID: 0}
     textBlocks: []
-    displayDuration: 0
+    displayDuration: 5
     waitForInput: 0
     elements: []
     transitionIn: 1
@@ -160,4 +160,4 @@ MonoBehaviour:
   autoAdvanceDelay: 3
   sequenceFont: {fileID: 11400000, guid: ef9eb6d1111e4ed4896bd70d6b1322ad, type: 2}
   endCallbackType: 1
-  endCallbackParameter: Level2
+  endCallbackParameter: Level1.1

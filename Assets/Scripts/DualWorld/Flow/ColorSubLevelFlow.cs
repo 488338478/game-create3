@@ -20,9 +20,6 @@ namespace GameCreate3.DualWorld
         [SerializeField] private bool autoCompleteAfterRealitySubmit = true;
         [SerializeField] private string exitWorkspaceEventId = "color_exit";
 
-        [Header("Chat")]
-        [SerializeField] private ChatTaskDefinition taskDefinition;
-
         [Header("Tuning")]
         [SerializeField] private float blockedToDreamDelaySec = 0.75f;
         [SerializeField] private bool dreamStartsUnlocked = true;
@@ -30,7 +27,8 @@ namespace GameCreate3.DualWorld
         public GameObject RealityRoot => realityRoot;
         public GameObject DreamRoot => dreamRoot;
 
-        private readonly List<global::GameCreate3.PaletteColorOption> collectedDreamColors = new List<global::GameCreate3.PaletteColorOption>();
+        private readonly List<global::GameCreate3.PaletteColorOption> collectedDreamColors
+            = new List<global::GameCreate3.PaletteColorOption>();
 
         private Coroutine pendingBlockedRoutine;
         private int realityFailCount;
@@ -47,6 +45,8 @@ namespace GameCreate3.DualWorld
             if (dreamCollector != null) dreamCollector.Completed += HandleDreamCollectorCompleted;
             if (dreamCollector != null) dreamCollector.ItemCollected += HandleDreamCollectorItemCollected;
             if (Workspace != null) Workspace.WorkspaceEventRaised += HandleWorkspaceEvent;
+
+            SubscribeToChatBox();
         }
 
         private void OnDestroy()
@@ -57,14 +57,24 @@ namespace GameCreate3.DualWorld
             if (dreamCollector != null) dreamCollector.Completed -= HandleDreamCollectorCompleted;
             if (dreamCollector != null) dreamCollector.ItemCollected -= HandleDreamCollectorItemCollected;
             if (Workspace != null) Workspace.WorkspaceEventRaised -= HandleWorkspaceEvent;
+
+            UnsubscribeFromChatBox();
         }
+
+        // ── ChatBox abstract overrides ──
+
+        protected override bool CanSubmit()
+            => realityTask != null && realityTask.IsInteractable;
+
+        protected override void DoSubmitRealityTask()
+            => realityTask?.Submit();
+
+        // ── Phase transitions ──
 
         protected override void OnPhaseEntered(SubLevelPhase phase)
         {
             if (phase != SubLevelPhase.RealityTaskBlocked)
-            {
                 CancelPendingBlockedTransition();
-            }
 
             switch (phase)
             {
@@ -78,32 +88,26 @@ namespace GameCreate3.DualWorld
                     realityTask?.SetDreamPaletteEnabled(false);
                     realityTask?.SetInteractable(true);
                     if (Workspace?.PlayerController != null)
-                    {
                         dreamCollector?.SetPlayerTransform(Workspace.PlayerController.transform);
-                    }
                     dreamCollector?.ResetStage();
                     dreamCollector?.SetInteractive(dreamStartsUnlocked);
                     realityTask?.SetDreamPaletteEnabled(dreamStartsUnlocked);
                     dreamHintRouter?.RefreshMutedState();
                     Workspace?.PlayerController?.SetInputEnabled(true);
                     if (dreamStartsUnlocked)
-                    {
                         Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.DreamUnlocked, SubLevelId, null));
-                    }
-                    if (taskDefinition != null)
-                    {
-                        Workspace?.ChatTaskController?.Publish(taskDefinition);
-                    }
+                    PublishChatTask();
+                    SetSubmitInteractable(true);
                     break;
 
                 case SubLevelPhase.RealityTaskBlocked:
                     realityTask?.SetInteractable(false);
+                    SetSubmitInteractable(false);
                     pendingBlockedRoutine = StartCoroutine(DelayThen(blockedToDreamDelaySec, () =>
                     {
+                        pendingBlockedRoutine = null;
                         if (CurrentPhase == SubLevelPhase.RealityTaskBlocked)
-                        {
                             EnterPhase(SubLevelPhase.DreamTaskUnlocked);
-                        }
                     }));
                     break;
 
@@ -111,9 +115,7 @@ namespace GameCreate3.DualWorld
                     realityTask?.SetDreamPaletteEnabled(true);
                     realityTask?.SetInteractable(true);
                     if (Workspace?.PlayerController != null)
-                    {
                         dreamCollector?.SetPlayerTransform(Workspace.PlayerController.transform);
-                    }
                     dreamCollector?.SetInteractive(true);
                     Workspace?.PlayerController?.SetInputEnabled(true);
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.DreamUnlocked, SubLevelId, null));
@@ -130,17 +132,14 @@ namespace GameCreate3.DualWorld
                 case SubLevelPhase.RealityTaskCompleted:
                     realityTask?.SetInteractable(false);
                     dreamCollector?.SetInteractive(false);
+                    SetSubmitInteractable(false);
                     Workspace?.RaiseWorkspaceEvent(realityCompletedWorkspaceEventId);
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.RealityCompleted, SubLevelId, collectedDreamColors.AsReadOnly()));
 
                     if (autoCompleteAfterRealitySubmit || string.IsNullOrWhiteSpace(exitWorkspaceEventId))
-                    {
                         EnterPhase(SubLevelPhase.SubLevelCompleted);
-                    }
                     else
-                    {
                         EnterPhase(SubLevelPhase.DreamWorldResolved);
-                    }
                     break;
 
                 case SubLevelPhase.DreamWorldResolved:
@@ -150,13 +149,12 @@ namespace GameCreate3.DualWorld
                 case SubLevelPhase.DreamTraversalActive:
                     Workspace?.PlayerController?.SetInputEnabled(true);
                     if (Workspace != null && Workspace.HasWorkspaceEvent(exitWorkspaceEventId))
-                    {
                         EnterPhase(SubLevelPhase.SubLevelCompleted);
-                    }
                     break;
 
                 case SubLevelPhase.SubLevelCompleted:
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.ExitReached, SubLevelId, collectedDreamColors.AsReadOnly()));
+                    GoSuccessScene();
                     break;
             }
         }
@@ -170,17 +168,12 @@ namespace GameCreate3.DualWorld
             }
 
             if (CurrentPhase == SubLevelPhase.RealityTaskActive && !dreamStartsUnlocked)
-            {
                 EnterPhase(SubLevelPhase.RealityTaskBlocked);
-            }
         }
 
         public override void OnDreamComplete()
         {
-            if ((int)CurrentPhase >= (int)SubLevelPhase.RealityTaskEnhanced)
-            {
-                return;
-            }
+            if ((int)CurrentPhase >= (int)SubLevelPhase.RealityTaskEnhanced) return;
 
             realityTask?.SetCurrentPalette(currentDreamPalette);
             Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.DreamCompleted, SubLevelId, collectedDreamColors.AsReadOnly()));
@@ -189,29 +182,24 @@ namespace GameCreate3.DualWorld
 
         public override void OnTraversalReachedExit()
         {
-            if (autoCompleteAfterRealitySubmit || string.IsNullOrWhiteSpace(exitWorkspaceEventId))
-            {
-                return;
-            }
-
-            if ((int)CurrentPhase < (int)SubLevelPhase.RealityTaskCompleted)
-            {
-                return;
-            }
-
-            if (CurrentPhase == SubLevelPhase.SubLevelCompleted)
-            {
-                return;
-            }
-
+            if (autoCompleteAfterRealitySubmit || string.IsNullOrWhiteSpace(exitWorkspaceEventId)) return;
+            if ((int)CurrentPhase < (int)SubLevelPhase.RealityTaskCompleted) return;
+            if (CurrentPhase == SubLevelPhase.SubLevelCompleted) return;
             EnterPhase(SubLevelPhase.SubLevelCompleted);
         }
+
+        // ── Event handlers ──
 
         private void HandleRealityTaskSubmit(global::GameCreate3.ColorSubmitResult result)
         {
             if (!result.success)
             {
                 realityFailCount++;
+                RaiseChatEvent(ChatTaskController.Event.Failed);
+            }
+            else
+            {
+                RaiseChatEvent(ChatTaskController.Event.Completed);
             }
 
             var submitResult = new RealitySubmitResult(
@@ -230,9 +218,7 @@ namespace GameCreate3.DualWorld
             if (colors != null)
             {
                 for (var i = 0; i < colors.Count; i++)
-                {
                     collectedDreamColors.Add(colors[i]);
-                }
             }
 
             OnDreamComplete();
@@ -249,31 +235,16 @@ namespace GameCreate3.DualWorld
         private void HandleWorkspaceEvent(string eventId)
         {
             if (eventId == exitWorkspaceEventId)
-            {
                 OnTraversalReachedExit();
-            }
         }
+
+        // ── Helpers ──
 
         private void CancelPendingBlockedTransition()
         {
-            if (pendingBlockedRoutine == null)
-            {
-                return;
-            }
-
+            if (pendingBlockedRoutine == null) return;
             StopCoroutine(pendingBlockedRoutine);
             pendingBlockedRoutine = null;
-        }
-
-        private IEnumerator DelayThen(float seconds, System.Action action)
-        {
-            if (seconds > 0f)
-            {
-                yield return new WaitForSeconds(seconds);
-            }
-
-            pendingBlockedRoutine = null;
-            action?.Invoke();
         }
 
         private void ResolveRuntimeReferences()
@@ -282,28 +253,19 @@ namespace GameCreate3.DualWorld
             {
                 realityTask = realityRoot.GetComponentInChildren<global::GameCreate3.ColorPuzzleController>(true);
                 if (realityTask == null)
-                {
                     realityTask = realityRoot.AddComponent<global::GameCreate3.ColorPuzzleController>();
-                }
             }
 
             if (dreamCollector == null)
             {
                 if (dreamRoot != null)
-                {
                     dreamCollector = dreamRoot.GetComponentInChildren<global::GameCreate3.DreamColorCollectController>(true);
-                }
-
                 if (dreamCollector == null && realityRoot != null)
-                {
                     dreamCollector = realityRoot.GetComponentInChildren<global::GameCreate3.DreamColorCollectController>(true);
-                }
             }
 
             if (dreamCollector != null && Workspace?.PlayerController != null)
-            {
                 dreamCollector.SetPlayerTransform(Workspace.PlayerController.transform);
-            }
 
             if (dreamCollector != null)
             {
@@ -314,18 +276,13 @@ namespace GameCreate3.DualWorld
 
         private void ResolveHintRouter()
         {
-            if (Workspace == null)
-            {
-                return;
-            }
+            if (Workspace == null) return;
 
             if (dreamHintRouter == null)
             {
                 dreamHintRouter = Workspace.GetComponent<DreamColorHintRouter>();
                 if (dreamHintRouter == null)
-                {
                     dreamHintRouter = Workspace.gameObject.AddComponent<DreamColorHintRouter>();
-                }
             }
 
             var alignmentTask = Workspace.GetComponentInChildren<RealityAlignmentTask>(true);
@@ -334,17 +291,12 @@ namespace GameCreate3.DualWorld
 
         private void TrackCollectedDreamColor(global::GameCreate3.PaletteColorOption option)
         {
-            if (!option.IsValid)
-            {
-                return;
-            }
+            if (!option.IsValid) return;
 
             for (var i = 0; i < collectedDreamColors.Count; i++)
             {
                 if (collectedDreamColors[i].Matches(option))
-                {
                     return;
-                }
             }
 
             collectedDreamColors.Add(option);

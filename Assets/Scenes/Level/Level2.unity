@@ -440,7 +440,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 1
+  m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -2249,6 +2249,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: AudioService
       objectReference: {fileID: 0}
+    - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: defaultBgmClip
+      value:
+      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
+    - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: m_audioClip
+      value:
+      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
     - target: {fileID: 5494348607869274081, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

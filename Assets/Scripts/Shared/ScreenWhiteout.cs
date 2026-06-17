@@ -60,6 +60,13 @@ namespace GameCreate3
         /// <summary>反向淡出，恢复原始状态。</summary>
         public void Reverse() => Run(forward: false);
 
+        /// <summary>瞬间设置遮罩透明度，用于开场白屏等场景。</summary>
+        public void SetAlphaImmediate(float alpha)
+        {
+            EnsureOverlay();
+            SetOverlayAlpha(alpha);
+        }
+
         private void Run(bool forward)
         {
             if (activeRoutine != null) StopCoroutine(activeRoutine);
@@ -117,7 +124,8 @@ namespace GameCreate3
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 1f;
+            // 按宽度匹配，与项目其余 Canvas 一致（全屏遮罩本身铺满，系数仅为统一口径）。
+            scaler.matchWidthOrHeight = 0f;
             go.AddComponent<GraphicRaycaster>();
 
             var imgGo  = new GameObject("White");

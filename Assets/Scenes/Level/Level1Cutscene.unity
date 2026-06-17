@@ -283,7 +283,7 @@ PrefabInstance:
       objectReference: {fileID: 2137173302}
     - target: {fileID: 3511512239443327306, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6496715230555199217, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_Name
@@ -514,6 +514,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: defaultBgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: d3816a97e1fccf54a8c6520ed0831d11, type: 3}
+    - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: d3816a97e1fccf54a8c6520ed0831d11, type: 3}
     - target: {fileID: 3562282326527126650, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_Name
       value: AudioService

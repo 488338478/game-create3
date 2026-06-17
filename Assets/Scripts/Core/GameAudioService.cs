@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using GameCreate3.StoryPlayer;
 using GameCreate3.UI;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+
 
 namespace GameCreate3.Core
 {
@@ -57,6 +57,8 @@ namespace GameCreate3.Core
         {
             if (Instance != null && Instance != this)
             {
+                // 新场景的 AudioService 实例将被销毁，但先把它的 BGM 设置传给单例。
+                TryApplyNewSceneBgm();
                 Destroy(gameObject);
                 return;
             }
@@ -74,52 +76,26 @@ namespace GameCreate3.Core
             {
                 PlayBGM(defaultBgmClip, defaultBgmLoop, defaultBgmVolumeScale);
             }
+        }
 
-            // 跨场景 BGM：单例常驻，监听场景加载，按场景名自动切换 BGM。
-            SceneManager.sceneLoaded += HandleSceneLoaded;
-            ApplySceneBgm(SceneManager.GetActiveScene().name);
+        /// <summary>
+        /// 当新场景加载时，它的 AudioService prefab override（defaultBgmClip）通过此方法传到单例。
+        /// 如果当前正在播放同一 clip 则不重启。
+        /// SceneRouterAudioHook 可以之后接管（routeBgm）。
+        /// </summary>
+        private void TryApplyNewSceneBgm()
+        {
+            if (!playBgmOnAwake || defaultBgmClip == null) return;
+            if (Instance.bgmSource != null && Instance.bgmSource.isPlaying && Instance.bgmSource.clip == defaultBgmClip) return;
+            Instance.PlayBGM(defaultBgmClip, defaultBgmLoop, defaultBgmVolumeScale);
         }
 
         private void OnDestroy()
         {
             if (Instance == this)
             {
-                SceneManager.sceneLoaded -= HandleSceneLoaded;
                 Instance = null;
             }
-        }
-
-        // 场景名 -> Resources/Audio/BGM/{id}。改这里即可调整每个场景的 BGM。
-        private static readonly Dictionary<string, string> SceneBgmMap = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            { "MainMenu", "BGM_Menu" },
-            { "Level1", "BGM_Level" },
-            { "Level1Cutscene", "BGM_Level" },
-            { "Level2", "BGM_Level" },
-        };
-
-        private string currentSceneBgmId;
-
-        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            ApplySceneBgm(scene.name);
-        }
-
-        private void ApplySceneBgm(string sceneName)
-        {
-            if (!SceneBgmMap.TryGetValue(sceneName, out var bgmId) || string.IsNullOrEmpty(bgmId))
-            {
-                return;
-            }
-
-            // 同一首不重启，避免相邻场景间断音。
-            if (bgmId == currentSceneBgmId && bgmSource != null && bgmSource.isPlaying)
-            {
-                return;
-            }
-
-            currentSceneBgmId = bgmId;
-            PlayBGM(bgmId, true);
         }
 
         public void PlayBGM(string bgmId, bool loop = true, float volumeScale = 1f)

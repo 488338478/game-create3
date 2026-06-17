@@ -18,7 +18,7 @@ namespace GameCreate3.DualWorld
         [SerializeField] private bool disableLegacyPressEInteractions = true;
         [SerializeField] private Shader grayscaleShader;
         [SerializeField] [Range(0f, 1f)] private float mutedGrayscaleAmount = 1f;
-        [SerializeField] [Range(0.25f, 1f)] private float mutedBrightness = 0.6f;
+        [SerializeField] [Range(0.25f, 1.5f)] private float mutedBrightness = 1f;
         [SerializeField] private float stateTransitionDurationSec = 0.18f;
         [SerializeField] private float pulseDurationSec = 0.42f;
         [SerializeField] private float pulseWhiteLift = 0.18f;

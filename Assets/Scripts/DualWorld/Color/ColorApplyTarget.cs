@@ -90,6 +90,8 @@ namespace GameCreate3
 
         public void ApplyVariant(PaletteColorOption option, bool isCorrect)
         {
+            // 已经点击涂色，停止提示闪烁，避免协程继续切回 sprite 覆盖涂色结果
+            StopHintColorPulse();
             ClearHintPreview();
             CacheBaseState();
             RestoreBaseState();
@@ -153,11 +155,8 @@ namespace GameCreate3
         {
             if (!isActiveAndEnabled)
             {
-                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} isActiveAndEnabled=false");
                 return;
             }
-
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} 开始脉冲 variantId={option.variantId}");
 
             // 清除上一次的 hint 预览
             ClearHintPreview();
@@ -177,7 +176,6 @@ namespace GameCreate3
         {
             if (!isActiveAndEnabled)
             {
-                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} PlayHintColorPulse 跳过: isActiveAndEnabled=false");
                 return;
             }
 

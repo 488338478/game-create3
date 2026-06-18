@@ -184,6 +184,13 @@ namespace GameCreate3
 
         public void PlayHintPulse(PaletteColorOption option)
         {
+            // 已经涂成正确颜色的色槽，不再提示闪烁
+            if (IsCorrectColor())
+            {
+                Debug.Log($"[ColorSlot] {gameObject.name} 已是正确颜色，跳过提示脉冲");
+                return;
+            }
+
             var resolvedOption = ResolveLocalOption(option);
             var targets = ResolveApplyTargets();
             for (var i = 0; i < targets.Count; i++)

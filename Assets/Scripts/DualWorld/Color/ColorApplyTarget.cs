@@ -220,11 +220,8 @@ namespace GameCreate3
 
             var hasColorFrame = System.Array.Exists(hintColorImageSprites, s => s != null)
                                 || System.Array.Exists(hintColorRendererSprites, s => s != null);
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} PlayHintColorPulse 进入 | images={images.Length} matchedVariant={(matched != null)} 彩色帧={hasColorFrame} paletteSprite={option.paletteSprite?.name}");
-
             if (!hasColorFrame)
             {
-                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} 没有彩色图可切换(variant未配置且paletteSprite为空)，提示跳过");
                 return;
             }
 
@@ -739,18 +736,15 @@ namespace GameCreate3
         {
             if (ApplyConfiguredVariant(option))
             {
-                Debug.Log($"[ColorApplyTarget] {gameObject.name} variant匹配成功");
                 return;
             }
 
             if (option.paletteSprite != null)
             {
-                Debug.Log($"[ColorApplyTarget] {gameObject.name} 应用paletteSprite");
                 ApplySpriteFallback(option.paletteSprite, true);
                 return;
             }
 
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} 应用tint fallbackColor={option.fallbackColor} images={images.Length} sprites={spriteRenderers.Length}");
             ApplyTintFallback(option.fallbackColor, false);
         }
 
@@ -778,8 +772,6 @@ namespace GameCreate3
 
         private void ApplySpriteFallback(Sprite sprite, bool isCorrect)
         {
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} ApplySpriteFallback sprite={sprite?.name} images={images.Length} sprites={spriteRenderers.Length}");
-
             var spriteColor = Color.white;
             spriteColor.a = isCorrect ? 1f : wrongAlpha;
 

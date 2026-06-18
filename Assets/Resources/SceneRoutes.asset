@@ -37,3 +37,6 @@ MonoBehaviour:
   - routeId: level3
     sceneName: Level3
     useLoading: 1
+  - routeId: level3cutscene
+    sceneName: Level3Cutscene
+    useLoading: 1

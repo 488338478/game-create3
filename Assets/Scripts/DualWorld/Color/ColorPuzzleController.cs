@@ -149,7 +149,6 @@ namespace GameCreate3
         {
             if (!option.IsValid)
             {
-                Debug.LogWarning($"[FlashTargets] option无效 variantId={option.variantId} colorId={option.colorId}");
                 return;
             }
 
@@ -159,19 +158,14 @@ namespace GameCreate3
                 colorSlots[i]?.StopApplyTargetPulses();
             }
 
-            var matched = 0;
             for (var i = 0; i < colorSlots.Count; i++)
             {
                 var slot = colorSlots[i];
                 if (slot != null && slot.MatchesOption(option))
                 {
-                    Debug.Log($"[FlashTargets] {slot.name} 匹配, 开始脉冲");
                     slot.PlayHintPulse(option);
-                    matched++;
                 }
             }
-            if (matched == 0)
-                Debug.LogWarning($"[FlashTargets] 没有ColorSlot匹配 variantId={option.variantId} colorId={option.colorId}");
         }
 
         public bool TryResolveBlockIndex(PaletteColorOption option, out int blockIndex)
@@ -257,20 +251,16 @@ namespace GameCreate3
         {
             if (!dreamPaletteEnabled)
             {
-                Debug.LogWarning($"[ColorPuzzleController] dreamPaletteEnabled=false, click ignored");
                 return;
             }
             if (slot == null)
             {
-                Debug.LogWarning($"[ColorPuzzleController] slot is null");
                 return;
             }
             if (!hasCurrentPalette)
             {
-                Debug.LogWarning($"[ColorPuzzleController] hasCurrentPalette=false, 还没捡过颜色");
                 return;
             }
-            Debug.Log($"[ColorPuzzleController] 上色: {slot.name} ← variantId={currentPaletteOption.variantId} colorId={currentPaletteOption.colorId}");
             slot.ApplyPaletteColor(currentPaletteOption);
         }
 

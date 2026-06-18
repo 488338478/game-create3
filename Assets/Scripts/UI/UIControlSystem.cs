@@ -107,7 +107,7 @@ namespace GameCreate3.UI
             RegisterScenePages();
 
             // 仅当回到主菜单场景时才自动打开 startup page
-            if (string.Equals(ctx.ToSceneName, "MainMenu", System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(ctx.ToScene, "MainMenu", System.StringComparison.OrdinalIgnoreCase))
             {
                 TryOpenStartupPage();
             }

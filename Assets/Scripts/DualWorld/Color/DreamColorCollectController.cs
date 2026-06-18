@@ -13,8 +13,7 @@ namespace GameCreate3
             public PaletteColorOption option;
             public bool resonant = true;
             public float spawnWeight = 1f;
-            public float fallSpeedMultiplier = 1f;
-            public float horizontalDrift;
+            public float speedMultiplier = 1f;
             public Sprite meteorSprite;
         }
 
@@ -44,8 +43,9 @@ namespace GameCreate3
         [SerializeField] private float playerCenteredSpawnY = 5f;
         [SerializeField] private Vector2 spawnIntervalRange = new Vector2(0.55f, 1.1f);
         [SerializeField] private int maxActiveMeteors = 4;
-        [SerializeField] private float baseMeteorFallSpeed = 2.8f;
-        [SerializeField] private float meteorFallAcceleration = 1.9f;
+        [SerializeField] private float meteorMoveSpeed = 3.5f;
+        [SerializeField] private float meteorMoveAngle = 250f;
+        [SerializeField] private float meteorAngleSpread = 20f;
         [SerializeField] private float runtimeMeteorColliderRadius = 0.18f;
         [SerializeField] private float meteorGroundY = -3.2f;
         [SerializeField] private LayerMask meteorGroundMask = ~0;
@@ -238,23 +238,16 @@ namespace GameCreate3
                 return;
             }
 
-            var baseDrift = Mathf.Abs(definition.horizontalDrift);
-            if (baseDrift < 0.1f)
-            {
-                baseDrift = 1.25f;
-            }
-
-            // 固定为从右上往左下划过，始终向左侧漂移。
-            var drift = -baseDrift * UnityEngine.Random.Range(0.85f, 1.15f);
+            var angle = meteorMoveAngle + UnityEngine.Random.Range(-meteorAngleSpread, meteorAngleSpread);
+            var speed = meteorMoveSpeed * Mathf.Max(0.1f, definition.speedMultiplier);
 
             pickup.Activate(
                 definition.option,
                 definition.resonant,
                 definition.meteorSprite,
                 GetMeteorSpawnPosition(),
-                baseMeteorFallSpeed * Mathf.Max(0.1f, definition.fallSpeedMultiplier),
-                meteorFallAcceleration,
-                drift,
+                angle,
+                speed,
                 meteorGroundY);
             pickup.SetInteractive(interactive);
             activeMeteors.Add(pickup);

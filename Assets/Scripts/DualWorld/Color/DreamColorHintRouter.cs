@@ -100,6 +100,10 @@ namespace GameCreate3.DualWorld
 
         private void HandleItemCollected(global::GameCreate3.PaletteColorOption option)
         {
+            // 新颜色进来，先把上一个颜色的脉冲关掉，所有物体回到褪色/恢复状态
+            StopActivePulses();
+            RefreshAllTargetResolvedVisuals(animated: false);
+
             if (!TryResolveBlockIndex(option, out var blockIndex))
             {
                 return;
@@ -160,24 +164,21 @@ namespace GameCreate3.DualWorld
 
         private IEnumerator PulseTarget(HintTargetState state, Color accentColor)
         {
-            var elapsed = 0f;
             var liftedColor = Color.Lerp(accentColor, Color.white, pulseWhiteLift);
             liftedColor.a = 1f;
 
             ApplyMutedVisual(state, mutedGrayscaleAmount, Color.white, 0f);
 
-            while (elapsed < pulseDurationSec)
+            var elapsed = 0f;
+            while (true)
             {
                 elapsed += Time.deltaTime;
-                var normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, pulseDurationSec));
+                var normalized = (elapsed % pulseDurationSec) / Mathf.Max(0.01f, pulseDurationSec);
                 var wave = Mathf.Sin(normalized * Mathf.PI);
                 ApplyMutedVisual(state, mutedGrayscaleAmount, liftedColor, wave);
 
                 yield return null;
             }
-
-            ApplyMutedVisual(state, mutedGrayscaleAmount, Color.white, 0f);
-            state.pulseRoutine = null;
         }
 
         private void RebuildTargetCache()
@@ -379,18 +380,7 @@ namespace GameCreate3.DualWorld
                 return true;
             }
 
-            if (option.variantId > 0)
-            {
-                blockIndex = option.variantId - 1;
-                return true;
-            }
-
-            if (int.TryParse(option.colorId, out var parsedColorId) && parsedColorId > 0)
-            {
-                blockIndex = parsedColorId - 1;
-                return true;
-            }
-
+            Debug.LogError($"[DreamColorHintRouter] TryResolveBlockIndex 失败：ColorPuzzleController 未找到匹配 variantId={option.variantId} colorId={option.colorId} 的 ColorSlot", this);
             return false;
         }
 

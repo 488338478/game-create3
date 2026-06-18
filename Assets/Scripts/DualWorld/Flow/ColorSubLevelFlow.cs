@@ -226,6 +226,7 @@ namespace GameCreate3.DualWorld
 
         private void HandleDreamCollectorItemCollected(global::GameCreate3.PaletteColorOption option)
         {
+            Debug.Log($"[ColorSubLevelFlow] 收到颜色 variantId={option.variantId} colorId={option.colorId} IsValid={option.IsValid}");
             TrackCollectedDreamColor(option);
             currentDreamPalette = option;
             realityTask?.SetCurrentPalette(option);

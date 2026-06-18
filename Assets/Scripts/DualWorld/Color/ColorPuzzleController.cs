@@ -34,8 +34,6 @@ namespace GameCreate3
         [SerializeField] private List<string> rejectLines = new List<string>();
         [SerializeField] private List<string> approveLines = new List<string>();
 
-        private const string RuntimeHintName = "RuntimeHintLabel";
-
         private bool dreamPaletteEnabled;
         private bool interactable;
         private bool forcedFailurePending = true;
@@ -149,13 +147,24 @@ namespace GameCreate3
 
         public void FlashTargetsForOption(PaletteColorOption option)
         {
-            if (!option.IsValid) return;
+            if (!option.IsValid)
+            {
+                Debug.LogWarning($"[FlashTargets] option无效 variantId={option.variantId} colorId={option.colorId}");
+                return;
+            }
+            var matched = 0;
             for (var i = 0; i < colorSlots.Count; i++)
             {
                 var slot = colorSlots[i];
                 if (slot != null && slot.MatchesOption(option))
+                {
+                    Debug.Log($"[FlashTargets] {slot.name} 匹配, 开始脉冲");
                     slot.PlayHintPulse(option);
+                    matched++;
+                }
             }
+            if (matched == 0)
+                Debug.LogWarning($"[FlashTargets] 没有ColorSlot匹配 variantId={option.variantId} colorId={option.colorId}");
         }
 
         public bool TryResolveBlockIndex(PaletteColorOption option, out int blockIndex)
@@ -239,7 +248,22 @@ namespace GameCreate3
 
         private void HandleColorSlotClicked(ColorSlot slot)
         {
-            if (!dreamPaletteEnabled || slot == null || !hasCurrentPalette) return;
+            if (!dreamPaletteEnabled)
+            {
+                Debug.LogWarning($"[ColorPuzzleController] dreamPaletteEnabled=false, click ignored");
+                return;
+            }
+            if (slot == null)
+            {
+                Debug.LogWarning($"[ColorPuzzleController] slot is null");
+                return;
+            }
+            if (!hasCurrentPalette)
+            {
+                Debug.LogWarning($"[ColorPuzzleController] hasCurrentPalette=false, 还没捡过颜色");
+                return;
+            }
+            Debug.Log($"[ColorPuzzleController] 上色: {slot.name} ← variantId={currentPaletteOption.variantId} colorId={currentPaletteOption.colorId}");
             slot.ApplyPaletteColor(currentPaletteOption);
         }
 
@@ -299,8 +323,6 @@ namespace GameCreate3
                 if (interactionGroup == null)
                     interactionGroup = uiRoot.gameObject.AddComponent<CanvasGroup>();
             }
-
-            EnsureHintLabel(uiRoot);
         }
 
         private Transform ResolveUiRoot()
@@ -328,27 +350,6 @@ namespace GameCreate3
             return null;
         }
 
-        private void EnsureHintLabel(Transform uiRoot)
-        {
-            if (hintLabel != null) return;
-
-            var existing = FindDescendant(uiRoot, RuntimeHintName);
-            if (existing != null)
-            {
-                hintLabel = existing.GetComponent<Text>();
-                return;
-            }
-
-            hintLabel = CreateText(
-                RuntimeHintName, uiRoot,
-                new Vector2(1f, 1f), new Vector2(1f, 1f),
-                new Vector2(-500f, -200f), new Vector2(400f, 96f),
-                24, TextAnchor.UpperLeft);
-            hintLabel.color = new Color(0.27f, 0.20f, 0.15f, 0.98f);
-            hintLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
-            hintLabel.verticalOverflow = VerticalWrapMode.Overflow;
-        }
-
         private static Transform FindDescendant(Transform root, string name)
         {
             if (root == null) return null;
@@ -360,30 +361,6 @@ namespace GameCreate3
                 if (match != null) return match;
             }
             return null;
-        }
-
-        private static Text CreateText(
-            string objectName, Transform parent,
-            Vector2 anchorMin, Vector2 anchorMax,
-            Vector2 anchoredPosition, Vector2 sizeDelta,
-            int fontSize, TextAnchor alignment)
-        {
-            var textObject = new GameObject(objectName, typeof(RectTransform), typeof(Text));
-            var rectTransform = textObject.GetComponent<RectTransform>();
-            rectTransform.SetParent(parent, false);
-            rectTransform.anchorMin = anchorMin;
-            rectTransform.anchorMax = anchorMax;
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = anchoredPosition;
-            rectTransform.sizeDelta = sizeDelta;
-
-            var text = textObject.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            text.fontSize = fontSize;
-            text.alignment = alignment;
-            text.color = new Color(0.18f, 0.14f, 0.10f, 1f);
-            text.text = string.Empty;
-            return text;
         }
     }
 

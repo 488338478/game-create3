@@ -185,13 +185,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
-  m_ScreenMatchMode: 0
+  m_ScreenMatchMode: 2
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
@@ -531,7 +531,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 6970910715511222920}
   colorButton: {fileID: 0}
-  blockIndex: -1
+  blockIndex: 3
   targetVariantId: 8
   targetColorId: 8
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -1257,7 +1257,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 3670253795020921854}
   colorButton: {fileID: 0}
-  blockIndex: -1
+  blockIndex: 7
   targetVariantId: 7
   targetColorId: 7
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -1618,7 +1618,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 674264372106902364}
   colorButton: {fileID: 0}
-  blockIndex: -1
+  blockIndex: 4
   targetVariantId: 5
   targetColorId: 5
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -2148,7 +2148,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 6374416781167864950}
   colorButton: {fileID: 0}
-  blockIndex: -1
+  blockIndex: 6
   targetVariantId: 6
   targetColorId: 6
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -2489,20 +2489,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 4984210623152057610}
   colorButton: {fileID: 0}
-  blockIndex: -1
-  targetVariantId: 2
-  targetColorId: 2
+  blockIndex: 5
+  targetVariantId: 4
+  targetColorId: 4
   targetColor: {r: 0, g: 0, b: 0, a: 0}
   colorTolerance: 0.01
   availableOptions:
   - variantId: 1
     colorId: 1
-    displayName: 
+    displayName:
     fallbackColor: {r: 0, g: 0, b: 0, a: 0}
     paletteSprite: {fileID: 21300000, guid: 049b8f1663bbd244d8d1b861ed138356, type: 3}
   - variantId: 2
     colorId: 2
-    displayName: 
+    displayName:
     fallbackColor: {r: 0, g: 0, b: 0, a: 0}
     paletteSprite: {fileID: 21300000, guid: 585f958b785dd1d4396081773c77a200, type: 3}
   - variantId: 3
@@ -6485,7 +6485,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 3763687710857899583}
   colorButton: {fileID: 0}
-  blockIndex: -1
+  blockIndex: 1
   targetVariantId: 3
   targetColorId: 3
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -6606,7 +6606,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 1252698528849224259}
   colorButton: {fileID: 0}
-  blockIndex: -1
+  blockIndex: 0
   targetVariantId: 1
   targetColorId: 1
   targetColor: {r: 0, g: 0, b: 0, a: 0}
@@ -6695,15 +6695,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorImage: {fileID: 124542648576529062}
   colorButton: {fileID: 0}
-  blockIndex: -1
-  targetVariantId: 4
-  targetColorId: 4
+  blockIndex: 2
+  targetVariantId: 2
+  targetColorId: 2
   targetColor: {r: 0, g: 0, b: 0, a: 0}
   colorTolerance: 0.01
   availableOptions:
   - variantId: 1
     colorId: 1
-    displayName: 
+    displayName:
     fallbackColor: {r: 0, g: 0, b: 0, a: 0}
     paletteSprite: {fileID: 21300000, guid: ad13875b32257d247b3af18b3a6cd72a, type: 3}
   - variantId: 2

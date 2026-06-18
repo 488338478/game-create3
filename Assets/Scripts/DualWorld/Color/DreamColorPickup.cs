@@ -14,10 +14,9 @@ namespace GameCreate3
         [SerializeField] private float resonantScale = 0.72f;
         [SerializeField] private float mutedScale = 0.64f;
 
-        private float verticalSpeed;
-        private float fallAcceleration;
-        private float horizontalDrift;
-        private float groundY;
+        private float moveAngle;
+        private float moveSpeed;
+        private float minY;
         private bool active;
         private Sprite visualSprite;
         private Sprite baseSprite;
@@ -58,15 +57,14 @@ namespace GameCreate3
             ReturnToPool();
         }
 
-        public void Activate(PaletteColorOption pickupOption, bool isResonant, Sprite sprite, Vector3 spawnPosition, float initialFallSpeed, float acceleration, float driftX, float floorY)
+        public void Activate(PaletteColorOption pickupOption, bool isResonant, Sprite sprite, Vector3 spawnPosition, float angle, float speed, float minYPos)
         {
             option = pickupOption;
             resonant = isResonant;
             visualSprite = sprite;
-            verticalSpeed = initialFallSpeed;
-            fallAcceleration = acceleration;
-            horizontalDrift = driftX;
-            groundY = floorY;
+            moveAngle = angle;
+            moveSpeed = speed;
+            minY = minYPos;
             active = true;
             IsCollected = false;
 
@@ -101,12 +99,11 @@ namespace GameCreate3
                 return false;
             }
 
-            verticalSpeed += fallAcceleration * deltaTime;
-
             previousPosition = transform.position;
+            var rad = moveAngle * Mathf.Deg2Rad;
             var position = previousPosition;
-            position.x += horizontalDrift * deltaTime;
-            position.y -= verticalSpeed * deltaTime;
+            position.x += Mathf.Cos(rad) * moveSpeed * deltaTime;
+            position.y += Mathf.Sin(rad) * moveSpeed * deltaTime;
             transform.position = position;
 
             if (visualRoot != null && spinSpeed != 0f)
@@ -114,7 +111,7 @@ namespace GameCreate3
                 visualRoot.Rotate(0f, 0f, spinSpeed * deltaTime);
             }
 
-            if (position.y <= groundY)
+            if (position.y <= minY)
             {
                 Miss();
                 return true;

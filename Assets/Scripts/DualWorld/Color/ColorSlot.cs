@@ -66,6 +66,8 @@ namespace GameCreate3
             }
 
             RestoreBaseDisplay();
+
+            Debug.Log($"[ColorSlot] Awake {gameObject.name} | colorImage={colorImage != null} raycastTarget={colorImage?.raycastTarget} | active={gameObject.activeInHierarchy} | blockIndex={blockIndex} targetVariantId={targetVariantId}");
         }
 
         private void OnEnable()
@@ -87,6 +89,8 @@ namespace GameCreate3
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            Debug.Log($"[ColorSlot] OnPointerClick on {gameObject.name}, colorButton={(colorButton != null ? "present" : "null")}");
+
             if (colorButton != null)
             {
                 return;
@@ -147,18 +151,15 @@ namespace GameCreate3
 
         public bool TryGetBlockIndex(out int resolvedBlockIndex)
         {
+            // blockIndex 是独立的空间映射字段，请在 Inspector 中显式配置。
+            // 不再从 targetVariantId 推导，避免颜色身份编号与空间位置编号耦合。
             if (blockIndex >= 0)
             {
                 resolvedBlockIndex = blockIndex;
                 return true;
             }
 
-            if (targetVariantId > 0)
-            {
-                resolvedBlockIndex = targetVariantId - 1;
-                return true;
-            }
-
+            // 兜底：从 GameObject 名 "Target_N" 解析
             if (TryParseBlockIndexFromName(gameObject.name, out resolvedBlockIndex))
             {
                 return true;
@@ -170,18 +171,56 @@ namespace GameCreate3
 
         public void PlayHintPulse(PaletteColorOption option)
         {
-            var resolvedOption = ResolveLocalOption(option);
-            for (var i = 0; i < applyTargets.Count; i++)
+            // Hint pulse 已移除，不再闪烁 ColorSlot 图标或 applyTarget 物体
+        }
+
+        private Coroutine hintPulseRoutine;
+        private static readonly Color HintPulseWhite = new Color(1f, 1f, 1f, 1f);
+
+        private System.Collections.IEnumerator HintPulseRoutine(PaletteColorOption option)
+        {
+            if (colorImage == null) yield break;
+
+            var baseSprite = colorImage.sprite;
+            var baseColor = colorImage.color;
+
+            if (option.paletteSprite != null)
             {
-                if (applyTargets[i] != null)
-                {
-                    applyTargets[i].PlayHintPulse(resolvedOption);
-                }
+                colorImage.sprite = option.paletteSprite;
+                colorImage.preserveAspect = true;
+                colorImage.color = Color.white;
+            }
+            else if (option.fallbackColor.a > 0f)
+            {
+                colorImage.color = option.fallbackColor;
+            }
+
+            var targetColor = colorImage.color;
+            var elapsed = 0f;
+            const float duration = 0.22f;
+
+            while (true)
+            {
+                elapsed += Time.deltaTime;
+                var normalized = (elapsed % duration) / duration;
+                var wave = Mathf.Sin(normalized * Mathf.PI);
+                colorImage.color = Color.Lerp(targetColor, HintPulseWhite, wave * 0.35f);
+                yield return null;
+            }
+        }
+
+        public void StopHintPulse()
+        {
+            if (hintPulseRoutine != null)
+            {
+                StopCoroutine(hintPulseRoutine);
+                hintPulseRoutine = null;
             }
         }
 
         public void ResetSlot()
         {
+            StopHintPulse();
             currentOption = default;
             RestoreBaseDisplay();
 
@@ -200,17 +239,28 @@ namespace GameCreate3
         {
             if (!interactable)
             {
+                Debug.LogWarning($"[ColorSlot] {gameObject.name} interactable=false, click ignored");
                 return;
             }
 
-            if (dreamPaletteEnabled && usePaletteSelectionWhenDreamEnabled)
+            if (!dreamPaletteEnabled)
             {
-                Clicked?.Invoke(this);
+                Debug.LogWarning($"[ColorSlot] {gameObject.name} dreamPaletteEnabled=false, click ignored");
+                return;
             }
+
+            if (!usePaletteSelectionWhenDreamEnabled)
+            {
+                Debug.LogWarning($"[ColorSlot] {gameObject.name} usePaletteSelectionWhenDreamEnabled=false, click ignored");
+                return;
+            }
+
+            Clicked?.Invoke(this);
         }
 
         private void ApplyOption(PaletteColorOption option)
         {
+            StopHintPulse();
             currentOption = option;
             var hasApplyTargets = applyTargets != null && applyTargets.Count > 0;
 

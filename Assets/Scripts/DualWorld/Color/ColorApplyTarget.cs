@@ -46,6 +46,7 @@ namespace GameCreate3
         private Vector3 baseScale = Vector3.one;
         private Coroutine pulseRoutine;
         private Coroutine hintRoutine;
+        private VisualSnapshot preHintSnapshot;
         private bool baseStateCached;
         private GameObject[] trackedVariantObjects = Array.Empty<GameObject>();
         private bool[] trackedVariantObjectStates = Array.Empty<bool>();
@@ -80,6 +81,7 @@ namespace GameCreate3
 
         public void ApplyVariant(PaletteColorOption option, bool isCorrect)
         {
+            ClearHintPreview();
             CacheBaseState();
             RestoreBaseState();
 
@@ -133,6 +135,7 @@ namespace GameCreate3
                 hintRoutine = null;
             }
 
+            ClearHintPreview();
             RestoreBaseState();
         }
 
@@ -140,8 +143,17 @@ namespace GameCreate3
         {
             if (!isActiveAndEnabled)
             {
+                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} isActiveAndEnabled=false");
                 return;
             }
+
+            Debug.Log($"[ColorApplyTarget] {gameObject.name} 开始脉冲 variantId={option.variantId}");
+
+            // 清除上一次的 hint 预览
+            ClearHintPreview();
+
+            // 记录闪烁前的原始状态
+            preHintSnapshot = CaptureCurrentState();
 
             if (hintRoutine != null)
             {
@@ -151,26 +163,20 @@ namespace GameCreate3
             hintRoutine = StartCoroutine(HintPulseRoutine(option));
         }
 
-        private IEnumerator PulseCorrectTarget()
+        public void ClearHintPreview()
         {
-            var elapsed = 0f;
-
-            while (elapsed < correctPulseDuration)
-            {
-                elapsed += Time.deltaTime;
-                var normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, correctPulseDuration));
-                var wave = Mathf.Sin(normalized * Mathf.PI);
-                pulseRoot.localScale = baseScale * (1f + correctScaleBoost * wave);
-                yield return null;
-            }
-
-            pulseRoot.localScale = baseScale;
-            pulseRoutine = null;
+            if (preHintSnapshot == null) return;
+            RestoreSnapshot(preHintSnapshot);
+            preHintSnapshot = null;
         }
 
         private IEnumerator HintPulseRoutine(PaletteColorOption option)
         {
-            var currentSnapshot = CaptureCurrentState();
+            // 先恢复到闪烁前的状态，再应用预览（每次切换颜色时重新设基准）
+            if (preHintSnapshot != null)
+            {
+                RestoreSnapshot(preHintSnapshot);
+            }
             ApplyHintPreview(option);
 
             var previewSnapshot = CaptureCurrentState();
@@ -179,10 +185,10 @@ namespace GameCreate3
             previewHighlight.a = 1f;
 
             var elapsed = 0f;
-            while (elapsed < hintPulseDuration)
+            while (true)
             {
                 elapsed += Time.deltaTime;
-                var normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, hintPulseDuration));
+                var normalized = (elapsed % hintPulseDuration) / Mathf.Max(0.01f, hintPulseDuration);
                 var wave = Mathf.Sin(normalized * Mathf.PI);
 
                 for (var i = 0; i < images.Length; i++)
@@ -213,9 +219,23 @@ namespace GameCreate3
 
                 yield return null;
             }
+        }
 
-            RestoreSnapshot(currentSnapshot);
-            hintRoutine = null;
+        private IEnumerator PulseCorrectTarget()
+        {
+            var elapsed = 0f;
+
+            while (elapsed < correctPulseDuration)
+            {
+                elapsed += Time.deltaTime;
+                var normalized = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, correctPulseDuration));
+                var wave = Mathf.Sin(normalized * Mathf.PI);
+                pulseRoot.localScale = baseScale * (1f + correctScaleBoost * wave);
+                yield return null;
+            }
+
+            pulseRoot.localScale = baseScale;
+            pulseRoutine = null;
         }
 
         private static Color ResolveHintPreviewColor(PaletteColorOption option)
@@ -546,15 +566,18 @@ namespace GameCreate3
         {
             if (ApplyConfiguredVariant(option))
             {
+                Debug.Log($"[ColorApplyTarget] {gameObject.name} variant匹配成功");
                 return;
             }
 
             if (option.paletteSprite != null)
             {
+                Debug.Log($"[ColorApplyTarget] {gameObject.name} 应用paletteSprite");
                 ApplySpriteFallback(option.paletteSprite, true);
                 return;
             }
 
+            Debug.Log($"[ColorApplyTarget] {gameObject.name} 应用tint fallbackColor={option.fallbackColor} images={images.Length} sprites={spriteRenderers.Length}");
             ApplyTintFallback(option.fallbackColor, false);
         }
 
@@ -582,6 +605,8 @@ namespace GameCreate3
 
         private void ApplySpriteFallback(Sprite sprite, bool isCorrect)
         {
+            Debug.Log($"[ColorApplyTarget] {gameObject.name} ApplySpriteFallback sprite={sprite?.name} images={images.Length} sprites={spriteRenderers.Length}");
+
             var spriteColor = Color.white;
             spriteColor.a = isCorrect ? 1f : wrongAlpha;
 

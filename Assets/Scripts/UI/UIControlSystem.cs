@@ -103,9 +103,14 @@ namespace GameCreate3.UI
 
         private void HandleSceneChanged(SceneRouteContext ctx)
         {
-            // 切回主菜单等场景时，重新发现场景里新创建的 UIPageController
+            // 切场景后重新发现新场景里已有的 UIPageController
             RegisterScenePages();
-            TryOpenStartupPage();
+
+            // 仅当回到主菜单场景时才自动打开 startup page
+            if (string.Equals(ctx.ToSceneName, "MainMenu", System.StringComparison.OrdinalIgnoreCase))
+            {
+                TryOpenStartupPage();
+            }
         }
 
         public UIPageController OpenPage(string pageId)

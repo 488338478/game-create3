@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GameCreate3.Core.SceneRouting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -83,6 +84,7 @@ namespace GameCreate3.UI
 
             RegisterPrefabMaps();
             RegisterScenePages();
+            SceneRouter.OnAfterChange += HandleSceneChanged;
         }
 
         private void Start()
@@ -92,10 +94,18 @@ namespace GameCreate3.UI
 
         private void OnDestroy()
         {
+            SceneRouter.OnAfterChange -= HandleSceneChanged;
             if (Instance == this)
             {
                 Instance = null;
             }
+        }
+
+        private void HandleSceneChanged(SceneRouteContext ctx)
+        {
+            // 切回主菜单等场景时，重新发现场景里新创建的 UIPageController
+            RegisterScenePages();
+            TryOpenStartupPage();
         }
 
         public UIPageController OpenPage(string pageId)

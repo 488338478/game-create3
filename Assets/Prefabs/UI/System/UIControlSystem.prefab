@@ -164,6 +164,10 @@ MonoBehaviour:
   overlayRoot: {fileID: 449392629080183305}
   scenePages: []
   pagePrefabs:
+  - pageId: main_menu
+    prefab: {fileID: 3100000069000207, guid: 6f6ec68d25338bfec6ea4211ef0733c1, type: 3}
+    layer: 2
+    closePeersOnOpen: 1
   - pageId: cg_gallery
     prefab: {fileID: 7562556124211789542, guid: 6f661a5ee224e0f4abd160b87ac407b1, type: 3}
     layer: 2

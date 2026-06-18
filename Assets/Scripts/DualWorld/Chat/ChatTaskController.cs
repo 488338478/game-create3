@@ -69,7 +69,10 @@ namespace GameCreate3.DualWorld
             chatBox.SetTaskHeader(task);
 
             // 发布任务即放开场白。
-            AppendNpc(task.initialMessage, ChatTaskPanelUI.Mood.Neutral, task.highlightInitial);
+            // 但若是从上一关带了聊天历史过来（DualWorldHandoff.Pending 尚未被 Restorer 消费），
+            // 说明这段对话是延续的、开场白已在历史里，就不再重发。
+            if (DualWorldHandoff.Pending == null)
+                AppendNpc(task.initialMessage, ChatTaskPanelUI.Mood.Neutral, task.highlightInitial);
         }
 
         public void Raise(Event evt)

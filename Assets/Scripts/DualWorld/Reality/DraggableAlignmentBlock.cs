@@ -27,6 +27,10 @@ namespace GameCreate3.DualWorld
         public RectTransform SnappedTarget => snappedTarget;
         public bool IsSnapped => snapped;
 
+        // 跨场景搬运用：初始锚定位置 + 当前锚定位置（位移 = 当前 − 初始）。
+        public Vector2 InitialPosition => initialPosition;
+        public Vector2 CurrentAnchored => rectTransform != null ? rectTransform.anchoredPosition : initialPosition;
+
         public event Action<DraggableAlignmentBlock> Snapped;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -84,6 +88,13 @@ namespace GameCreate3.DualWorld
             interactable = value;
         }
 
+        /// <summary>跨场景还原散块：直接放到指定锚定位置（不触发吸附/拖拽逻辑）。</summary>
+        public void RestoreFree(Vector2 anchoredPosition)
+        {
+            if (rectTransform == null) rectTransform = (RectTransform)transform;
+            rectTransform.anchoredPosition = anchoredPosition;
+        }
+
         public void ResetBlock()
         {
             rectTransform.anchoredPosition = initialPosition;
@@ -125,11 +136,22 @@ namespace GameCreate3.DualWorld
             var bestSqr = range * range;
             RectTransform best = null;
 
+            // 吸附距离按 block 自身的本地（参考像素）尺度比较，而不是世界坐标。
+            // 拼图整体由 reality 相机以很小的世界尺度渲染（lossyScale << 1），
+            // 若直接比世界距离，固定的 snapRange 会远大于整个拼图 → 哪里松手都吸，
+            // 且同一个值在不同场景的相机/缩放下松紧不一致。除以 lossyScale 归一化后，
+            // snapRange 即为参考像素，与缩放无关、跨场景一致。
+            var scale = rectTransform.lossyScale;
+            var sx = Mathf.Approximately(scale.x, 0f) ? 1f : scale.x;
+            var sy = Mathf.Approximately(scale.y, 0f) ? 1f : scale.y;
+
             for (var i = 0; i < targets.Count; i++)
             {
                 var t = targets[i];
                 if (!IsSnapCandidate(t)) continue;
-                var dSqr = ((Vector2)(t.position - rectTransform.position)).sqrMagnitude;
+                var world = (Vector2)(t.position - rectTransform.position);
+                var local = new Vector2(world.x / sx, world.y / sy);
+                var dSqr = local.sqrMagnitude;
                 if (dSqr <= bestSqr)
                 {
                     bestSqr = dSqr;

@@ -331,6 +331,40 @@ namespace GameCreate3.DualWorld
             SetInteractable(true);
         }
 
+        // ── 跨场景搬运：采集/还原散块相对各自初始位置的位移（与本关绝对布局无关）──
+
+        /// <summary>采集所有散块的位移到快照。用 dragBounds 尺寸做归一参考，便于换到布局不同的下一关。</summary>
+        public void CaptureBlocks(DualWorldHandoff.Snapshot snap)
+        {
+            if (snap == null) return;
+            snap.captureBoundsSize = dragBounds != null ? dragBounds.rect.size : Vector2.zero;
+            snap.blockDeltas.Clear();
+            for (var i = 0; i < blocks.Count; i++)
+            {
+                var b = blocks[i];
+                snap.blockDeltas.Add(b != null ? b.CurrentAnchored - b.InitialPosition : Vector2.zero);
+            }
+        }
+
+        /// <summary>按快照把每个散块放回「相对位移」处：用两关 dragBounds 尺寸比做等比换算。</summary>
+        public void RestoreBlocks(DualWorldHandoff.Snapshot snap)
+        {
+            if (snap == null || snap.blockDeltas == null) return;
+            var here = dragBounds != null ? dragBounds.rect.size : Vector2.zero;
+            var cap = snap.captureBoundsSize;
+            var n = Mathf.Min(blocks.Count, snap.blockDeltas.Count);
+            for (var i = 0; i < n; i++)
+            {
+                var b = blocks[i];
+                if (b == null) continue;
+                var d = snap.blockDeltas[i];
+                // 两关绝对位置/缩放不同 → 用 dragBounds 尺寸比把位移等比映射过来。
+                if (cap.x > 0f && here.x > 0f) d.x *= here.x / cap.x;
+                if (cap.y > 0f && here.y > 0f) d.y *= here.y / cap.y;
+                b.RestoreFree(b.InitialPosition + d);
+            }
+        }
+
         /// <summary>外部（ChatBoxUI.SubmitRequested → AlignmentSubLevelFlow）调用，触发一次提交评估。</summary>
         public void Submit()
         {

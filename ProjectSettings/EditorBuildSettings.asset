@@ -29,4 +29,10 @@ EditorBuildSettings:
   - enabled: 0
     path: "Assets/Scenes/Templates\uFF08abandoned\uFF09/SS_Gameplay_Template.unity"
     guid: a47069ca0386480f90377e415eaac720
+  - enabled: 1
+    path: "Assets/Scenes/Level/Level2\xB72.unity"
+    guid: 2f328204f9fac5b41b2986b4c28c7af6
+  - enabled: 1
+    path: Assets/Scenes/Level/Level1.1.unity
+    guid: 7e262b1b89f0f304faa4743cdd19a8fc
   m_configObjects: {}

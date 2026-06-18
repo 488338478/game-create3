@@ -282,6 +282,124 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 04050607080901020a0304050607080c, type: 3}
+--- !u!1 &500000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 500000011}
+  - component: {fileID: 500000012}
+  m_Layer: 0
+  m_Name: SceneFadeIn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &500000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &500000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad45c1273db2fc645b9125985d64c0fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalLight: {fileID: 0}
+  targetLightIntensity: 4
+  overlayImage: {fileID: 0}
+  overlaySortOrder: 999
+  duration: 0.8
+  curve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  fadeInOnStart: 1
+--- !u!1 &500000020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 500000021}
+  - component: {fileID: 500000022}
+  m_Layer: 0
+  m_Name: DualWorldHandoffRestorer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &500000021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500000020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &500000022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500000020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d94c25491bcc422fb2a6278834b0d78f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &542916293 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8831563970039531835, guid: 7e9618c6494c6c748b940d026898424f, type: 3}
@@ -1411,6 +1529,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5669852341283274089, guid: 7e9618c6494c6c748b940d026898424f, type: 3}
+      propertyPath: snapRange
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 5669852341283274089, guid: 7e9618c6494c6c748b940d026898424f, type: 3}
       propertyPath: unlockMap.Array.data[1].blockIndex
       value: 7
       objectReference: {fileID: 0}
@@ -1766,7 +1888,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 4
+          m_StringArgument: 5
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!224 &1345534121 stripped
@@ -2159,7 +2281,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.4200079
+      value: -0.42000785
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2245,18 +2367,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: defaultBgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
+    - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
     - target: {fileID: 3562282326527126650, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_Name
       value: AudioService
       objectReference: {fileID: 0}
-    - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
-      propertyPath: defaultBgmClip
-      value:
-      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
-    - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
-      propertyPath: m_audioClip
-      value:
-      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
     - target: {fileID: 5494348607869274081, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2314,3 +2436,5 @@ SceneRoots:
   - {fileID: 2130155892}
   - {fileID: 806424399}
   - {fileID: 318316944}
+  - {fileID: 500000011}
+  - {fileID: 500000021}

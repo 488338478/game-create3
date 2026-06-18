@@ -21,6 +21,9 @@ namespace GameCreate3.DualWorld
         private readonly List<ChatLogEntry> entries = new List<ChatLogEntry>();
         private ChatTaskDefinition currentDef;
 
+        /// 当前 log 全量（只读）。跨场景搬运用，外部需拷贝后再改。
+        public IReadOnlyList<ChatLogEntry> Entries => entries;
+
         private void Awake()
         {
             Show();

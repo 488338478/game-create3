@@ -25,3 +25,6 @@ MonoBehaviour:
   - routeId: 4
     sceneName: MainMenu
     useLoading: 1
+  - routeId: 5
+    sceneName: "Level2\xB72"
+    useLoading: 1

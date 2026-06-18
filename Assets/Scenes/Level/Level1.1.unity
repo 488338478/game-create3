@@ -386,6 +386,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  fadeInOnStart: 0
 --- !u!114 &500000003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -395,9 +396,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 500000000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: caf90bfa9cc99d54eb3025014d7cad43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  whiteout: {fileID: 500000002}
+  whiteoutDuration: 0.8
+  holdWhiteDelay: 0.4
+  submitToWhiteoutDelay: 1.5
+  requiredSubmits: 3
+  targetScene: Level2
+  alignmentTask: {fileID: 0}
+  taskDefinition: {fileID: 0}
 --- !u!1001 &609761697
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1771,7 +1780,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1142843546}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41a0b9df763d98e42b7e7994addd4a99, type: 3}
   m_Name: 
@@ -1779,20 +1788,7 @@ MonoBehaviour:
   delaySeconds: 4
   onComplete:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1260673407}
-        m_TargetAssemblyTypeName: GameCreate3.Core.SceneRouting.SceneRouterProxy,
-          Assembly-CSharp
-        m_MethodName: Go
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 4
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!224 &1345534121 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1457192788051483678, guid: 7e9618c6494c6c748b940d026898424f, type: 3}
@@ -1998,7 +1994,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1683071527}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1461114880}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
 --- !u!1 &1762716141
 GameObject:
   m_ObjectHideFlags: 0
@@ -2118,7 +2126,31 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1762716143}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1142843546}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 1461114880}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1001 &2018114677
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2346,18 +2378,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: defaultBgmClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
+    - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
     - target: {fileID: 3562282326527126650, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_Name
       value: AudioService
       objectReference: {fileID: 0}
-    - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
-      propertyPath: defaultBgmClip
-      value:
-      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
-    - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
-      propertyPath: m_audioClip
-      value:
-      objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
     - target: {fileID: 5494348607869274081, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2408,8 +2440,8 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 4400000001}
-  - {fileID: 677758277}
   - {fileID: 2018114677}
+  - {fileID: 677758277}
   - {fileID: 609761697}
   - {fileID: 1260673406}
   - {fileID: 2130155892}

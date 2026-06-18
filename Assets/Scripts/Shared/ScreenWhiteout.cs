@@ -30,6 +30,10 @@ namespace GameCreate3
         [Tooltip("控制淡入曲线，默认线性。X=时间0-1，Y=强度0-1")]
         [SerializeField] private AnimationCurve curve = AnimationCurve.Linear(0, 0, 1, 1);
 
+        [Header("开场淡入")]
+        [Tooltip("勾选后：Awake 立即铺满白，Start 自动反向淡出。用作场景开场的白屏淡入。")]
+        [SerializeField] private bool fadeInOnStart;
+
         private float originalLightIntensity;
         private Coroutine activeRoutine;
         private GameObject generatedOverlayRoot;
@@ -42,7 +46,17 @@ namespace GameCreate3
             if (globalLight != null)
                 originalLightIntensity = globalLight.intensity;
 
-            SetOverlayAlpha(0f);
+            // 开场淡入时先铺满白（含过曝），否则保持透明。
+            if (fadeInOnStart)
+                Apply(1f);
+            else
+                SetOverlayAlpha(0f);
+        }
+
+        private void Start()
+        {
+            if (fadeInOnStart)
+                Reverse();
         }
 
         private void OnDestroy()

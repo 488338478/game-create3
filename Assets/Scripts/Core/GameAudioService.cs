@@ -53,6 +53,11 @@ namespace GameCreate3.Core
 
         public static GameAudioService Instance { get; private set; }
 
+        /// <summary>
+        /// 设为 true 可跳过下一次 BGM 淡出（切场景前设，FadeOut 时自动重置）。
+        /// </summary>
+        public static bool SkipNextBgmFadeOut { get; set; }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -86,7 +91,13 @@ namespace GameCreate3.Core
         private void TryApplyNewSceneBgm()
         {
             if (!playBgmOnAwake || defaultBgmClip == null) return;
-            if (Instance.bgmSource != null && Instance.bgmSource.isPlaying && Instance.bgmSource.clip == defaultBgmClip) return;
+            if (Instance.bgmSource != null && Instance.bgmSource.isPlaying && Instance.bgmSource.clip == defaultBgmClip)
+            {
+                // 同一首 BGM 已在播：上一个场景切走时 SceneRouterAudioHook 可能已 FadeOut 把音量拉到 0。
+                // 这里把音量恢复，实现真正的"无缝继续"，而不是"静音继续"。
+                Instance.RestoreBgmVolumeImmediate();
+                return;
+            }
             Instance.PlayBGM(defaultBgmClip, defaultBgmLoop, defaultBgmVolumeScale);
         }
 
@@ -110,11 +121,35 @@ namespace GameCreate3.Core
                 return;
             }
 
+            // 停掉可能正在进行的淡变（例如上个场景切走时 SceneRouterAudioHook 的 FadeOut）。
+            // 否则那个残留协程会继续把下面刚设好的音量一帧帧拉到 0，导致新场景 BGM 听起来"丢失"。
+            if (fadeRoutine != null)
+            {
+                StopCoroutine(fadeRoutine);
+                fadeRoutine = null;
+            }
+
             bgmContentScale = Mathf.Clamp01(volumeScale);
             bgmSource.clip = clip;
             bgmSource.loop = loop;
             bgmSource.volume = GetEffectiveBgmVolume() * bgmContentScale;
             bgmSource.Play();
+        }
+
+        // 立即停掉残留的淡变并把 BGM 音量复位到目标值。
+        // 用于"跨场景同曲继续"时撤销离场 FadeOut 留下的低音量。
+        private void RestoreBgmVolumeImmediate()
+        {
+            if (fadeRoutine != null)
+            {
+                StopCoroutine(fadeRoutine);
+                fadeRoutine = null;
+            }
+
+            if (bgmSource != null)
+            {
+                bgmSource.volume = GetTargetVolumeForSource(GameAudioChannel.Bgm, bgmSource);
+            }
         }
 
         public void StopBGM()
@@ -263,6 +298,11 @@ namespace GameCreate3.Core
 
         public void FadeOut(GameAudioChannel channel, float? durationSeconds = null)
         {
+            if (channel == GameAudioChannel.Bgm && SkipNextBgmFadeOut)
+            {
+                SkipNextBgmFadeOut = false;
+                return;
+            }
             StartFade(channel, false, durationSeconds ?? defaultFadeSeconds);
         }
 

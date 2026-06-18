@@ -1586,11 +1586,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: defaultBgmClip
-      value:
+      value: 
       objectReference: {fileID: 8300000, guid: 057cfcb6d04f72540a12b7b5e70ccf66, type: 3}
     - target: {fileID: 2568180548510230053, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_audioClip
-      value:
+      value: 
       objectReference: {fileID: 8300000, guid: 7398736867ed7da4bb8abd53f98cd154, type: 3}
     - target: {fileID: 3562282326527126650, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: m_Name
@@ -3097,6 +3097,7 @@ GameObject:
   - component: {fileID: 1988043799}
   - component: {fileID: 1988043800}
   - component: {fileID: 1988043801}
+  - component: {fileID: 1988043802}
   m_Layer: 0
   m_Name: GoalBubble
   m_TagString: Untagged
@@ -3235,6 +3236,65 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  fadeInOnStart: 0
+--- !u!114 &1988043802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988043797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a12c9e9382433846af0c971addbeab3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetRoot: {fileID: 1988043798}
+  includeChildren: 1
+  useUnscaledTime: 0
+  animateBrightness: 1
+  brightnessSpeed: 0.4
+  darkMultiplier: 0.9
+  brightMultiplier: 1.65
+  brightnessCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.5766907
+      value: 1.0101242
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.47364384
+      value: -0.0031433105
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1.6802875
+      value: 0.9893377
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  animatePosition: 1
+  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionSpeed: 0.6
+  chaosAmount: 0.407
+  positionSmoothTime: 0.5
+  randomizePhaseOnEnable: 1
 --- !u!114 &1992591974 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8868194971810599307, guid: 27c3bcfb2fa244a48f6be1edc9314019, type: 3}
@@ -3312,11 +3372,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.7897285
+      value: 0.7862588
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.50733066
+      value: -0.50716066
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.z

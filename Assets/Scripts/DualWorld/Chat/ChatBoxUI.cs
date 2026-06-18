@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -40,6 +41,13 @@ namespace GameCreate3.DualWorld
         public void Clear()
         {
             if (logPanel != null) logPanel.Clear();
+        }
+
+        /// <summary>当前聊天 log 的拷贝（跨场景搬运用；拷贝独立于面板，Clear 不影响返回值）。</summary>
+        public List<ChatLogEntry> GetLog()
+        {
+            var src = logPanel != null ? logPanel.Entries : null;
+            return src != null ? new List<ChatLogEntry>(src) : new List<ChatLogEntry>();
         }
 
         public void SetSubmitInteractable(bool v)

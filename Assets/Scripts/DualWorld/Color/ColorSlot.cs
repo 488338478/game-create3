@@ -66,8 +66,6 @@ namespace GameCreate3
             }
 
             RestoreBaseDisplay();
-
-            Debug.Log($"[ColorSlot] Awake {gameObject.name} | colorImage={colorImage != null} raycastTarget={colorImage?.raycastTarget} | active={gameObject.activeInHierarchy} | blockIndex={blockIndex} targetVariantId={targetVariantId}");
         }
 
         private void OnEnable()
@@ -89,8 +87,6 @@ namespace GameCreate3
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            Debug.Log($"[ColorSlot] OnPointerClick on {gameObject.name}, colorButton={(colorButton != null ? "present" : "null")}");
-
             if (colorButton != null)
             {
                 return;
@@ -184,6 +180,12 @@ namespace GameCreate3
 
         public void PlayHintPulse(PaletteColorOption option)
         {
+            // 已经涂成正确颜色的色槽，不再提示闪烁
+            if (IsCorrectColor())
+            {
+                return;
+            }
+
             var resolvedOption = ResolveLocalOption(option);
             var targets = ResolveApplyTargets();
             for (var i = 0; i < targets.Count; i++)
@@ -272,19 +274,16 @@ namespace GameCreate3
         {
             if (!interactable)
             {
-                Debug.LogWarning($"[ColorSlot] {gameObject.name} interactable=false, click ignored");
                 return;
             }
 
             if (!dreamPaletteEnabled)
             {
-                Debug.LogWarning($"[ColorSlot] {gameObject.name} dreamPaletteEnabled=false, click ignored");
                 return;
             }
 
             if (!usePaletteSelectionWhenDreamEnabled)
             {
-                Debug.LogWarning($"[ColorSlot] {gameObject.name} usePaletteSelectionWhenDreamEnabled=false, click ignored");
                 return;
             }
 

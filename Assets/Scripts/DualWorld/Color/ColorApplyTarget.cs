@@ -90,6 +90,8 @@ namespace GameCreate3
 
         public void ApplyVariant(PaletteColorOption option, bool isCorrect)
         {
+            // 已经点击涂色，停止提示闪烁，避免协程继续切回 sprite 覆盖涂色结果
+            StopHintColorPulse();
             ClearHintPreview();
             CacheBaseState();
             RestoreBaseState();
@@ -153,11 +155,8 @@ namespace GameCreate3
         {
             if (!isActiveAndEnabled)
             {
-                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} isActiveAndEnabled=false");
                 return;
             }
-
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} 开始脉冲 variantId={option.variantId}");
 
             // 清除上一次的 hint 预览
             ClearHintPreview();
@@ -177,7 +176,6 @@ namespace GameCreate3
         {
             if (!isActiveAndEnabled)
             {
-                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} PlayHintColorPulse 跳过: isActiveAndEnabled=false");
                 return;
             }
 
@@ -222,11 +220,8 @@ namespace GameCreate3
 
             var hasColorFrame = System.Array.Exists(hintColorImageSprites, s => s != null)
                                 || System.Array.Exists(hintColorRendererSprites, s => s != null);
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} PlayHintColorPulse 进入 | images={images.Length} matchedVariant={(matched != null)} 彩色帧={hasColorFrame} paletteSprite={option.paletteSprite?.name}");
-
             if (!hasColorFrame)
             {
-                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} 没有彩色图可切换(variant未配置且paletteSprite为空)，提示跳过");
                 return;
             }
 
@@ -741,18 +736,15 @@ namespace GameCreate3
         {
             if (ApplyConfiguredVariant(option))
             {
-                Debug.Log($"[ColorApplyTarget] {gameObject.name} variant匹配成功");
                 return;
             }
 
             if (option.paletteSprite != null)
             {
-                Debug.Log($"[ColorApplyTarget] {gameObject.name} 应用paletteSprite");
                 ApplySpriteFallback(option.paletteSprite, true);
                 return;
             }
 
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} 应用tint fallbackColor={option.fallbackColor} images={images.Length} sprites={spriteRenderers.Length}");
             ApplyTintFallback(option.fallbackColor, false);
         }
 
@@ -780,8 +772,6 @@ namespace GameCreate3
 
         private void ApplySpriteFallback(Sprite sprite, bool isCorrect)
         {
-            Debug.Log($"[ColorApplyTarget] {gameObject.name} ApplySpriteFallback sprite={sprite?.name} images={images.Length} sprites={spriteRenderers.Length}");
-
             var spriteColor = Color.white;
             spriteColor.a = isCorrect ? 1f : wrongAlpha;
 

@@ -38,6 +38,8 @@ namespace GameCreate3
         [SerializeField] private float correctPulseDuration = 0.26f;
         [SerializeField] private float hintWhiteLift = 0.35f;
         [SerializeField] private float hintPulseDuration = 0.22f;
+        [Tooltip("颜色提示：彩色图 ↔ 无色图(base) 来回切换的间隔(秒)")]
+        [SerializeField] private float hintToggleInterval = 0.4f;
 
         private Color[] baseImageColors = System.Array.Empty<Color>();
         private Color[] baseSpriteColors = System.Array.Empty<Color>();
@@ -48,6 +50,13 @@ namespace GameCreate3
         private Coroutine hintRoutine;
         private VisualSnapshot preHintSnapshot;
         private bool baseStateCached;
+        private Coroutine hintColorRoutine;
+        private Color[] savedHintImageColors;
+        private Color[] savedHintSpriteColors;
+        private Sprite[] savedHintImageSprites;
+        private Sprite[] savedHintSpriteRendererSprites;
+        private Sprite[] hintColorImageSprites;
+        private Sprite[] hintColorRendererSprites;
         private GameObject[] trackedVariantObjects = Array.Empty<GameObject>();
         private bool[] trackedVariantObjectStates = Array.Empty<bool>();
 
@@ -135,6 +144,7 @@ namespace GameCreate3
                 hintRoutine = null;
             }
 
+            StopHintColorPulse();
             ClearHintPreview();
             RestoreBaseState();
         }
@@ -161,6 +171,171 @@ namespace GameCreate3
             }
 
             hintRoutine = StartCoroutine(HintPulseRoutine(option));
+        }
+
+        public void PlayHintColorPulse(PaletteColorOption option)
+        {
+            if (!isActiveAndEnabled)
+            {
+                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} PlayHintColorPulse 跳过: isActiveAndEnabled=false");
+                return;
+            }
+
+            StopHintColorPulse();
+
+            // 记录"无色图"基准帧(当前 sprite + color)
+            savedHintImageColors = new Color[images.Length];
+            savedHintImageSprites = new Sprite[images.Length];
+            for (var i = 0; i < images.Length; i++)
+            {
+                savedHintImageColors[i] = images[i] != null ? images[i].color : Color.white;
+                savedHintImageSprites[i] = images[i] != null ? images[i].sprite : null;
+            }
+
+            savedHintSpriteColors = new Color[spriteRenderers.Length];
+            savedHintSpriteRendererSprites = new Sprite[spriteRenderers.Length];
+            for (var i = 0; i < spriteRenderers.Length; i++)
+            {
+                savedHintSpriteColors[i] = spriteRenderers[i] != null ? spriteRenderers[i].color : Color.white;
+                savedHintSpriteRendererSprites[i] = spriteRenderers[i] != null ? spriteRenderers[i].sprite : null;
+            }
+
+            // 解析"彩色图"帧：优先配置 variant 的 imageSprites，否则统一用 option.paletteSprite
+            var matched = FindMatchedVariant(option);
+            hintColorImageSprites = new Sprite[images.Length];
+            for (var i = 0; i < images.Length; i++)
+            {
+                Sprite cs = null;
+                if (matched != null && i < matched.imageSprites.Length) cs = matched.imageSprites[i];
+                if (cs == null) cs = option.paletteSprite;
+                hintColorImageSprites[i] = cs;
+            }
+
+            hintColorRendererSprites = new Sprite[spriteRenderers.Length];
+            for (var i = 0; i < spriteRenderers.Length; i++)
+            {
+                Sprite cs = null;
+                if (matched != null && i < matched.spriteRendererSprites.Length) cs = matched.spriteRendererSprites[i];
+                if (cs == null) cs = option.paletteSprite;
+                hintColorRendererSprites[i] = cs;
+            }
+
+            var hasColorFrame = System.Array.Exists(hintColorImageSprites, s => s != null)
+                                || System.Array.Exists(hintColorRendererSprites, s => s != null);
+            Debug.Log($"[ColorApplyTarget] {gameObject.name} PlayHintColorPulse 进入 | images={images.Length} matchedVariant={(matched != null)} 彩色帧={hasColorFrame} paletteSprite={option.paletteSprite?.name}");
+
+            if (!hasColorFrame)
+            {
+                Debug.LogWarning($"[ColorApplyTarget] {gameObject.name} 没有彩色图可切换(variant未配置且paletteSprite为空)，提示跳过");
+                return;
+            }
+
+            hintColorRoutine = StartCoroutine(HintSpriteToggleRoutine());
+        }
+
+        public void StopHintColorPulse()
+        {
+            if (hintColorRoutine != null)
+            {
+                StopCoroutine(hintColorRoutine);
+                hintColorRoutine = null;
+            }
+
+            if (savedHintImageColors != null)
+            {
+                for (var i = 0; i < images.Length && i < savedHintImageColors.Length; i++)
+                {
+                    if (images[i] == null) continue;
+                    images[i].color = savedHintImageColors[i];
+                    if (savedHintImageSprites != null && i < savedHintImageSprites.Length)
+                        images[i].sprite = savedHintImageSprites[i];
+                }
+            }
+
+            if (savedHintSpriteColors != null)
+            {
+                for (var i = 0; i < spriteRenderers.Length && i < savedHintSpriteColors.Length; i++)
+                {
+                    if (spriteRenderers[i] == null) continue;
+                    spriteRenderers[i].color = savedHintSpriteColors[i];
+                    if (savedHintSpriteRendererSprites != null && i < savedHintSpriteRendererSprites.Length)
+                        spriteRenderers[i].sprite = savedHintSpriteRendererSprites[i];
+                }
+            }
+
+            savedHintImageColors = null;
+            savedHintSpriteColors = null;
+            savedHintImageSprites = null;
+            savedHintSpriteRendererSprites = null;
+            hintColorImageSprites = null;
+            hintColorRendererSprites = null;
+        }
+
+        // 颜色提示：按固定频率在"彩色图"和"无色图(base)"之间来回切换 sprite。
+        private System.Collections.IEnumerator HintSpriteToggleRoutine()
+        {
+            var interval = Mathf.Max(0.05f, hintToggleInterval);
+            var showColor = true;
+
+            while (true)
+            {
+                for (var i = 0; i < images.Length; i++)
+                {
+                    if (images[i] == null) continue;
+                    if (showColor)
+                    {
+                        if (hintColorImageSprites[i] != null)
+                        {
+                            images[i].sprite = hintColorImageSprites[i];
+                            images[i].color = Color.white; // 彩色帧露出原色，避免被 base tint 压暗
+                        }
+                    }
+                    else
+                    {
+                        if (savedHintImageSprites != null && i < savedHintImageSprites.Length)
+                            images[i].sprite = savedHintImageSprites[i];
+                        if (i < savedHintImageColors.Length)
+                            images[i].color = savedHintImageColors[i];
+                    }
+                }
+
+                for (var i = 0; i < spriteRenderers.Length; i++)
+                {
+                    if (spriteRenderers[i] == null) continue;
+                    if (showColor)
+                    {
+                        if (hintColorRendererSprites[i] != null)
+                        {
+                            spriteRenderers[i].sprite = hintColorRendererSprites[i];
+                            spriteRenderers[i].color = Color.white;
+                        }
+                    }
+                    else
+                    {
+                        if (savedHintSpriteRendererSprites != null && i < savedHintSpriteRendererSprites.Length)
+                            spriteRenderers[i].sprite = savedHintSpriteRendererSprites[i];
+                        if (i < savedHintSpriteColors.Length)
+                            spriteRenderers[i].color = savedHintSpriteColors[i];
+                    }
+                }
+
+                showColor = !showColor;
+                yield return new WaitForSeconds(interval);
+            }
+        }
+
+        private VisualVariant FindMatchedVariant(PaletteColorOption option)
+        {
+            if (!option.IsValid || variants == null) return null;
+            for (var i = 0; i < variants.Count; i++)
+            {
+                if (variants[i] != null &&
+                    PaletteColorOption.Matches(variants[i].variantId, variants[i].colorId, option.variantId, option.colorId))
+                {
+                    return variants[i];
+                }
+            }
+            return null;
         }
 
         public void ClearHintPreview()

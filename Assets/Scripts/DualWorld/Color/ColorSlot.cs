@@ -169,9 +169,42 @@ namespace GameCreate3
             return false;
         }
 
+        private List<ColorApplyTarget> ResolveApplyTargets()
+        {
+            if (applyTargets == null) applyTargets = new List<ColorApplyTarget>();
+            if (applyTargets.Count == 0 || applyTargets.TrueForAll(t => t == null))
+            {
+                applyTargets.Clear();
+                var onSelf = GetComponent<ColorApplyTarget>();
+                if (onSelf != null) applyTargets.Add(onSelf);
+                applyTargets.AddRange(GetComponentsInChildren<ColorApplyTarget>(true));
+            }
+            return applyTargets;
+        }
+
         public void PlayHintPulse(PaletteColorOption option)
         {
-            // Hint pulse 已移除，不再闪烁 ColorSlot 图标或 applyTarget 物体
+            var resolvedOption = ResolveLocalOption(option);
+            var targets = ResolveApplyTargets();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != null)
+                {
+                    targets[i].PlayHintColorPulse(resolvedOption);
+                }
+            }
+        }
+
+        public void StopApplyTargetPulses()
+        {
+            var targets = ResolveApplyTargets();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != null)
+                {
+                    targets[i].StopHintColorPulse();
+                }
+            }
         }
 
         private Coroutine hintPulseRoutine;

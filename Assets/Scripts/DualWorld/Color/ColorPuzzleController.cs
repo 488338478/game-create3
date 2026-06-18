@@ -152,6 +152,13 @@ namespace GameCreate3
                 Debug.LogWarning($"[FlashTargets] option无效 variantId={option.variantId} colorId={option.colorId}");
                 return;
             }
+
+            // 先停掉所有色槽的旧脉冲
+            for (var i = 0; i < colorSlots.Count; i++)
+            {
+                colorSlots[i]?.StopApplyTargetPulses();
+            }
+
             var matched = 0;
             for (var i = 0; i < colorSlots.Count; i++)
             {

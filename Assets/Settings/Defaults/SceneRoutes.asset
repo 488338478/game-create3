@@ -28,3 +28,9 @@ MonoBehaviour:
   - routeId: 5
     sceneName: "Level2\xB72"
     useLoading: 1
+  - routeId: 6
+    sceneName: Level2Cutscene
+    useLoading: 1
+  - routeId: 7
+    sceneName: Level3Cutscene
+    useLoading: 1

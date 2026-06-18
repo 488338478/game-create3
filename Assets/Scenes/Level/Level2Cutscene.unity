@@ -355,20 +355,6 @@ VideoPlayer:
   m_WaitForFirstFrame: 1
   m_FrameReadyEventEnabled: 0
   m_VideoShaders: []
---- !u!114 &249281666
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 249281663}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 013c3d415bbd4098a70c33144b406af2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  nextRouteId: level3cutscene
-  videoPlayer: {fileID: 249281664}
 --- !u!4 &249281665
 Transform:
   m_ObjectHideFlags: 0
@@ -384,6 +370,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &249281666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 249281663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 013c3d415bbd4098a70c33144b406af2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nextRouteId: 7
+  videoPlayer: {fileID: 249281664}
 --- !u!1 &1439109004
 GameObject:
   m_ObjectHideFlags: 0

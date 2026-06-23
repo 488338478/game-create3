@@ -25,9 +25,6 @@ namespace GameCreate3.Level3
         [Tooltip("波次持续时间（秒），0 表示无限")]
         public float duration;
 
-        [Tooltip("投射物预制体列表（随机选取）")]
-        public List<GameObject> projectilePrefabs = new List<GameObject>();
-
         [Tooltip("生成类型")]
         public SpawnType spawnType = SpawnType.RandomX;
 
@@ -39,6 +36,9 @@ namespace GameCreate3.Level3
 
         [Tooltip("水平摆动频率")]
         public float swayFrequency = 1f;
+
+        [Tooltip("生成时缩放倍率")]
+        public float spawnScale = 1f;
 
         [Tooltip("该波次投射物数量上限")]
         public int maxProjectiles = 50;

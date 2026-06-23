@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5100000005}
   - component: {fileID: 5100000006}
   m_Layer: 0
-  m_Name: Attack_Emoji1_V1
+  m_Name: Attack_Projectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -121,7 +121,7 @@ Rigidbody2D:
   m_GameObject: {fileID: 5100000001}
   m_BodyType: 2
   m_Simulated: 1
-  m_UseFullKinematicContacts: 0
+  m_UseFullKinematicContacts: 1
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDrag: 0
@@ -150,12 +150,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2826e15ea74e5d7e595da5017dfc35bf, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  sprites:
+  - {fileID: 21300000, guid: f08814950d5df814eb8a88700afed61d, type: 3}
+  - {fileID: 21300000, guid: ba42056877785a549a57b1c08a653482, type: 3}
+  - {fileID: 21300000, guid: f7227aaea1ce95a4dbf118fdcb4152dc, type: 3}
+  - {fileID: 21300000, guid: eb56160a2a657bf4a832934df2c4ff9a, type: 3}
+  - {fileID: 21300000, guid: 7de79721e604efc4c84aef6a14ee1ad4, type: 3}
+  - {fileID: 21300000, guid: 16e7419b725c03145a6027834d4dd15a, type: 3}
+  - {fileID: 21300000, guid: babb2ba68326d8a45833d8ef977d670b, type: 3}
+  - {fileID: 21300000, guid: 143dee16b3b33164bbc8dcc04bff1a13, type: 3}
   fallSpeed: 3
   swayAmplitude: 0.5
   swayFrequency: 1
   deflectSpeed: 8
   deflectTint: {r: 0, g: 1, b: 1, a: 1}
   damage: 1
-  playerLayer:
+  destroyOnContact:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264

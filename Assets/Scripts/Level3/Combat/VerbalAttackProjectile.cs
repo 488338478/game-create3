@@ -3,8 +3,12 @@ using UnityEngine;
 namespace GameCreate3.Level3
 {
     [RequireComponent(typeof(Collider2D))]
+    [RequireComponent(typeof(Rigidbody2D))]
     public sealed class VerbalAttackProjectile : MonoBehaviour
     {
+        [Header("Sprites")]
+        [SerializeField] private Sprite[] sprites;
+
         [Header("Movement")]
         [SerializeField] private float fallSpeed = 3f;
         [SerializeField] private float swayAmplitude;
@@ -16,19 +20,29 @@ namespace GameCreate3.Level3
 
         [Header("Damage")]
         [SerializeField] private int damage = 1;
-        [SerializeField] private LayerMask playerLayer;
+        [SerializeField] private LayerMask destroyOnContact;
 
         public bool IsDeflected { get; private set; }
 
         private SpriteRenderer spriteRenderer;
+        private Rigidbody2D rb;
         private BossAttackSpawner pool;
         private float elapsed;
+
+        private const float SafeDespawnDistance = 30f;
 
         private void Awake()
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            rb = GetComponent<Rigidbody2D>();
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.useFullKinematicContacts = true;
+
             var col = GetComponent<Collider2D>();
             col.isTrigger = true;
+
+            // Ground (3) + Player (8)
+            destroyOnContact = (1 << 3) | (1 << 8);
         }
 
         public void InitFromPool(BossAttackSpawner owner, float speed, float amplitude, float frequency)
@@ -42,6 +56,8 @@ namespace GameCreate3.Level3
 
             if (spriteRenderer != null)
                 spriteRenderer.color = Color.white;
+
+            RandomizeSprite();
         }
 
         public void Deflect()
@@ -59,39 +75,49 @@ namespace GameCreate3.Level3
                 gameObject.SetActive(false);
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
+            var pos = rb.position;
+
             if (IsDeflected)
             {
-                transform.position += Vector3.up * (deflectSpeed * Time.deltaTime);
-                if (transform.position.y > 10f)
-                    ReturnToPool();
+                pos += Vector2.up * (deflectSpeed * Time.fixedDeltaTime);
             }
             else
             {
-                elapsed += Time.deltaTime;
-                var prevSway = swayAmplitude * Mathf.Sin((elapsed - Time.deltaTime) * swayFrequency * Mathf.PI * 2f);
+                elapsed += Time.fixedDeltaTime;
+                var prevSway = swayAmplitude * Mathf.Sin((elapsed - Time.fixedDeltaTime) * swayFrequency * Mathf.PI * 2f);
                 var currSway = swayAmplitude * Mathf.Sin(elapsed * swayFrequency * Mathf.PI * 2f);
-                transform.position += new Vector3(currSway - prevSway, -fallSpeed * Time.deltaTime, 0f);
-
-                if (transform.position.y < -8f)
-                    ReturnToPool();
+                pos += new Vector2(currSway - prevSway, -fallSpeed * Time.fixedDeltaTime);
             }
+
+            if (pos.magnitude > SafeDespawnDistance)
+            {
+                ReturnToPool();
+                return;
+            }
+
+            rb.MovePosition(pos);
         }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
             if (IsDeflected) return;
 
-            if (playerLayer == 0 || (playerLayer.value & (1 << other.gameObject.layer)) != 0)
-            {
-                var combatState = other.GetComponentInParent<PlayerCombatState>(true);
-                if (combatState != null)
-                {
-                    combatState.TakeDamage(damage);
-                    ReturnToPool();
-                }
-            }
+            var otherLayer = 1 << other.gameObject.layer;
+            if ((destroyOnContact.value & otherLayer) == 0) return;
+
+            var combatState = other.GetComponentInParent<PlayerCombatState>(true);
+            if (combatState != null)
+                combatState.OnProjectileHit(damage);
+
+            ReturnToPool();
+        }
+
+        private void RandomizeSprite()
+        {
+            if (sprites != null && sprites.Length > 0 && spriteRenderer != null)
+                spriteRenderer.sprite = sprites[Random.Range(0, sprites.Length)];
         }
     }
 }

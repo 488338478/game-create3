@@ -45,8 +45,10 @@ namespace GameCreate3.Level3
 
             var hw = wallController.CurrentHalfWidth;
             var pos = PlayerController.transform.position;
+            var minX = wallController.LeftWallEnabled ? -hw : float.NegativeInfinity;
+            var maxX = wallController.RightWallEnabled ? hw : float.PositiveInfinity;
             var clamped = new Vector3(
-                Mathf.Clamp(pos.x, -hw, hw),
+                Mathf.Clamp(pos.x, minX, maxX),
                 pos.y,
                 pos.z
             );

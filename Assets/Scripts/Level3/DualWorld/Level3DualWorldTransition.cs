@@ -16,13 +16,14 @@ namespace GameCreate3.Level3
         [SerializeField] private float panelOffscreenX = 960f;
 
         private bool transitioned;
+        private Vector2 panelOriginalPos;
 
         private void Awake()
         {
             if (xiaohongshuPanel != null)
             {
-                var ap = xiaohongshuPanel.anchoredPosition;
-                xiaohongshuPanel.anchoredPosition = new Vector2(panelOffscreenX, ap.y);
+                panelOriginalPos = xiaohongshuPanel.anchoredPosition;
+                xiaohongshuPanel.anchoredPosition = new Vector2(panelOffscreenX, panelOriginalPos.y);
                 xiaohongshuPanel.gameObject.SetActive(false);
             }
         }
@@ -42,7 +43,7 @@ namespace GameCreate3.Level3
 
             var elapsed = 0f;
             var panelStart = xiaohongshuPanel.anchoredPosition;
-            var panelTarget = new Vector2(0f, panelStart.y);
+            var panelTarget = panelOriginalPos;
 
             while (elapsed < transitionDuration)
             {

@@ -16,34 +16,18 @@ MonoBehaviour:
   - startTime: 0
     spawnInterval: 0.6
     duration: 0
-    projectilePrefabs:
-    - {fileID: 5100000001, guid: 2471cb98490d18d5ea881f40fce81cac, type: 3}
-    - {fileID: 5100000001, guid: ffea8c22f7a96f9cf1ce02f070949bbc, type: 3}
-    - {fileID: 5100000001, guid: ebb7a8da5c055793a13e18a6a9477c2b, type: 3}
-    - {fileID: 5100000001, guid: 06fbf4eb085d7d3221c81fc88ec86277, type: 3}
-    - {fileID: 5100000001, guid: 38b2e0820c1a109ab409b19e05263952, type: 3}
-    - {fileID: 5100000001, guid: a6adbd47604d6dbf1122480d0d14a387, type: 3}
-    - {fileID: 5100000001, guid: d0c9d87fc82dfdceae225accb52a8e31, type: 3}
-    - {fileID: 5100000001, guid: 524c1e736152340f4fea5cd867f30754, type: 3}
     spawnType: 1
     fallSpeed: 5
     swayAmplitude: 1
     swayFrequency: 2
+    spawnScale: 0.3
     maxProjectiles: 60
   - startTime: 3
     spawnInterval: 0.4
     duration: 0
-    projectilePrefabs:
-    - {fileID: 5100000001, guid: 2471cb98490d18d5ea881f40fce81cac, type: 3}
-    - {fileID: 5100000001, guid: ffea8c22f7a96f9cf1ce02f070949bbc, type: 3}
-    - {fileID: 5100000001, guid: ebb7a8da5c055793a13e18a6a9477c2b, type: 3}
-    - {fileID: 5100000001, guid: 06fbf4eb085d7d3221c81fc88ec86277, type: 3}
-    - {fileID: 5100000001, guid: 38b2e0820c1a109ab409b19e05263952, type: 3}
-    - {fileID: 5100000001, guid: a6adbd47604d6dbf1122480d0d14a387, type: 3}
-    - {fileID: 5100000001, guid: d0c9d87fc82dfdceae225accb52a8e31, type: 3}
-    - {fileID: 5100000001, guid: 524c1e736152340f4fea5cd867f30754, type: 3}
     spawnType: 2
     fallSpeed: 5.5
     swayAmplitude: 2
     swayFrequency: 2.5
+    spawnScale: 0.3
     maxProjectiles: 80

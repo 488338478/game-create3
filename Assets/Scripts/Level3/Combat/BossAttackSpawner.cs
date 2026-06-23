@@ -10,11 +10,14 @@ namespace GameCreate3.Level3
         [SerializeField] private BossAttackPattern phase1Pattern;
         [SerializeField] private BossAttackPattern phase2Pattern;
 
+        [Header("Projectile")]
+        [SerializeField] private GameObject projectilePrefab;
+
         [Header("Spawn Area")]
         [SerializeField] private BoxCollider2D spawnZone;
 
         [Header("Pool")]
-        [SerializeField] private int poolSizePerPrefab = 15;
+        [SerializeField] private int totalPoolSize = 15;
 
         [Header("Difficulty Scaling")]
         [SerializeField] private float spawnRateMultiplier = 1f;
@@ -22,8 +25,8 @@ namespace GameCreate3.Level3
         [SerializeField] private float multiplierIncreasePerSecond = 0.02f;
 
         private SideScrollWorkspaceBase workspace;
-        private readonly Dictionary<GameObject, Queue<VerbalAttackProjectile>> pools = new();
-        private readonly Dictionary<VerbalAttackProjectile, Queue<VerbalAttackProjectile>> activeToPool = new();
+        private readonly Queue<VerbalAttackProjectile> pool = new();
+        private readonly HashSet<VerbalAttackProjectile> active = new();
         private bool isSpawning;
 
         private Transform PlayerTransform =>
@@ -38,7 +41,7 @@ namespace GameCreate3.Level3
 
         private void Start()
         {
-            PrewarmPools();
+            PrewarmPool();
         }
 
         private void Update()
@@ -74,41 +77,20 @@ namespace GameCreate3.Level3
         {
             if (proj == null) return;
             proj.gameObject.SetActive(false);
-            if (activeToPool.TryGetValue(proj, out var queue))
-            {
-                queue.Enqueue(proj);
-                activeToPool.Remove(proj);
-            }
+            active.Remove(proj);
+            pool.Enqueue(proj);
         }
 
-        private void PrewarmPools()
+        private void PrewarmPool()
         {
-            var allPrefabs = new HashSet<GameObject>();
-            CollectPrefabs(phase1Pattern, allPrefabs);
-            CollectPrefabs(phase2Pattern, allPrefabs);
-
-            foreach (var prefab in allPrefabs)
+            if (projectilePrefab == null) return;
+            for (var i = 0; i < totalPoolSize; i++)
             {
-                if (prefab == null) continue;
-                var queue = new Queue<VerbalAttackProjectile>();
-                for (var i = 0; i < poolSizePerPrefab; i++)
-                {
-                    var instance = Instantiate(prefab, transform);
-                    instance.SetActive(false);
-                    var proj = instance.GetComponent<VerbalAttackProjectile>();
-                    if (proj != null) queue.Enqueue(proj);
-                }
-                pools[prefab] = queue;
+                var instance = Instantiate(projectilePrefab, transform);
+                instance.SetActive(false);
+                var proj = instance.GetComponent<VerbalAttackProjectile>();
+                if (proj != null) pool.Enqueue(proj);
             }
-        }
-
-        private static void CollectPrefabs(BossAttackPattern pattern, HashSet<GameObject> set)
-        {
-            if (pattern == null) return;
-            foreach (var wave in pattern.waves)
-                if (wave.projectilePrefabs != null)
-                    foreach (var p in wave.projectilePrefabs)
-                        if (p != null) set.Add(p);
         }
 
         private void StartSpawning(BossAttackPattern pattern)
@@ -146,13 +128,9 @@ namespace GameCreate3.Level3
 
         private void SpawnProjectile(BossAttackWave wave)
         {
-            if (wave.projectilePrefabs == null || wave.projectilePrefabs.Count == 0) return;
+            if (pool.Count == 0) return;
 
-            var prefab = wave.projectilePrefabs[Random.Range(0, wave.projectilePrefabs.Count)];
-            if (prefab == null) return;
-            if (!pools.TryGetValue(prefab, out var queue) || queue.Count == 0) return;
-
-            var proj = queue.Dequeue();
+            var proj = pool.Dequeue();
             if (proj == null) return;
 
             var bounds = spawnZone.bounds;
@@ -164,9 +142,10 @@ namespace GameCreate3.Level3
             };
 
             proj.transform.position = new Vector3(sx, bounds.max.y, 0f);
+            proj.transform.localScale = Vector3.one * wave.spawnScale;
             proj.gameObject.SetActive(true);
             proj.InitFromPool(this, wave.fallSpeed, wave.swayAmplitude, wave.swayFrequency);
-            activeToPool[proj] = queue;
+            active.Add(proj);
         }
     }
 }

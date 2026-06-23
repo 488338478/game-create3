@@ -17,22 +17,28 @@ MonoBehaviour:
     sceneName: Level1
     useLoading: 1
   - routeId: 2
-    sceneName: Level1Cutscene
-    useLoading: 1
-  - routeId: 3
     sceneName: Level2
     useLoading: 1
-  - routeId: 4
-    sceneName: MainMenu
+  - routeId: 3
+    sceneName: Level3
     useLoading: 1
-  - routeId: 5
+  - routeId: 4
+    sceneName: Level4
+    useLoading: 1
+  - routeId: level1cutscene
+    sceneName: Level1Cutscene
+    useLoading: 1
+  - routeId: level2_2
     sceneName: "Level2\xB72"
     useLoading: 1
-  - routeId: 6
+  - routeId: level2cutscene
     sceneName: Level2Cutscene
     useLoading: 1
-  - routeId: 7
+  - routeId: level3cutscene
     sceneName: Level3Cutscene
+    useLoading: 1
+  - routeId: level4cutscene
+    sceneName: Level4Cutscene
     useLoading: 1
   - routeId: main_menu
     sceneName: MainMenu
@@ -48,16 +54,4 @@ MonoBehaviour:
     useLoading: 0
   - routeId: next_stage
     sceneName: Level1
-    useLoading: 1
-  - routeId: level1
-    sceneName: Level1
-    useLoading: 1
-  - routeId: level2
-    sceneName: Level2
-    useLoading: 1
-  - routeId: level3
-    sceneName: Level3
-    useLoading: 1
-  - routeId: level3cutscene
-    sceneName: Level3Cutscene
     useLoading: 1

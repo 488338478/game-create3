@@ -23,8 +23,7 @@ namespace GameCreate3
             config = value;
         }
 
-        /// <param name="jumpHeld">[已废弃] 跳跃改为固定高度，不再根据按住时长调节。</param>
-        public void Tick(bool isGrounded, bool jumpPressed, bool jumpHeld)
+        public void Tick(bool isGrounded, bool jumpPressed)
         {
             if (targetBody == null || config == null)
             {

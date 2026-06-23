@@ -15,7 +15,7 @@ namespace GameCreate3
         [FormerlySerializedAs("previewSprite")]
         public Sprite paletteSprite;
 
-        public bool IsValid => variantId >= 0 || !string.IsNullOrWhiteSpace(colorId);
+        public bool IsValid => variantId > 0 || !string.IsNullOrWhiteSpace(colorId);
 
         public bool Matches(PaletteColorOption other)
         {

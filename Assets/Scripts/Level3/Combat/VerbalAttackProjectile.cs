@@ -109,7 +109,7 @@ namespace GameCreate3.Level3
 
             var combatState = other.GetComponentInParent<PlayerCombatState>(true);
             if (combatState != null)
-                combatState.OnProjectileHit(damage);
+                combatState.TakeDamage(damage);
 
             ReturnToPool();
         }

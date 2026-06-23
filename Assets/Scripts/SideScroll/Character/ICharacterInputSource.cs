@@ -4,7 +4,6 @@ namespace GameCreate3
     {
         float MoveX { get; }
         bool JumpPressed { get; }
-        bool JumpHeld { get; }
         bool InteractPressed { get; }
         void Tick();
     }

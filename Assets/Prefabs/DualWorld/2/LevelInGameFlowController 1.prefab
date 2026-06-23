@@ -59,6 +59,7 @@ MonoBehaviour:
   successSceneName: Level2Cutscene
   dreamStartsUnlocked: 1
   blockedToDreamDelaySec: 0.75
+  firstCollectedColorAutoFillDelaySec: 10
 --- !u!1 &3407142471320434716
 GameObject:
   m_ObjectHideFlags: 0

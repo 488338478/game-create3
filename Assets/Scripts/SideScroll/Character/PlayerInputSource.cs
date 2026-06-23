@@ -56,14 +56,12 @@ namespace GameCreate3
 
         public float MoveX { get; private set; }
         public bool JumpPressed { get; private set; }
-        public bool JumpHeld { get; private set; }
         public bool InteractPressed { get; private set; }
 
         public void Tick()
         {
             MoveX = moveAction.ReadValue<float>();
             JumpPressed = jumpAction.WasPressedThisFrame();
-            JumpHeld = jumpAction.IsPressed();
             InteractPressed = interactAction.WasPressedThisFrame();
         }
 

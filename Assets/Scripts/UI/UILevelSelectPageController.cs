@@ -220,6 +220,7 @@ namespace GameCreate3.UI
         {
             var save = GameSaveProgressService.Instance;
             var lastRouteId = save != null ? save.GetProgress(UIProgressKeys.LastRouteId, string.Empty) : string.Empty;
+            lastRouteId = NormalizeSavedRouteId(lastRouteId);
             if (!string.IsNullOrWhiteSpace(lastRouteId))
             {
                 for (var i = 0; i < levels.Count; i++)
@@ -232,6 +233,18 @@ namespace GameCreate3.UI
             }
 
             return Mathf.Clamp(GetUnlockedMaxLevelIndex(), 0, Mathf.Max(0, levels.Count - 1));
+        }
+
+        private static string NormalizeSavedRouteId(string routeId)
+        {
+            return routeId switch
+            {
+                "level1" => "1",
+                "level2" => "2",
+                "level3" => "3",
+                "level4" => "4",
+                _ => routeId
+            };
         }
 
         private bool IsLevelSelectable(int levelIndex)

@@ -4,7 +4,6 @@ namespace GameCreate3
     {
         public float MoveX => 0f;
         public bool JumpPressed => false;
-        public bool JumpHeld => false;
         public bool InteractPressed => false;
 
         public void Tick()

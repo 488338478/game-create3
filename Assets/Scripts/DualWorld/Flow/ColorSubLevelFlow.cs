@@ -23,6 +23,7 @@ namespace GameCreate3.DualWorld
         [Header("Tuning")]
         [SerializeField] private float blockedToDreamDelaySec = 0.75f;
         [SerializeField] private bool dreamStartsUnlocked = true;
+        [SerializeField] private float firstCollectedColorAutoFillDelaySec = 10f;
 
         public GameObject RealityRoot => realityRoot;
         public GameObject DreamRoot => dreamRoot;
@@ -35,6 +36,11 @@ namespace GameCreate3.DualWorld
         private float realityTaskStartTime;
         private global::GameCreate3.PaletteColorOption currentDreamPalette;
         private DreamColorHintRouter dreamHintRouter;
+        private Coroutine pendingFirstCollectedColorAutoFillRoutine;
+        private bool firstCollectedColorAutoFillConsumed;
+        private bool waitingForFirstCollectedColorAutoFill;
+        private bool suppressFirstCollectedColorStateTracking;
+        private global::GameCreate3.PaletteColorOption firstCollectedColorForAutoFill;
 
         protected override void OnInitialized()
         {
@@ -42,6 +48,7 @@ namespace GameCreate3.DualWorld
             ResolveHintRouter();
 
             if (realityTask != null) realityTask.OnSubmitAttempted += HandleRealityTaskSubmit;
+            if (realityTask != null) realityTask.SlotStateChanged += HandleRealityTaskSlotStateChanged;
             if (dreamCollector != null) dreamCollector.Completed += HandleDreamCollectorCompleted;
             if (dreamCollector != null) dreamCollector.ItemCollected += HandleDreamCollectorItemCollected;
             if (Workspace != null) Workspace.WorkspaceEventRaised += HandleWorkspaceEvent;
@@ -52,8 +59,10 @@ namespace GameCreate3.DualWorld
         private void OnDestroy()
         {
             CancelPendingBlockedTransition();
+            CancelPendingFirstCollectedColorAutoFill();
 
             if (realityTask != null) realityTask.OnSubmitAttempted -= HandleRealityTaskSubmit;
+            if (realityTask != null) realityTask.SlotStateChanged -= HandleRealityTaskSlotStateChanged;
             if (dreamCollector != null) dreamCollector.Completed -= HandleDreamCollectorCompleted;
             if (dreamCollector != null) dreamCollector.ItemCollected -= HandleDreamCollectorItemCollected;
             if (Workspace != null) Workspace.WorkspaceEventRaised -= HandleWorkspaceEvent;
@@ -83,6 +92,7 @@ namespace GameCreate3.DualWorld
                     realityTaskStartTime = Time.time;
                     currentDreamPalette = default;
                     collectedDreamColors.Clear();
+                    ResetFirstCollectedColorAutoFillState();
                     realityTask?.ResetPuzzle();
                     realityTask?.ClearCurrentPalette();
                     realityTask?.SetDreamPaletteEnabled(false);
@@ -130,6 +140,7 @@ namespace GameCreate3.DualWorld
                     break;
 
                 case SubLevelPhase.RealityTaskCompleted:
+                    CancelPendingFirstCollectedColorAutoFill();
                     realityTask?.SetInteractable(false);
                     dreamCollector?.SetInteractive(false);
                     SetSubmitInteractable(false);
@@ -153,6 +164,7 @@ namespace GameCreate3.DualWorld
                     break;
 
                 case SubLevelPhase.SubLevelCompleted:
+                    CancelPendingFirstCollectedColorAutoFill();
                     Workspace?.EventBus.Raise(new CrossWorldEvent(CrossWorldEventType.ExitReached, SubLevelId, collectedDreamColors.AsReadOnly()));
                     GoSuccessScene();
                     break;
@@ -230,6 +242,23 @@ namespace GameCreate3.DualWorld
             currentDreamPalette = option;
             realityTask?.SetCurrentPalette(option);
             realityTask?.FlashTargetsForOption(option);
+            TryScheduleFirstCollectedColorAutoFill(option);
+        }
+
+        private void HandleRealityTaskSlotStateChanged(global::GameCreate3.ColorSlot slot)
+        {
+            if (!waitingForFirstCollectedColorAutoFill || suppressFirstCollectedColorStateTracking || realityTask == null)
+            {
+                return;
+            }
+
+            if (!realityTask.HasAnyAppliedColor())
+            {
+                return;
+            }
+
+            firstCollectedColorAutoFillConsumed = true;
+            CancelPendingFirstCollectedColorAutoFill();
         }
 
         private void HandleWorkspaceEvent(string eventId)
@@ -271,6 +300,7 @@ namespace GameCreate3.DualWorld
             {
                 var meteorRoot = dreamRoot != null ? dreamRoot.transform : dreamCollector.transform;
                 dreamCollector.SetMeteorContainer(meteorRoot);
+                dreamCollector.SetSolvedColorResolver(realityTask != null ? realityTask.IsOptionSolved : null);
             }
         }
 
@@ -300,6 +330,101 @@ namespace GameCreate3.DualWorld
             }
 
             collectedDreamColors.Add(option);
+        }
+
+        private void TryScheduleFirstCollectedColorAutoFill(global::GameCreate3.PaletteColorOption option)
+        {
+            if (realityTask == null ||
+                firstCollectedColorAutoFillConsumed ||
+                waitingForFirstCollectedColorAutoFill ||
+                (!option.IsValid && option.paletteSprite == null))
+            {
+                return;
+            }
+
+            if (realityTask.HasAnyAppliedColor())
+            {
+                firstCollectedColorAutoFillConsumed = true;
+                return;
+            }
+
+            waitingForFirstCollectedColorAutoFill = true;
+            firstCollectedColorForAutoFill = option;
+
+            var autoFillDelaySec = ResolveFirstCollectedColorAutoFillDelaySec();
+            if (autoFillDelaySec <= 0f)
+            {
+                AutoFillFirstCollectedColor();
+                return;
+            }
+
+            pendingFirstCollectedColorAutoFillRoutine = StartCoroutine(AutoFillFirstCollectedColorAfterDelay());
+        }
+
+        private IEnumerator AutoFillFirstCollectedColorAfterDelay()
+        {
+            yield return new WaitForSeconds(ResolveFirstCollectedColorAutoFillDelaySec());
+            pendingFirstCollectedColorAutoFillRoutine = null;
+            AutoFillFirstCollectedColor();
+        }
+
+        private void AutoFillFirstCollectedColor()
+        {
+            if (!waitingForFirstCollectedColorAutoFill || realityTask == null)
+            {
+                return;
+            }
+
+            if (CurrentPhase == SubLevelPhase.RealityTaskCompleted || CurrentPhase == SubLevelPhase.SubLevelCompleted)
+            {
+                CancelPendingFirstCollectedColorAutoFill();
+                return;
+            }
+
+            var shouldAutoFill = !realityTask.HasAnyAppliedColor();
+            waitingForFirstCollectedColorAutoFill = false;
+            firstCollectedColorAutoFillConsumed = true;
+
+            if (shouldAutoFill)
+            {
+                suppressFirstCollectedColorStateTracking = true;
+                try
+                {
+                    realityTask.TryAutoFillOption(firstCollectedColorForAutoFill);
+                }
+                finally
+                {
+                    suppressFirstCollectedColorStateTracking = false;
+                }
+            }
+
+            firstCollectedColorForAutoFill = default;
+        }
+
+        private void CancelPendingFirstCollectedColorAutoFill()
+        {
+            if (pendingFirstCollectedColorAutoFillRoutine != null)
+            {
+                StopCoroutine(pendingFirstCollectedColorAutoFillRoutine);
+                pendingFirstCollectedColorAutoFillRoutine = null;
+            }
+
+            waitingForFirstCollectedColorAutoFill = false;
+            firstCollectedColorForAutoFill = default;
+            suppressFirstCollectedColorStateTracking = false;
+        }
+
+        private void ResetFirstCollectedColorAutoFillState()
+        {
+            CancelPendingFirstCollectedColorAutoFill();
+            firstCollectedColorAutoFillConsumed = false;
+        }
+
+        private float ResolveFirstCollectedColorAutoFillDelaySec()
+        {
+            return firstCollectedColorAutoFillDelaySec > 0f
+                ? firstCollectedColorAutoFillDelaySec
+                : 10f;
         }
     }
 }

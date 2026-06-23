@@ -70,7 +70,7 @@ namespace GameCreate3
         {
             IsGrounded = groundDetector.Sample();
             movementMotor.Apply(inputProxy.MoveX, IsGrounded);
-            jumpMotor.Tick(IsGrounded, inputProxy.JumpPressed, inputProxy.JumpHeld);
+            jumpMotor.Tick(IsGrounded, inputProxy.JumpPressed);
             // 跳跃锁存被消费后立刻清掉，避免 jumpBuffer 自然衰减期间被多次重新填满。
             inputProxy.ConsumeJumpPressed();
 

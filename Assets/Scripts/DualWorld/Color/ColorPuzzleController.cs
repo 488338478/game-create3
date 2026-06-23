@@ -45,6 +45,7 @@ namespace GameCreate3
         public bool IsInteractable => interactable;
 
         public event Action<ColorSubmitResult> OnSubmitAttempted;
+        public event Action<ColorSlot> SlotStateChanged;
 
         /// <summary>供 Flow 层（ChatBox 管道）调用，触发一次提交评估</summary>
         public void Submit()
@@ -69,6 +70,8 @@ namespace GameCreate3
                 slot.SetInteractable(true);
                 slot.Clicked -= HandleColorSlotClicked;
                 slot.Clicked += HandleColorSlotClicked;
+                slot.StateChanged -= HandleColorSlotStateChanged;
+                slot.StateChanged += HandleColorSlotStateChanged;
             }
         }
 
@@ -182,6 +185,63 @@ namespace GameCreate3
             return false;
         }
 
+        public bool IsOptionSolved(PaletteColorOption option)
+        {
+            if (!option.IsValid)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < colorSlots.Count; i++)
+            {
+                var slot = colorSlots[i];
+                if (slot == null || !slot.MatchesOption(option) || !slot.IsCorrectColor())
+                {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool HasAnyAppliedColor()
+        {
+            for (var i = 0; i < colorSlots.Count; i++)
+            {
+                var slot = colorSlots[i];
+                if (slot != null && slot.HasAppliedOption)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool TryAutoFillOption(PaletteColorOption option)
+        {
+            if (!option.IsValid && option.paletteSprite == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < colorSlots.Count; i++)
+            {
+                var slot = colorSlots[i];
+                if (slot == null || !slot.MatchesOption(option) || slot.IsCorrectColor())
+                {
+                    continue;
+                }
+
+                slot.ApplyPaletteColor(option);
+                return true;
+            }
+
+            return false;
+        }
+
         public void SetInteractable(bool enabled)
         {
             interactable = enabled;
@@ -264,6 +324,11 @@ namespace GameCreate3
             slot.ApplyPaletteColor(currentPaletteOption);
         }
 
+        private void HandleColorSlotStateChanged(ColorSlot slot)
+        {
+            SlotStateChanged?.Invoke(slot);
+        }
+
         private void RefreshDreamPaletteArea()
         {
             if (dreamPaletteGroup != null)
@@ -297,6 +362,8 @@ namespace GameCreate3
                 if (slot == null) continue;
                 slot.Clicked -= HandleColorSlotClicked;
                 slot.Clicked += HandleColorSlotClicked;
+                slot.StateChanged -= HandleColorSlotStateChanged;
+                slot.StateChanged += HandleColorSlotStateChanged;
             }
         }
 
@@ -305,7 +372,10 @@ namespace GameCreate3
             foreach (var slot in colorSlots)
             {
                 if (slot != null)
+                {
                     slot.Clicked -= HandleColorSlotClicked;
+                    slot.StateChanged -= HandleColorSlotStateChanged;
+                }
             }
         }
 

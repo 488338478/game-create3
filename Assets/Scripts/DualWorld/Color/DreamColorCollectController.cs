@@ -50,6 +50,7 @@ namespace GameCreate3
         [SerializeField] private float meteorGroundY = -3.2f;
         [SerializeField] private LayerMask meteorGroundMask = ~0;
         [SerializeField] private float meteorGroundProbePadding = 0.08f;
+        [SerializeField] [Range(0.01f, 1f)] private float solvedColorSpawnWeightMultiplier = 0.2f;
         [SerializeField] private List<MeteorDefinition> meteorDefinitions = new List<MeteorDefinition>();
 
         [Header("Resonance")]
@@ -65,6 +66,7 @@ namespace GameCreate3
         private readonly List<DreamColorPickup> activeMeteors = new List<DreamColorPickup>();
         private readonly List<Collider2D> playerColliders = new List<Collider2D>();
         private readonly RaycastHit2D[] meteorGroundHits = new RaycastHit2D[8];
+        private Func<PaletteColorOption, bool> solvedColorResolver;
 
         public event Action<IReadOnlyList<PaletteColorOption>> Completed;
         public event Action<PaletteColorOption> ItemCollected;
@@ -294,13 +296,13 @@ namespace GameCreate3
             float totalWeight = 0f;
             for (int i = 0; i < meteorDefinitions.Count; i++)
             {
-                totalWeight += Mathf.Max(0.01f, meteorDefinitions[i].spawnWeight);
+                totalWeight += GetMeteorSpawnWeight(meteorDefinitions[i]);
             }
 
             var pick = UnityEngine.Random.value * totalWeight;
             for (int i = 0; i < meteorDefinitions.Count; i++)
             {
-                pick -= Mathf.Max(0.01f, meteorDefinitions[i].spawnWeight);
+                pick -= GetMeteorSpawnWeight(meteorDefinitions[i]);
                 if (pick <= 0f)
                 {
                     return meteorDefinitions[i];
@@ -532,6 +534,11 @@ namespace GameCreate3
             meteorContainer = container != null ? container : transform;
         }
 
+        public void SetSolvedColorResolver(Func<PaletteColorOption, bool> resolver)
+        {
+            solvedColorResolver = resolver;
+        }
+
         private void TryStoreCollectedOption(PaletteColorOption option)
         {
             if (option.IsValid)
@@ -546,6 +553,31 @@ namespace GameCreate3
             }
 
             collectedOptions.Add(option);
+        }
+
+        private float GetMeteorSpawnWeight(MeteorDefinition definition)
+        {
+            if (definition == null)
+            {
+                return 0.0001f;
+            }
+
+            var weight = Mathf.Max(0.0001f, definition.spawnWeight);
+            if (solvedColorResolver != null &&
+                definition.option.IsValid &&
+                solvedColorResolver(definition.option))
+            {
+                weight *= ResolveSolvedColorSpawnWeightMultiplier();
+            }
+
+            return Mathf.Max(0.0001f, weight);
+        }
+
+        private float ResolveSolvedColorSpawnWeightMultiplier()
+        {
+            return solvedColorSpawnWeightMultiplier > 0f
+                ? Mathf.Clamp(solvedColorSpawnWeightMultiplier, 0.01f, 1f)
+                : 0.2f;
         }
 
         private bool ShouldAutoCompleteCollection()

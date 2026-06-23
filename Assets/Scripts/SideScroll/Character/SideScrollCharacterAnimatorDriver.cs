@@ -28,6 +28,12 @@ namespace GameCreate3
         [Tooltip("从落地到起跳的最大检测帧数（防漏触发）")]
         [SerializeField] private int jumpGraceTicks = 3;
 
+        [Header("Jump Layer")]
+        [Tooltip("用于空中覆盖动画的 Animator Layer 名。留空或找不到则忽略。")]
+        [SerializeField] private string jumpLayerName = "jump";
+        [SerializeField] private float groundedJumpLayerWeight = 0f;
+        [SerializeField] private float airborneJumpLayerWeight = 1f;
+
         [Header("转向（调 localScale.x）")]
         [Tooltip("要翻转的对象，留空则用本物体 transform")]
         [SerializeField] private Transform facingTarget;
@@ -38,6 +44,7 @@ namespace GameCreate3
         private Animator _animator;
         private int      _speedId;
         private int      _jumpId;
+        private int      _jumpLayerIndex = -1;
         private bool     _wasGrounded;
         private int      _airTicks;
         private int      _facingSign = 1;   // 1=右, -1=左
@@ -50,6 +57,9 @@ namespace GameCreate3
             _animator = GetComponent<Animator>();
             _speedId  = Animator.StringToHash(speedParam);
             _jumpId   = Animator.StringToHash(jumpParam);
+            _jumpLayerIndex = _animator != null && !string.IsNullOrWhiteSpace(jumpLayerName)
+                ? _animator.GetLayerIndex(jumpLayerName)
+                : -1;
 
             if (body == null)
                 body = GetComponentInParent<Rigidbody2D>();
@@ -88,6 +98,7 @@ namespace GameCreate3
                 _wasGrounded = grounded;
                 _airTicks = grounded ? 0 : jumpGraceTicks + 1;
                 _stepTimer = 0f;
+                ApplyJumpLayerWeight(grounded);
             }
         }
 
@@ -116,6 +127,7 @@ namespace GameCreate3
 
             // ── Jump（落地→腾空 = 跳跃触发）────────────────────────
             var isGrounded = groundDetector != null ? groundDetector.IsGrounded : false;
+            ApplyJumpLayerWeight(isGrounded);
 
             if (_wasGrounded && !isGrounded)
             {
@@ -148,6 +160,12 @@ namespace GameCreate3
             }
 
             _wasGrounded = isGrounded;
+        }
+
+        private void ApplyJumpLayerWeight(bool isGrounded)
+        {
+            if (_animator == null || _jumpLayerIndex < 0) return;
+            _animator.SetLayerWeight(_jumpLayerIndex, isGrounded ? groundedJumpLayerWeight : airborneJumpLayerWeight);
         }
 
         private void ApplyFacing()

@@ -1828,6 +1828,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   meteorGroundProbePadding: 0.08
+  solvedColorSpawnWeightMultiplier: 0.2
   meteorDefinitions:
   - option:
       variantId: 1

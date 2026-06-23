@@ -30,6 +30,7 @@ namespace GameCreate3
 
         public Color CurrentColor => colorImage != null ? colorImage.color : currentOption.fallbackColor;
         public string CurrentColorId => currentOption.colorId;
+        public bool HasAppliedOption => currentOption.IsValid || currentOption.paletteSprite != null;
 
         public void Initialize(Image image, Button button, Color target)
         {

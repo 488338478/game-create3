@@ -13,6 +13,27 @@ MonoBehaviour:
   m_Name: SceneRoutes
   m_EditorClassIdentifier:
   routes:
+  - routeId: 1
+    sceneName: Level1
+    useLoading: 1
+  - routeId: 2
+    sceneName: Level1Cutscene
+    useLoading: 1
+  - routeId: 3
+    sceneName: Level2
+    useLoading: 1
+  - routeId: 4
+    sceneName: MainMenu
+    useLoading: 1
+  - routeId: 5
+    sceneName: "Level2\xB72"
+    useLoading: 1
+  - routeId: 6
+    sceneName: Level2Cutscene
+    useLoading: 1
+  - routeId: 7
+    sceneName: Level3Cutscene
+    useLoading: 1
   - routeId: main_menu
     sceneName: MainMenu
     useLoading: 0
@@ -33,9 +54,6 @@ MonoBehaviour:
     useLoading: 1
   - routeId: level2
     sceneName: Level2
-    useLoading: 1
-  - routeId: level3
-    sceneName: Level3
     useLoading: 1
   - routeId: level3cutscene
     sceneName: Level3Cutscene

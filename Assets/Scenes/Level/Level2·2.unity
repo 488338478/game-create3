@@ -182,7 +182,7 @@ PrefabInstance:
     - target: {fileID: 114000010000000001, guid: 04050607080901020a0304050607080c, type: 3}
       propertyPath: catalog
       value: 
-      objectReference: {fileID: 11400000, guid: 2f952216120e100408d36ccacd299092, type: 2}
+      objectReference: {fileID: 11400000, guid: d1e2f30405060708091011d1e2f30405, type: 2}
     - target: {fileID: 1000010000000000001, guid: 04050607080901020a0304050607080c, type: 3}
       propertyPath: m_Name
       value: SceneRouterHooks

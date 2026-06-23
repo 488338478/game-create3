@@ -165,9 +165,9 @@ namespace GameCreate3.UI
 #if UNITY_EDITOR
         private void Reset()
         {
-            standardCursor = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Arts/UI/鼠标图标/mouse_standard.png");
-            pressedCursor = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Arts/UI/鼠标图标/mouse_pre.png");
-            moveCursor = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Arts/UI/鼠标图标/mouse_move.png");
+            standardCursor = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Arts/_Shared/UI/Cursor/mouse_standard.png");
+            pressedCursor = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Arts/_Shared/UI/Cursor/mouse_pre.png");
+            moveCursor = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Arts/_Shared/UI/Cursor/mouse_move.png");
         }
 #endif
     }

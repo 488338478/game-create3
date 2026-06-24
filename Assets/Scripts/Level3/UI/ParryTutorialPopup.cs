@@ -10,6 +10,7 @@ namespace GameCreate3.Level3
 
         private bool hasOpened;
         private GameObject dimmer;
+        private Canvas panelOverrideCanvas;
 
         private void Awake()
         {
@@ -46,7 +47,13 @@ namespace GameCreate3.Level3
             if (popupPanel != null)
             {
                 popupPanel.SetActive(true);
-                popupPanel.transform.SetAsLastSibling();
+                panelOverrideCanvas = popupPanel.GetComponent<Canvas>();
+                if (panelOverrideCanvas == null)
+                    panelOverrideCanvas = popupPanel.AddComponent<Canvas>();
+                panelOverrideCanvas.overrideSorting = true;
+                panelOverrideCanvas.sortingOrder = canvas.sortingOrder + 2;
+                if (popupPanel.GetComponent<GraphicRaycaster>() == null)
+                    popupPanel.AddComponent<GraphicRaycaster>();
                 var cg = popupPanel.GetComponent<CanvasGroup>();
                 if (cg == null) cg = popupPanel.AddComponent<CanvasGroup>();
                 cg.blocksRaycasts = false;
@@ -58,7 +65,12 @@ namespace GameCreate3.Level3
         private void Close()
         {
             if (dimmer != null) Destroy(dimmer);
-            if (popupPanel != null) popupPanel.SetActive(false);
+            if (popupPanel != null)
+            {
+                popupPanel.SetActive(false);
+                if (panelOverrideCanvas != null)
+                    panelOverrideCanvas.overrideSorting = false;
+            }
             Time.timeScale = 1f;
         }
     }

@@ -22,6 +22,14 @@ namespace GameCreate3.Level3
         [Tooltip("玩家开始移动后 Boss 延迟多久才跟（秒）")]
         [SerializeField] private float followDelay = 0.4f;
 
+        [Header("Catch-up Warning")]
+        [SerializeField] private SpriteRenderer bossSprite;
+        [SerializeField] private float catchDistanceThreshold = 0.5f;
+        [SerializeField] private float toRedSpeed = 8f;
+        [SerializeField] private float toWhiteSpeed = 2f;
+
+        private static readonly Color caughtColor = new(1f, 0.5f, 0.5f, 1f);
+
         [Header("Aiming")]
         [Tooltip("预判时间（秒），越大越提前瞄")]
         [SerializeField] private float predictionTime = 0.3f;
@@ -37,6 +45,7 @@ namespace GameCreate3.Level3
         private readonly Queue<VerbalAttackProjectile> pool = new();
         private readonly HashSet<VerbalAttackProjectile> active = new();
         private bool isSpawning;
+        private bool isStopped;
 
         private Vector2 lastPlayerPos;
         private Vector2 playerVelocity;
@@ -63,6 +72,8 @@ namespace GameCreate3.Level3
 
         private void Update()
         {
+            if (isStopped) return;
+
             var pt = PlayerTransform;
             if (pt != null)
             {
@@ -97,6 +108,20 @@ namespace GameCreate3.Level3
             var targetX = player.position.x;
             pos.x = Mathf.MoveTowards(pos.x, targetX, followSpeed * Time.deltaTime);
             transform.position = pos;
+
+            UpdateCatchColor(player);
+        }
+
+        private void UpdateCatchColor(Transform player)
+        {
+            if (bossSprite == null) return;
+
+            var dist = Mathf.Abs(transform.position.x - player.position.x);
+            var isCaught = dist <= catchDistanceThreshold;
+            var targetColor = isCaught ? caughtColor : Color.white;
+            var speed = isCaught ? toRedSpeed : toWhiteSpeed;
+
+            bossSprite.color = Color.Lerp(bossSprite.color, targetColor, speed * Time.deltaTime);
         }
 
         // --- WorkspaceEventRouter 调用的 public 入口 ---
@@ -117,6 +142,14 @@ namespace GameCreate3.Level3
         public void OnPhase3()
         {
             StopAllSpawning();
+        }
+
+        public void OnSequenceComplete()
+        {
+            StopAllSpawning();
+            isStopped = true;
+            if (bossSprite != null)
+                bossSprite.color = Color.white;
         }
 
         // --- Pool ---

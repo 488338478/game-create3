@@ -25,6 +25,9 @@ namespace GameCreate3.Level3
         [SerializeField] private Level3XiaohongshuUI xiaohongshuUI;
         [SerializeField] private Level3HUD hud;
 
+        [Header("VFX")]
+        [SerializeField] private FollowerBubbleSpawner followerBubbleSpawner;
+
         [Header("Transition (通关白屏)")]
         [SerializeField] private ScreenWhiteout screenWhiteout;
         [SerializeField] private float victoryWhiteoutDelay = 1f;
@@ -42,12 +45,16 @@ namespace GameCreate3.Level3
             }
             workspace.WorkspaceEventRaised += OnEvent;
             AutoResolve();
+            if (followerCounter != null && followerBubbleSpawner != null)
+                followerCounter.FollowerDeltaOccurred += followerBubbleSpawner.SpawnBubbles;
         }
 
         private void OnDestroy()
         {
             if (workspace != null)
                 workspace.WorkspaceEventRaised -= OnEvent;
+            if (followerCounter != null && followerBubbleSpawner != null)
+                followerCounter.FollowerDeltaOccurred -= followerBubbleSpawner.SpawnBubbles;
         }
 
         private void OnEvent(string eventId)
@@ -71,7 +78,6 @@ namespace GameCreate3.Level3
                     break;
 
                 case Level3Events.Phase3:
-                    bossAttackSpawner?.OnPhase3();
                     parryController?.OnPhase3();
                     hud?.OnPhase3();
                     break;
@@ -127,13 +133,14 @@ namespace GameCreate3.Level3
                 case Level3Events.SequenceComplete:
                     phaseController?.OnSequenceComplete();
                     followerCounter?.OnSequenceComplete();
-                    xiaohongshuUI?.OnSequenceComplete();
+                    bossAttackSpawner?.OnSequenceComplete();
+                    wallController?.ReturnToStart();
                     break;
 
                 case Level3Events.LevelComplete:
+                    bossAttackSpawner?.OnPhase3();
                     xiaohongshuUI?.OnLevelComplete();
                     hud?.OnLevelEnd();
-                    StartCoroutine(VictoryTransition());
                     break;
 
                 case Level3Events.LevelFail:
@@ -165,6 +172,13 @@ namespace GameCreate3.Level3
                 hud = FindObjectOfType<Level3HUD>(true);
             if (screenWhiteout == null)
                 screenWhiteout = FindObjectOfType<ScreenWhiteout>(true);
+            if (followerBubbleSpawner == null)
+                followerBubbleSpawner = FindObjectOfType<FollowerBubbleSpawner>(true);
+        }
+
+        public void TriggerVictoryTransition()
+        {
+            StartCoroutine(VictoryTransition());
         }
 
         private IEnumerator VictoryTransition()

@@ -14,28 +14,28 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   waves:
   - startTime: 0
-    spawnInterval: 1.2
+    spawnInterval: 2.2
     duration: 0
     spawnType: 0
-    fallSpeed: 3
+    fallSpeed: 5
     swayAmplitude: 0.5
     swayFrequency: 1
     spawnScale: 0.3
     maxProjectiles: 30
-  - startTime: 5
-    spawnInterval: 0.9
+  - startTime: 8
+    spawnInterval: 1.8
     duration: 0
     spawnType: 0
-    fallSpeed: 3.5
+    fallSpeed: 5.5
     swayAmplitude: 1
     swayFrequency: 1.5
     spawnScale: 0.3
     maxProjectiles: 40
-  - startTime: 10
-    spawnInterval: 0.7
+  - startTime: 16
+    spawnInterval: 1.5
     duration: 0
     spawnType: 0
-    fallSpeed: 4
+    fallSpeed: 6.5
     swayAmplitude: 1.5
     swayFrequency: 2
     spawnScale: 0.3

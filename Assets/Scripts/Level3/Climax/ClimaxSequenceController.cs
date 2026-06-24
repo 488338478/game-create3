@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GameCreate3.Core;
 using UnityEngine;
 
 namespace GameCreate3.Level3
@@ -17,6 +18,9 @@ namespace GameCreate3.Level3
         [Header("Path Blocks")]
         [SerializeField] private GameObject[] pathBlocks;
         [SerializeField] private float tempBlockDuration = 0.5f;
+
+        [Header("Audio")]
+        [SerializeField] private AudioClip sequenceCompleteClip;
 
         [Header("Exit Door")]
         [SerializeField] private GameObject exitDoor;
@@ -95,8 +99,10 @@ namespace GameCreate3.Level3
             }
             else
             {
-                SpawnPathBlock(currentStep, permanent: false);
                 workspace?.RaiseWorkspaceEvent(Level3Events.SequenceWrong);
+                var wrongBlockIndex = System.Array.IndexOf(correctOrder, animalIndex);
+                StartCoroutine(WrongSequenceReset(wrongBlockIndex));
+                currentStep = 0;
             }
         }
 
@@ -118,9 +124,26 @@ namespace GameCreate3.Level3
                 obj.SetActive(false);
         }
 
+        private System.Collections.IEnumerator WrongSequenceReset(int wrongStep)
+        {
+            SpawnPathBlock(wrongStep, permanent: false);
+            yield return new WaitForSeconds(tempBlockDuration);
+            ResetAllPathBlocks();
+        }
+
+        private void ResetAllPathBlocks()
+        {
+            if (pathBlocks == null) return;
+            foreach (var block in pathBlocks)
+                if (block != null)
+                    block.SetActive(false);
+        }
+
         private void CompleteSequence()
         {
             sequenceComplete = true;
+            if (sequenceCompleteClip != null && GameAudioService.Instance != null)
+                GameAudioService.Instance.PlaySFX(sequenceCompleteClip);
             if (exitDoor != null)
                 exitDoor.SetActive(true);
             workspace?.RaiseWorkspaceEvent(Level3Events.SequenceComplete);

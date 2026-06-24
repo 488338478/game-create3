@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,6 +20,9 @@ namespace GameCreate3.Level3
 
         public int CurrentFollowers { get; private set; }
 
+        /// <summary>参数为粉丝变动量（正=涨粉，负=掉粉），仅离散事件触发。</summary>
+        public event Action<int> FollowerDeltaOccurred;
+
         private SideScrollWorkspaceBase workspace;
         private bool isActive;
         private float passiveAccumulator;
@@ -39,7 +43,7 @@ namespace GameCreate3.Level3
             {
                 var gain = Mathf.FloorToInt(passiveAccumulator);
                 passiveAccumulator -= gain;
-                AddFollowers(gain);
+                AddFollowers(gain, fireDelta: false);
             }
         }
 
@@ -55,11 +59,13 @@ namespace GameCreate3.Level3
 
         public void OnParrySuccess()
         {
-            AddFollowers(parryGain);
+            if (!isActive) return;
+            AddFollowers(parryGain, fireDelta: true);
         }
 
         public void OnPlayerHit()
         {
+            if (!isActive) return;
             SubtractFollowers(hitPenalty);
         }
 
@@ -69,16 +75,19 @@ namespace GameCreate3.Level3
             CurrentFollowers = sequenceCompleteJump;
             workspace?.RaiseWorkspaceEvent(Level3Events.FollowerChanged);
             CheckThresholds(oldValue, CurrentFollowers);
+            FollowerDeltaOccurred?.Invoke(CurrentFollowers - oldValue);
         }
 
         // --- 内部 ---
 
-        private void AddFollowers(int amount)
+        private void AddFollowers(int amount, bool fireDelta)
         {
             var oldValue = CurrentFollowers;
             CurrentFollowers += amount;
             workspace?.RaiseWorkspaceEvent(Level3Events.FollowerChanged);
             CheckThresholds(oldValue, CurrentFollowers);
+            if (fireDelta)
+                FollowerDeltaOccurred?.Invoke(amount);
         }
 
         private void SubtractFollowers(int amount)
@@ -87,6 +96,7 @@ namespace GameCreate3.Level3
             CurrentFollowers = Mathf.Max(0, CurrentFollowers - amount);
             workspace?.RaiseWorkspaceEvent(Level3Events.FollowerChanged);
             CheckThresholds(oldValue, CurrentFollowers);
+            FollowerDeltaOccurred?.Invoke(-(oldValue - CurrentFollowers));
         }
 
         private void CheckThresholds(int oldValue, int newValue)

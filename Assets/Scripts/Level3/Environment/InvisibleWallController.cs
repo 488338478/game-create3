@@ -129,7 +129,8 @@ namespace GameCreate3.Level3
                 float totalDist = Vector3.Distance(leftStartPos, leftTarget.position);
                 float pushDist = totalDist * parryPushBackRatio;
                 Vector3 dir = (leftStartPos - leftTarget.position).normalized;
-                leftPushTarget = wallLeft.position + dir * pushDist;
+                Vector3 candidate = wallLeft.position + dir * pushDist;
+                leftPushTarget = ClampTowardStart(candidate, leftTarget.position, leftStartPos);
                 leftPushingBack = true;
             }
             if (rightWallEnabled && wallRight != null && rightTarget != null)
@@ -137,7 +138,26 @@ namespace GameCreate3.Level3
                 float totalDist = Vector3.Distance(rightStartPos, rightTarget.position);
                 float pushDist = totalDist * parryPushBackRatio;
                 Vector3 dir = (rightStartPos - rightTarget.position).normalized;
-                rightPushTarget = wallRight.position + dir * pushDist;
+                Vector3 candidate = wallRight.position + dir * pushDist;
+                rightPushTarget = ClampTowardStart(candidate, rightTarget.position, rightStartPos);
+                rightPushingBack = true;
+            }
+        }
+
+        /// <summary>停止移动并平滑回到初始位置。</summary>
+        public void ReturnToStart()
+        {
+            leftMoving = false;
+            rightMoving = false;
+
+            if (leftWallEnabled && wallLeft != null)
+            {
+                leftPushTarget = leftStartPos;
+                leftPushingBack = true;
+            }
+            if (rightWallEnabled && wallRight != null)
+            {
+                rightPushTarget = rightStartPos;
                 rightPushingBack = true;
             }
         }
@@ -154,6 +174,17 @@ namespace GameCreate3.Level3
             rightWallEnabled = enabled;
             if (wallRight != null)
                 wallRight.gameObject.SetActive(enabled);
+        }
+
+        // --- Internal ---
+
+        private static Vector3 ClampTowardStart(Vector3 candidate, Vector3 target, Vector3 start)
+        {
+            float fullDist = Vector3.Distance(target, start);
+            float candidateDist = Vector3.Distance(target, candidate);
+            if (candidateDist > fullDist)
+                return start;
+            return candidate;
         }
     }
 }

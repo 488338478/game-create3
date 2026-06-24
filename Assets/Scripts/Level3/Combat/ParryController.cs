@@ -8,18 +8,19 @@ namespace GameCreate3.Level3
         [Header("Parry Settings")]
         [SerializeField] private float parryRadius = 2.5f;
         [SerializeField] private float parryCooldown = 0.3f;
-        [SerializeField] private int parryActiveFrames = 12;
+        [SerializeField] private float parryWindowDuration = 0.167f;
         [SerializeField] private LayerMask projectileLayer;
 
         [Header("VFX")]
         [SerializeField] private GameObject parryBurstPrefab;
 
         private SideScrollWorkspaceBase workspace;
+        private Transform playerTransform;
         private InputAction parryAction;
         private Animator animator;
         private bool isEnabled;
         private float cooldownTimer;
-        private int activeFramesLeft;
+        private float activeWindowTimer;
         private bool parryHit;
 
         private static readonly int ParryTrigger = Animator.StringToHash("Parry");
@@ -27,7 +28,11 @@ namespace GameCreate3.Level3
         private void Awake()
         {
             workspace = GetComponentInParent<SideScrollWorkspaceBase>(true);
-            animator = GetComponentInChildren<Animator>();
+            if (workspace != null && workspace.PlayerController != null)
+                playerTransform = workspace.PlayerController.transform;
+            animator = playerTransform != null
+                ? playerTransform.GetComponentInChildren<Animator>()
+                : GetComponentInChildren<Animator>();
 
             parryAction = new InputAction("Parry", InputActionType.Button);
             parryAction.AddBinding("<Keyboard>/f");
@@ -53,17 +58,17 @@ namespace GameCreate3.Level3
 
             if (parryAction.WasPressedThisFrame())
             {
-                activeFramesLeft = parryActiveFrames;
+                activeWindowTimer = parryWindowDuration;
                 parryHit = false;
                 animator?.SetTrigger(ParryTrigger);
             }
 
-            if (activeFramesLeft > 0)
+            if (activeWindowTimer > 0f)
             {
-                activeFramesLeft--;
+                activeWindowTimer -= Time.deltaTime;
                 CheckParryHits();
 
-                if (activeFramesLeft <= 0)
+                if (activeWindowTimer <= 0f)
                 {
                     cooldownTimer = parryCooldown;
                     if (parryHit)
@@ -71,7 +76,7 @@ namespace GameCreate3.Level3
                         workspace?.RaiseWorkspaceEvent(Level3Events.ParrySuccess);
                         if (parryBurstPrefab != null)
                         {
-                            var burst = Instantiate(parryBurstPrefab, transform.position, Quaternion.identity);
+                            var burst = Instantiate(parryBurstPrefab, PlayerCenter, Quaternion.identity);
                             Destroy(burst, 0.5f);
                         }
                     }
@@ -82,20 +87,23 @@ namespace GameCreate3.Level3
         // --- WorkspaceEventRouter 调用的 public 入口 ---
 
         public void OnPhase2() => isEnabled = true;
-        public void OnPhase3() => isEnabled = false;
+        public void OnPhase3() { }
 
         // --- 内部 ---
 
+        private Vector3 PlayerCenter => playerTransform != null ? playerTransform.position : transform.position;
+
         private void CheckParryHits()
         {
-            var hits = Physics2D.OverlapCircleAll(transform.position, parryRadius, projectileLayer);
+            var center = PlayerCenter;
+            var hits = Physics2D.OverlapCircleAll(center, parryRadius, projectileLayer);
 
             foreach (var hit in hits)
             {
                 var projectile = hit.GetComponent<VerbalAttackProjectile>();
                 if (projectile != null && !projectile.IsDeflected)
                 {
-                    var dir = ((Vector2)hit.transform.position - (Vector2)transform.position).normalized;
+                    var dir = ((Vector2)hit.transform.position - (Vector2)center).normalized;
                     projectile.Deflect(dir);
                     parryHit = true;
                 }
@@ -107,7 +115,7 @@ namespace GameCreate3.Level3
         {
             if (!isEnabled) return;
             Gizmos.color = new Color(0, 1, 1, 0.3f);
-            Gizmos.DrawWireSphere(transform.position, parryRadius);
+            Gizmos.DrawWireSphere(PlayerCenter, parryRadius);
         }
 #endif
     }

@@ -1,5 +1,4 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,7 +10,7 @@ namespace GameCreate3.Level3
         [SerializeField] private GameObject panelRoot;
 
         [Header("Follower Display")]
-        [SerializeField] private TextMeshProUGUI followerCountText;
+        [SerializeField] private Text followerCountText;
         [SerializeField] private float countScrollDuration = 0.3f;
         [SerializeField] private float countJumpDuration = 0.15f;
 
@@ -23,9 +22,10 @@ namespace GameCreate3.Level3
 
         [Header("Red Point Indicator")]
         [SerializeField] private RectTransform redpoint;
+        [SerializeField] private Vector2 redpointOffset = new(239f, 77f);
 
         [Header("Status Text")]
-        [SerializeField] private TextMeshProUGUI statusText;
+        [SerializeField] private Text statusText;
 
         private FollowerCounter followerCounter;
         private Coroutine scrollRoutine;
@@ -36,6 +36,8 @@ namespace GameCreate3.Level3
             followerCounter = GetComponentInParent<FollowerCounter>(true);
             if (panelRoot != null)
                 panelRoot.SetActive(false);
+            if (redpoint != null)
+                redpoint.gameObject.SetActive(false);
         }
 
         // --- WorkspaceEventRouter 调用的 public 入口 ---
@@ -44,9 +46,12 @@ namespace GameCreate3.Level3
         {
             if (panelRoot != null)
                 panelRoot.SetActive(true);
-            displayedCount = 0;
-            if (followerCountText != null)
-                followerCountText.text = "0";
+            if (followerCounter != null)
+            {
+                displayedCount = followerCounter.CurrentFollowers;
+                if (followerCountText != null)
+                    followerCountText.text = FormatCount(displayedCount);
+            }
         }
 
         public void OnFollowerChanged()
@@ -73,11 +78,8 @@ namespace GameCreate3.Level3
             redpoint.gameObject.SetActive(true);
 
             var commentRT = comment.GetComponent<RectTransform>();
-            if (commentRT == null) return;
-
-            var pos = commentRT.anchoredPosition;
-            var size = commentRT.sizeDelta;
-            redpoint.anchoredPosition = new Vector2(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f);
+            if (commentRT != null)
+                redpoint.anchoredPosition = commentRT.anchoredPosition + redpointOffset;
         }
 
         public void OnSequenceCorrect() => SetStatusText("正确！继续前进~");

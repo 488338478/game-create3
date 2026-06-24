@@ -4,80 +4,143 @@ namespace GameCreate3.Level3
 {
     public sealed class InvisibleWallController : MonoBehaviour
     {
-        [Header("Bounds")]
-        [SerializeField] private float initialHalfWidth = 8f;
-        [SerializeField] private float minHalfWidth = 1.5f;
+        [Header("Walls (prefab instances with Collider2D)")]
+        [SerializeField] private Transform wallLeft;
+        [SerializeField] private Transform wallRight;
 
-        [Header("Compression")]
-        [SerializeField] private float compressSpeed = 0.3f;
-        [SerializeField] private float hitSpeedBoost = 0.5f;
-        [SerializeField] private float hitBoostDuration = 1.5f;
-
-        [Header("Wall Sprites")]
-        [SerializeField] private SpriteRenderer wallLeft;
-        [SerializeField] private SpriteRenderer wallRight;
+        [Header("Target Markers (empty GameObjects in scene)")]
+        [SerializeField] private Transform leftTarget;
+        [SerializeField] private Transform rightTarget;
 
         [Header("Enable/Disable")]
         [SerializeField] private bool leftWallEnabled = true;
         [SerializeField] private bool rightWallEnabled = true;
 
-        public float CurrentHalfWidth { get; private set; }
-        public bool LeftWallEnabled => leftWallEnabled;
-        public bool RightWallEnabled => rightWallEnabled;
+        [Header("Movement")]
+        [SerializeField] private float totalDuration = 15f;
+        [SerializeField] private float hitTimeReduction = 1f;
+        [SerializeField, Range(0f, 1f)] private float parryPushBackRatio = 0.1f;
+        [SerializeField] private float pushBackSpeed = 8f;
 
-        private bool isCompressing;
-        private float hitBoostTimer;
-        private float currentCompressSpeed;
+        private bool leftMoving;
+        private bool rightMoving;
+        private float leftSpeed;
+        private float rightSpeed;
+        private Vector3 leftStartPos;
+        private Vector3 rightStartPos;
+
+        private bool leftPushingBack;
+        private bool rightPushingBack;
+        private Vector3 leftPushTarget;
+        private Vector3 rightPushTarget;
 
         private void Awake()
         {
-            CurrentHalfWidth = initialHalfWidth;
-            currentCompressSpeed = compressSpeed;
-
             if (wallLeft != null)
+            {
+                leftStartPos = wallLeft.position;
                 wallLeft.gameObject.SetActive(leftWallEnabled);
+            }
             if (wallRight != null)
+            {
+                rightStartPos = wallRight.position;
                 wallRight.gameObject.SetActive(rightWallEnabled);
+            }
         }
 
         private void Update()
         {
-            if (!isCompressing) return;
-
-            if (hitBoostTimer > 0f)
+            if (leftWallEnabled && wallLeft != null)
             {
-                hitBoostTimer -= Time.deltaTime;
-                if (hitBoostTimer <= 0f)
-                    currentCompressSpeed = compressSpeed;
+                if (leftPushingBack)
+                {
+                    wallLeft.position = Vector3.MoveTowards(wallLeft.position, leftPushTarget, pushBackSpeed * Time.deltaTime);
+                    if (wallLeft.position == leftPushTarget)
+                        leftPushingBack = false;
+                }
+                else if (leftMoving && leftTarget != null)
+                {
+                    wallLeft.position = Vector3.MoveTowards(wallLeft.position, leftTarget.position, leftSpeed * Time.deltaTime);
+                    if (wallLeft.position == leftTarget.position)
+                        leftMoving = false;
+                }
             }
 
-            CurrentHalfWidth = Mathf.Max(minHalfWidth, CurrentHalfWidth - currentCompressSpeed * Time.deltaTime);
-            UpdateWallPositions();
+            if (rightWallEnabled && wallRight != null)
+            {
+                if (rightPushingBack)
+                {
+                    wallRight.position = Vector3.MoveTowards(wallRight.position, rightPushTarget, pushBackSpeed * Time.deltaTime);
+                    if (wallRight.position == rightPushTarget)
+                        rightPushingBack = false;
+                }
+                else if (rightMoving && rightTarget != null)
+                {
+                    wallRight.position = Vector3.MoveTowards(wallRight.position, rightTarget.position, rightSpeed * Time.deltaTime);
+                    if (wallRight.position == rightTarget.position)
+                        rightMoving = false;
+                }
+            }
         }
 
-        // --- WorkspaceEventRouter 调用的 public 入口 ---
+        // --- Public API ---
 
-        public void OnPhase1()
+        public void StartMoving()
         {
-            isCompressing = true;
-            CurrentHalfWidth = initialHalfWidth;
+            if (leftWallEnabled && wallLeft != null && leftTarget != null)
+            {
+                float dist = Vector3.Distance(wallLeft.position, leftTarget.position);
+                leftSpeed = dist / Mathf.Max(totalDuration, 0.01f);
+                leftMoving = true;
+            }
+            if (rightWallEnabled && wallRight != null && rightTarget != null)
+            {
+                float dist = Vector3.Distance(wallRight.position, rightTarget.position);
+                rightSpeed = dist / Mathf.Max(totalDuration, 0.01f);
+                rightMoving = true;
+            }
         }
 
-        public void OnPhase2()
+        public void StopMoving()
         {
-            isCompressing = false;
-            hitBoostTimer = 0f;
-            currentCompressSpeed = compressSpeed;
+            leftMoving = false;
+            rightMoving = false;
         }
 
-        public void OnPlayerHit()
+        public void AccelerateOnHit()
         {
-            if (!isCompressing) return;
-            currentCompressSpeed = compressSpeed + hitSpeedBoost;
-            hitBoostTimer = hitBoostDuration;
+            totalDuration = Mathf.Max(totalDuration - hitTimeReduction, 0.5f);
+            if (leftMoving && wallLeft != null && leftTarget != null)
+            {
+                float dist = Vector3.Distance(wallLeft.position, leftTarget.position);
+                leftSpeed = dist / Mathf.Max(totalDuration, 0.01f);
+            }
+            if (rightMoving && wallRight != null && rightTarget != null)
+            {
+                float dist = Vector3.Distance(wallRight.position, rightTarget.position);
+                rightSpeed = dist / Mathf.Max(totalDuration, 0.01f);
+            }
         }
 
-        // ---
+        public void PushBack()
+        {
+            if (leftWallEnabled && wallLeft != null && leftTarget != null)
+            {
+                float totalDist = Vector3.Distance(leftStartPos, leftTarget.position);
+                float pushDist = totalDist * parryPushBackRatio;
+                Vector3 dir = (leftStartPos - leftTarget.position).normalized;
+                leftPushTarget = wallLeft.position + dir * pushDist;
+                leftPushingBack = true;
+            }
+            if (rightWallEnabled && wallRight != null && rightTarget != null)
+            {
+                float totalDist = Vector3.Distance(rightStartPos, rightTarget.position);
+                float pushDist = totalDist * parryPushBackRatio;
+                Vector3 dir = (rightStartPos - rightTarget.position).normalized;
+                rightPushTarget = wallRight.position + dir * pushDist;
+                rightPushingBack = true;
+            }
+        }
 
         public void SetLeftWallEnabled(bool enabled)
         {
@@ -92,21 +155,5 @@ namespace GameCreate3.Level3
             if (wallRight != null)
                 wallRight.gameObject.SetActive(enabled);
         }
-
-        private void UpdateWallPositions()
-        {
-            if (wallLeft != null && leftWallEnabled)
-                wallLeft.transform.localPosition = new Vector3(-CurrentHalfWidth, 0f, 0f);
-            if (wallRight != null && rightWallEnabled)
-                wallRight.transform.localPosition = new Vector3(CurrentHalfWidth, 0f, 0f);
-        }
-
-#if UNITY_EDITOR
-        private void OnDrawGizmos()
-        {
-            Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
-            Gizmos.DrawWireCube(Vector3.zero, new Vector3(CurrentHalfWidth * 2f, 10f, 0));
-        }
-#endif
     }
 }

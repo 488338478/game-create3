@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace GameCreate3.Level3
 {
@@ -18,9 +17,6 @@ namespace GameCreate3.Level3
         [Header("Jump on Complete")]
         [SerializeField] private int sequenceCompleteJump = 100000;
 
-        [Header("Fan UI (scene Text)")]
-        [SerializeField] private Text fanText;
-
         public int CurrentFollowers { get; private set; }
 
         private SideScrollWorkspaceBase workspace;
@@ -32,7 +28,6 @@ namespace GameCreate3.Level3
         {
             workspace = GetComponentInParent<SideScrollWorkspaceBase>(true);
             CurrentFollowers = initialFollowers;
-            UpdateFanText();
         }
 
         private void Update()
@@ -55,7 +50,7 @@ namespace GameCreate3.Level3
             isActive = true;
             CurrentFollowers = initialFollowers;
             passiveAccumulator = 0f;
-            UpdateFanText();
+            workspace?.RaiseWorkspaceEvent(Level3Events.FollowerChanged);
         }
 
         public void OnParrySuccess()
@@ -82,7 +77,6 @@ namespace GameCreate3.Level3
         {
             var oldValue = CurrentFollowers;
             CurrentFollowers += amount;
-            UpdateFanText();
             workspace?.RaiseWorkspaceEvent(Level3Events.FollowerChanged);
             CheckThresholds(oldValue, CurrentFollowers);
         }
@@ -91,15 +85,8 @@ namespace GameCreate3.Level3
         {
             var oldValue = CurrentFollowers;
             CurrentFollowers = Mathf.Max(0, CurrentFollowers - amount);
-            UpdateFanText();
             workspace?.RaiseWorkspaceEvent(Level3Events.FollowerChanged);
             CheckThresholds(oldValue, CurrentFollowers);
-        }
-
-        private void UpdateFanText()
-        {
-            if (fanText != null)
-                fanText.text = CurrentFollowers.ToString("N0");
         }
 
         private void CheckThresholds(int oldValue, int newValue)

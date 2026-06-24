@@ -13,11 +13,20 @@ namespace GameCreate3.Level3
         [Header("Projectile")]
         [SerializeField] private GameObject projectilePrefab;
 
-        [Header("Spawn Area")]
-        [SerializeField] private BoxCollider2D spawnZone;
-
         [Header("Pool")]
         [SerializeField] private int totalPoolSize = 15;
+
+        [Header("Boss Movement")]
+        [Tooltip("Boss 跟随玩家的最大移动速度")]
+        [SerializeField] private float followSpeed = 5f;
+        [Tooltip("玩家开始移动后 Boss 延迟多久才跟（秒）")]
+        [SerializeField] private float followDelay = 0.4f;
+
+        [Header("Aiming")]
+        [Tooltip("预判时间（秒），越大越提前瞄")]
+        [SerializeField] private float predictionTime = 0.3f;
+        [Tooltip("随机角度偏移范围（度）")]
+        [SerializeField] private float aimSpreadAngle = 15f;
 
         [Header("Difficulty Scaling")]
         [SerializeField] private float spawnRateMultiplier = 1f;
@@ -28,6 +37,11 @@ namespace GameCreate3.Level3
         private readonly Queue<VerbalAttackProjectile> pool = new();
         private readonly HashSet<VerbalAttackProjectile> active = new();
         private bool isSpawning;
+
+        private Vector2 lastPlayerPos;
+        private Vector2 playerVelocity;
+        private float followDelayTimer;
+        private bool playerWasMoving;
 
         private Transform PlayerTransform =>
             workspace != null && workspace.PlayerController != null
@@ -42,13 +56,47 @@ namespace GameCreate3.Level3
         private void Start()
         {
             PrewarmPool();
+            var pt = PlayerTransform;
+            if (pt != null)
+                lastPlayerPos = pt.position;
         }
 
         private void Update()
         {
+            var pt = PlayerTransform;
+            if (pt != null)
+            {
+                Vector2 currentPos = pt.position;
+                playerVelocity = (currentPos - lastPlayerPos) / Time.deltaTime;
+                lastPlayerPos = currentPos;
+
+                FollowPlayer(pt);
+            }
+
             if (!isSpawning) return;
             if (spawnRateMultiplier < maxSpawnRateMultiplier)
                 spawnRateMultiplier += multiplierIncreasePerSecond * Time.deltaTime;
+        }
+
+        private void FollowPlayer(Transform player)
+        {
+            var isMoving = playerVelocity.sqrMagnitude > 0.01f;
+
+            if (isMoving && !playerWasMoving)
+                followDelayTimer = followDelay;
+
+            playerWasMoving = isMoving;
+
+            if (followDelayTimer > 0f)
+            {
+                followDelayTimer -= Time.deltaTime;
+                return;
+            }
+
+            var pos = transform.position;
+            var targetX = player.position.x;
+            pos.x = Mathf.MoveTowards(pos.x, targetX, followSpeed * Time.deltaTime);
+            transform.position = pos;
         }
 
         // --- WorkspaceEventRouter 调用的 public 入口 ---
@@ -81,12 +129,15 @@ namespace GameCreate3.Level3
             pool.Enqueue(proj);
         }
 
+        private Transform poolRoot;
+
         private void PrewarmPool()
         {
             if (projectilePrefab == null) return;
+            poolRoot = new GameObject("ProjectilePool").transform;
             for (var i = 0; i < totalPoolSize; i++)
             {
-                var instance = Instantiate(projectilePrefab, transform);
+                var instance = Instantiate(projectilePrefab, poolRoot);
                 instance.SetActive(false);
                 var proj = instance.GetComponent<VerbalAttackProjectile>();
                 if (proj != null) pool.Enqueue(proj);
@@ -108,20 +159,21 @@ namespace GameCreate3.Level3
 
         private IEnumerator RunWaves(BossAttackPattern pattern)
         {
-            foreach (var wave in pattern.waves)
+            while (isSpawning)
             {
-                if (!isSpawning) yield break;
-                if (wave.startTime > 0f)
-                    yield return new WaitForSeconds(wave.startTime);
-
-                var waveEndTime = wave.duration > 0f ? Time.time + wave.duration : float.MaxValue;
-                var totalSpawned = 0;
-
-                while (isSpawning && Time.time < waveEndTime && totalSpawned < wave.maxProjectiles)
+                foreach (var wave in pattern.waves)
                 {
-                    SpawnProjectile(wave);
-                    totalSpawned++;
-                    yield return new WaitForSeconds(wave.spawnInterval / spawnRateMultiplier);
+                    if (!isSpawning) yield break;
+                    if (wave.startTime > 0f)
+                        yield return new WaitForSeconds(wave.startTime);
+
+                    var waveEndTime = wave.duration > 0f ? Time.time + wave.duration : float.MaxValue;
+
+                    while (isSpawning && Time.time < waveEndTime)
+                    {
+                        SpawnProjectile(wave);
+                        yield return new WaitForSeconds(wave.spawnInterval / spawnRateMultiplier);
+                    }
                 }
             }
         }
@@ -133,19 +185,35 @@ namespace GameCreate3.Level3
             var proj = pool.Dequeue();
             if (proj == null) return;
 
-            var bounds = spawnZone.bounds;
-            var pt = PlayerTransform;
-            var sx = wave.spawnType switch
-            {
-                SpawnType.Targeted => pt != null ? pt.position.x : Random.Range(bounds.min.x, bounds.max.x),
-                _ => Random.Range(bounds.min.x, bounds.max.x)
-            };
+            var spawnPos = (Vector2)transform.position;
+            var dir = CalculateAimDirection(spawnPos);
 
-            proj.transform.position = new Vector3(sx, bounds.max.y, 0f);
+            proj.transform.position = spawnPos;
             proj.transform.localScale = Vector3.one * wave.spawnScale;
             proj.gameObject.SetActive(true);
-            proj.InitFromPool(this, wave.fallSpeed, wave.swayAmplitude, wave.swayFrequency);
+            proj.InitFromPool(this, dir, wave.fallSpeed);
             active.Add(proj);
+        }
+
+        private Vector2 CalculateAimDirection(Vector2 from)
+        {
+            var pt = PlayerTransform;
+            if (pt == null)
+                return Vector2.down;
+
+            Vector2 targetPos = (Vector2)pt.position + playerVelocity * predictionTime;
+            var baseDir = (targetPos - from).normalized;
+
+            var angle = Random.Range(-aimSpreadAngle, aimSpreadAngle);
+            return RotateVector(baseDir, angle);
+        }
+
+        private static Vector2 RotateVector(Vector2 v, float degrees)
+        {
+            var rad = degrees * Mathf.Deg2Rad;
+            var cos = Mathf.Cos(rad);
+            var sin = Mathf.Sin(rad);
+            return new Vector2(v.x * cos - v.y * sin, v.x * sin + v.y * cos);
         }
     }
 }

@@ -1,0 +1,15 @@
+The attached image is the EXACT canonical reference character. Match every detail: a cute round pink bear with dark pink outline, small round ears with darker pink inner ear marks, tiny black dot eyes, a small round pink nose/snout protruding to the right, a golden/yellow halo floating above the head, small white angel wings on the back, stubby pink limbs, chibi proportions (large head, small body). Simple flat coloring, clean outlines, no shading.
+
+Draw a 2x2 grid of 4 equal cells, read left-to-right, top row then bottom row. Each cell shows the SAME character performing sequential frames of a "parry with umbrella" animation:
+
+Cell 1 (top-left): The bear raises its right arm upward, holding a closed pink umbrella by its curved handle. The umbrella is folded/closed, pointing upward. Body faces slightly right (same angle as reference). Feet planted.
+
+Cell 2 (top-right): The bear holds a fully opened round pink umbrella in front of its body like a shield. The umbrella dome faces outward/right, covering the bear's front. The bear peeks from behind the umbrella edge with a cautious expression. Feet planted in same position.
+
+Cell 3 (bottom-left): Impact moment — the open umbrella is still held as a shield. Ripple/wave lines spread across the umbrella surface from the center. Small star-shaped particles bounce off. The umbrella vibrates slightly (short motion lines). The bear braces with squinting eyes. Feet planted in same position.
+
+Cell 4 (bottom-right): The bear is closing/folding the umbrella, holding it casually at its side pointing down. The bear looks relieved and happy with a gentle smile. Returning to relaxed pose. Feet planted in same position.
+
+The character has EXACTLY TWO legs ending in TWO feet. Do NOT draw a third foot/leg or any extra paw between or behind the feet.
+
+Solid flat chroma-green #00B140 background edge-to-edge in every cell. No gradient, no shadow, no floor, no grid lines, no text, no labels.

@@ -1,0 +1,15 @@
+The attached image is the EXACT canonical reference character. Match every detail: a cute round pink bear with dark pink outline, small round ears with darker pink inner ear marks, tiny black dot eyes, a small round pink nose/snout protruding to the right, a golden/yellow halo floating above the head, small white angel wings on the back, stubby pink limbs, chibi proportions (large head, small body). Simple flat coloring, clean outlines, no shading.
+
+Draw a 2x2 grid of 4 equal cells, read left-to-right, top row then bottom row. Each cell shows the SAME character performing sequential frames of a "parry with painting canvas" animation:
+
+Cell 1 (top-left): The bear raises its right arm upward, about to lift a small rectangular painting canvas with a thin brown wooden frame. The canvas is about half the bear's torso size. Body faces slightly right (same angle as reference). Feet planted.
+
+Cell 2 (top-right): The bear holds the painting canvas firmly in front of its body with both paws like a shield. The canvas faces outward (we see the white back of canvas with wooden frame edges). The bear peeks over the top of the canvas with a determined expression. Feet planted in same position.
+
+Cell 3 (bottom-left): Impact moment — the canvas is still held in front. Colorful paint splashes (pink, cyan, yellow dots/splatters) burst outward from the canvas surface. Small circular shockwave lines radiate from the center. The bear's eyes squeeze shut. Feet planted in same position.
+
+Cell 4 (bottom-right): The bear lowers the canvas to its side with right paw. The canvas now has a few colorful paint splotches on it. The bear looks satisfied with a small open-mouth smile. Returning to relaxed pose. Feet planted in same position.
+
+The character has EXACTLY TWO legs ending in TWO feet. Do NOT draw a third foot/leg or any extra paw between or behind the feet.
+
+Solid flat chroma-green #00B140 background edge-to-edge in every cell. No gradient, no shadow, no floor, no grid lines, no text, no labels.

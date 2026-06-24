@@ -1,3 +1,5 @@
+using System.Collections;
+using GameCreate3.Core.SceneRouting;
 using UnityEngine;
 
 namespace GameCreate3.Level3
@@ -22,8 +24,11 @@ namespace GameCreate3.Level3
         [Header("UI (assign after Canvas is set up)")]
         [SerializeField] private Level3XiaohongshuUI xiaohongshuUI;
         [SerializeField] private Level3HUD hud;
-        [SerializeField] private Level3FailurePage failurePage;
-        [SerializeField] private Level3VictoryOverlay victoryOverlay;
+
+        [Header("Transition (通关白屏)")]
+        [SerializeField] private ScreenWhiteout screenWhiteout;
+        [SerializeField] private float victoryWhiteoutDelay = 1f;
+        [SerializeField] private string victoryRouteId = "level3cutscene";
 
         private SideScrollWorkspaceBase workspace;
 
@@ -51,13 +56,13 @@ namespace GameCreate3.Level3
             {
                 case Level3Events.Phase1:
                     bossAttackSpawner?.OnPhase1();
-                    wallController?.OnPhase1();
+                    wallController?.StartMoving();
                     hud?.OnPhase1();
                     break;
 
                 case Level3Events.Phase2:
                     bossAttackSpawner?.OnPhase2();
-                    wallController?.OnPhase2();
+                    wallController?.StopMoving();
                     followerCounter?.OnPhase2();
                     parryController?.OnPhase2();
                     dualWorldTransition?.OnPhase2();
@@ -72,7 +77,7 @@ namespace GameCreate3.Level3
                     break;
 
                 case Level3Events.PlayerHit:
-                    wallController?.OnPlayerHit();
+                    wallController?.AccelerateOnHit();
                     followerCounter?.OnPlayerHit();
                     hud?.OnPlayerHit();
                     break;
@@ -83,6 +88,7 @@ namespace GameCreate3.Level3
 
                 case Level3Events.ParrySuccess:
                     followerCounter?.OnParrySuccess();
+                    wallController?.PushBack();
                     break;
 
                 case Level3Events.FollowerChanged:
@@ -125,14 +131,14 @@ namespace GameCreate3.Level3
                     break;
 
                 case Level3Events.LevelComplete:
-                    victoryOverlay?.OnLevelComplete();
                     xiaohongshuUI?.OnLevelComplete();
                     hud?.OnLevelEnd();
+                    StartCoroutine(VictoryTransition());
                     break;
 
                 case Level3Events.LevelFail:
-                    failurePage?.OnLevelFail();
                     hud?.OnLevelEnd();
+                    SceneRouter.Reload();
                     break;
             }
         }
@@ -140,7 +146,7 @@ namespace GameCreate3.Level3
         private void AutoResolve()
         {
             if (bossAttackSpawner == null)
-                bossAttackSpawner = GetComponentInParent<BossAttackSpawner>(true);
+                bossAttackSpawner = FindObjectOfType<BossAttackSpawner>(true);
             if (wallController == null)
                 wallController = GetComponentInParent<InvisibleWallController>(true);
             if (followerCounter == null)
@@ -157,10 +163,21 @@ namespace GameCreate3.Level3
                 xiaohongshuUI = FindObjectOfType<Level3XiaohongshuUI>(true);
             if (hud == null)
                 hud = FindObjectOfType<Level3HUD>(true);
-            if (failurePage == null)
-                failurePage = FindObjectOfType<Level3FailurePage>(true);
-            if (victoryOverlay == null)
-                victoryOverlay = FindObjectOfType<Level3VictoryOverlay>(true);
+            if (screenWhiteout == null)
+                screenWhiteout = FindObjectOfType<ScreenWhiteout>(true);
+        }
+
+        private IEnumerator VictoryTransition()
+        {
+            if (screenWhiteout != null)
+                screenWhiteout.Trigger();
+
+            yield return new WaitForSeconds(victoryWhiteoutDelay);
+
+            if (!string.IsNullOrEmpty(victoryRouteId))
+                SceneRouter.Go(victoryRouteId);
+            else
+                SceneRouter.GoScene("Level3Cutscene");
         }
     }
 }

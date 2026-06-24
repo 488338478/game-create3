@@ -9,14 +9,14 @@ namespace GameCreate3.Level3
         [Header("Sprites")]
         [SerializeField] private Sprite[] sprites;
 
-        [Header("Movement")]
-        [SerializeField] private float fallSpeed = 3f;
-        [SerializeField] private float swayAmplitude;
-        [SerializeField] private float swayFrequency = 1f;
-
         [Header("Deflect")]
         [SerializeField] private float deflectSpeed = 8f;
         [SerializeField] private Color deflectTint = Color.cyan;
+        [SerializeField] private float hitStopDuration = 0.2f;
+
+        [Header("HitStop VFX")]
+        [SerializeField] private float shakeIntensity = 0.08f;
+        [SerializeField] private float flashInterval = 0.03f;
 
         [Header("Damage")]
         [SerializeField] private int damage = 1;
@@ -27,9 +27,15 @@ namespace GameCreate3.Level3
         private SpriteRenderer spriteRenderer;
         private Rigidbody2D rb;
         private BossAttackSpawner pool;
-        private float elapsed;
+        private Vector2 direction;
+        private float speed;
+        private float deflectTimer;
 
-        private const float SafeDespawnDistance = 30f;
+        private float hitStopTimer;
+        private Vector3 hitStopAnchor;
+        private float flashTimer;
+
+        private const float SafeDespawnDistance = 15f;
 
         private void Awake()
         {
@@ -41,18 +47,16 @@ namespace GameCreate3.Level3
             var col = GetComponent<Collider2D>();
             col.isTrigger = true;
 
-            // Ground (3) + Player (8)
             destroyOnContact = (1 << 3) | (1 << 8);
         }
 
-        public void InitFromPool(BossAttackSpawner owner, float speed, float amplitude, float frequency)
+        public void InitFromPool(BossAttackSpawner owner, Vector2 dir, float spd)
         {
             pool = owner;
-            fallSpeed = speed;
-            swayAmplitude = amplitude;
-            swayFrequency = frequency;
-            elapsed = 0f;
+            direction = dir.normalized;
+            speed = spd;
             IsDeflected = false;
+            hitStopTimer = 0f;
 
             if (spriteRenderer != null)
                 spriteRenderer.color = Color.white;
@@ -60,11 +64,17 @@ namespace GameCreate3.Level3
             RandomizeSprite();
         }
 
-        public void Deflect()
+        public void Deflect(Vector2 deflectDirection)
         {
             IsDeflected = true;
+            direction = deflectDirection.normalized;
+            speed = deflectSpeed;
+            deflectTimer = 2f;
+            hitStopTimer = hitStopDuration;
+            hitStopAnchor = transform.position;
+            flashTimer = 0f;
             if (spriteRenderer != null)
-                spriteRenderer.color = deflectTint;
+                spriteRenderer.color = Color.white;
         }
 
         public void ReturnToPool()
@@ -77,19 +87,46 @@ namespace GameCreate3.Level3
 
         private void FixedUpdate()
         {
-            var pos = rb.position;
+            if (hitStopTimer > 0f)
+            {
+                hitStopTimer -= Time.fixedDeltaTime;
+
+                // Shake
+                var offset = (Vector3)(Random.insideUnitCircle * shakeIntensity);
+                transform.position = hitStopAnchor + offset;
+
+                // Flash white/tint
+                if (spriteRenderer != null)
+                {
+                    flashTimer -= Time.fixedDeltaTime;
+                    if (flashTimer <= 0f)
+                    {
+                        flashTimer = flashInterval;
+                        spriteRenderer.color = spriteRenderer.color == Color.white ? deflectTint : Color.white;
+                    }
+                }
+
+                if (hitStopTimer <= 0f)
+                {
+                    transform.position = hitStopAnchor;
+                    if (spriteRenderer != null)
+                        spriteRenderer.color = deflectTint;
+                }
+                return;
+            }
 
             if (IsDeflected)
             {
-                pos += Vector2.up * (deflectSpeed * Time.fixedDeltaTime);
+                deflectTimer -= Time.fixedDeltaTime;
+                if (deflectTimer <= 0f)
+                {
+                    ReturnToPool();
+                    return;
+                }
             }
-            else
-            {
-                elapsed += Time.fixedDeltaTime;
-                var prevSway = swayAmplitude * Mathf.Sin((elapsed - Time.fixedDeltaTime) * swayFrequency * Mathf.PI * 2f);
-                var currSway = swayAmplitude * Mathf.Sin(elapsed * swayFrequency * Mathf.PI * 2f);
-                pos += new Vector2(currSway - prevSway, -fallSpeed * Time.fixedDeltaTime);
-            }
+
+            var pos = rb.position;
+            pos += direction * (speed * Time.fixedDeltaTime);
 
             if (pos.magnitude > SafeDespawnDistance)
             {
@@ -109,7 +146,7 @@ namespace GameCreate3.Level3
 
             var combatState = other.GetComponentInParent<PlayerCombatState>(true);
             if (combatState != null)
-                combatState.TakeDamage(damage);
+                combatState.OnProjectileHit(damage);
 
             ReturnToPool();
         }

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5100000004}
   - component: {fileID: 5100000005}
   - component: {fileID: 5100000006}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Attack_Projectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,10 +104,31 @@ BoxCollider2D:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 6.04, y: 4.9}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
@@ -148,8 +169,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2826e15ea74e5d7e595da5017dfc35bf, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   sprites:
   - {fileID: 21300000, guid: f08814950d5df814eb8a88700afed61d, type: 3}
   - {fileID: 21300000, guid: ba42056877785a549a57b1c08a653482, type: 3}
@@ -159,11 +180,11 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 16e7419b725c03145a6027834d4dd15a, type: 3}
   - {fileID: 21300000, guid: babb2ba68326d8a45833d8ef977d670b, type: 3}
   - {fileID: 21300000, guid: 143dee16b3b33164bbc8dcc04bff1a13, type: 3}
-  fallSpeed: 3
-  swayAmplitude: 0.5
-  swayFrequency: 1
   deflectSpeed: 8
   deflectTint: {r: 0, g: 1, b: 1, a: 1}
+  hitStopDuration: 0.3
+  shakeIntensity: 0.08
+  flashInterval: 0.03
   damage: 1
   destroyOnContact:
     serializedVersion: 2

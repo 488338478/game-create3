@@ -7,7 +7,9 @@ namespace GameCreate3.Level3
     {
         [Header("Health")]
         [SerializeField] private int maxHits = 5;
-        [SerializeField] private float invincibilityDuration = 1.5f;
+
+        [Header("Hit Stun")]
+        [SerializeField] private float postAnimInvincibility = 0.5f;
 
         [Header("Visual Feedback")]
         [SerializeField] private float blinkInterval = 0.1f;
@@ -17,60 +19,77 @@ namespace GameCreate3.Level3
         public bool IsDefeated { get; private set; }
 
         private SideScrollWorkspaceBase workspace;
+        private SideScrollCharacterControllerBase playerController;
+        private Animator animator;
         private SpriteRenderer spriteRenderer;
-        private Coroutine invincibilityRoutine;
+        private Coroutine hitRoutine;
+
+        private static readonly int DeathTrigger = Animator.StringToHash("Death");
+        private const int DeathLayerIndex = 4;
 
         private void Awake()
         {
             workspace = GetComponentInParent<SideScrollWorkspaceBase>(true);
+            playerController = GetComponent<SideScrollCharacterControllerBase>();
+            animator = GetComponentInChildren<Animator>(true);
             spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
             CurrentHits = maxHits;
         }
 
-        /// <summary>
-        /// 由 VerbalAttackProjectile 碰撞时调用。
-        /// </summary>
-        public void TakeDamage(int damage = 1)
+        public void OnProjectileHit(int damage = 1)
         {
             if (IsDefeated) return;
-            if (IsInvincible) return;
-
-            CurrentHits -= damage;
-
-            if (CurrentHits <= 0)
-            {
-                CurrentHits = 0;
-                IsDefeated = true;
-                workspace?.RaiseWorkspaceEvent(Level3Events.PlayerDefeated);
-                return;
-            }
 
             workspace?.RaiseWorkspaceEvent(Level3Events.PlayerHit);
 
-            if (invincibilityRoutine != null)
-                StopCoroutine(invincibilityRoutine);
-            invincibilityRoutine = StartCoroutine(InvincibilityCoroutine());
+            if (IsInvincible) return;
+
+            CurrentHits -= damage;
+            if (CurrentHits <= 0)
+                CurrentHits = 1;
+
+            if (hitRoutine != null)
+                StopCoroutine(hitRoutine);
+            hitRoutine = StartCoroutine(HitStunCoroutine());
         }
 
-        private IEnumerator InvincibilityCoroutine()
+        private IEnumerator HitStunCoroutine()
         {
             IsInvincible = true;
-            var elapsed = 0f;
-            var blinkOn = true;
+            playerController?.SetInputEnabled(false);
+            animator?.SetTrigger(DeathTrigger);
 
-            while (elapsed < invincibilityDuration)
+            yield return null;
+            float animDuration = 0.72f;
+            if (animator != null)
             {
+                float timeout = 0.5f;
+                while (!animator.GetCurrentAnimatorStateInfo(DeathLayerIndex).IsName("bear_death") && timeout > 0f)
+                {
+                    timeout -= Time.deltaTime;
+                    yield return null;
+                }
+                var stateInfo = animator.GetCurrentAnimatorStateInfo(DeathLayerIndex);
+                animDuration = stateInfo.length;
+            }
+
+            // 闪烁和动画同步，动画结束即解除一切
+            float elapsed = 0f;
+            bool visible = true;
+            while (elapsed < animDuration)
+            {
+                visible = !visible;
                 if (spriteRenderer != null)
-                    spriteRenderer.enabled = blinkOn;
-                blinkOn = !blinkOn;
+                    spriteRenderer.enabled = visible;
                 yield return new WaitForSeconds(blinkInterval);
                 elapsed += blinkInterval;
             }
-
             if (spriteRenderer != null)
                 spriteRenderer.enabled = true;
+
+            playerController?.SetInputEnabled(true);
             IsInvincible = false;
-            invincibilityRoutine = null;
+            hitRoutine = null;
         }
     }
 }

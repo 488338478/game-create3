@@ -37,26 +37,5 @@ namespace GameCreate3.Level3
                 phaseController = GetComponentInChildren<Level3PhaseController>(true);
         }
 
-        private void LateUpdate()
-        {
-            if (!IsEntered) return;
-            if (wallController == null) return;
-            if (PlayerController == null) return;
-
-            var hw = wallController.CurrentHalfWidth;
-            var pos = PlayerController.transform.position;
-            var minX = wallController.LeftWallEnabled ? -hw : float.NegativeInfinity;
-            var maxX = wallController.RightWallEnabled ? hw : float.PositiveInfinity;
-            var clamped = new Vector3(
-                Mathf.Clamp(pos.x, minX, maxX),
-                pos.y,
-                pos.z
-            );
-
-            if (clamped != pos)
-            {
-                PlayerController.transform.position = clamped;
-            }
-        }
     }
 }

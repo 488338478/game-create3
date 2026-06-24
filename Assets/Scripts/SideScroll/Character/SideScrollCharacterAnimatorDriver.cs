@@ -39,6 +39,7 @@ namespace GameCreate3
         [SerializeField] private Transform facingTarget;
         [Tooltip("精灵默认朝向：true=美术原图朝右，false=朝左")]
         [SerializeField] private bool spriteFacesRight = true;
+        [SerializeField] private Level4HorizontalFlyAssist level4HorizontalFlyAssist;
 
         // ── 私有状态 ──────────────────────────────────────────────
         private Animator _animator;
@@ -69,6 +70,9 @@ namespace GameCreate3
 
             if (facingTarget == null)
                 facingTarget = transform;
+
+            if (level4HorizontalFlyAssist == null)
+                level4HorizontalFlyAssist = GetComponentInParent<Level4HorizontalFlyAssist>();
         }
 
         /// <summary>
@@ -123,6 +127,16 @@ namespace GameCreate3
                     _facingSign = moveSign;
                     ApplyFacing();
                 }
+            }
+
+            if (level4HorizontalFlyAssist != null && level4HorizontalFlyAssist.IsFlightModeActive)
+            {
+                _animator.ResetTrigger(_jumpId);
+                ApplyJumpLayerWeight(true);
+                _stepTimer = 0f;
+                _wasGrounded = true;
+                _airTicks = 0;
+                return;
             }
 
             // ── Jump（落地→腾空 = 跳跃触发）────────────────────────

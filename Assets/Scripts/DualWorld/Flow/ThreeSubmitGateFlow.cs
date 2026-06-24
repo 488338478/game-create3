@@ -20,6 +20,7 @@ namespace GameCreate3.DualWorld
 
         [Header("Gate")]
         [SerializeField] private int requiredSubmits = 3;
+        [SerializeField] private string targetRouteId;
         [SerializeField] private string targetScene = "Level2";
 
         [Header("Reality Task")]
@@ -111,7 +112,14 @@ namespace GameCreate3.DualWorld
             if (chatBox != null) handoff.chat = chatBox.GetLog();
             DualWorldHandoff.Pending = handoff;
 
-            SceneRouter.GoScene(targetScene);
+            if (!string.IsNullOrWhiteSpace(targetRouteId))
+            {
+                SceneRouter.Go(targetRouteId);
+            }
+            else
+            {
+                SceneRouter.GoScene(targetScene);
+            }
         }
     }
 }

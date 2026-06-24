@@ -223,7 +223,10 @@ namespace GameCreate3.Core.SceneRouting.Hooks
 
             for (var i = items.Count; i < runtimeViews.Count; i++)
             {
-                runtimeViews[i].root.gameObject.SetActive(false);
+                if (IsRuntimeViewAlive(runtimeViews[i]))
+                {
+                    runtimeViews[i].root.gameObject.SetActive(false);
+                }
             }
 
             if (hintRoot != null)
@@ -249,6 +252,11 @@ namespace GameCreate3.Core.SceneRouting.Hooks
 
         private void EnsureRuntimeUi()
         {
+            if (overlayCanvas == null || hintRoot == null)
+            {
+                ResetRuntimeUiReferences();
+            }
+
             if (hintRoot != null)
             {
                 return;
@@ -290,6 +298,11 @@ namespace GameCreate3.Core.SceneRouting.Hooks
             while (runtimeViews.Count <= index)
             {
                 runtimeViews.Add(CreateRuntimeView(runtimeViews.Count));
+            }
+
+            if (!IsRuntimeViewAlive(runtimeViews[index]))
+            {
+                runtimeViews[index] = CreateRuntimeView(index);
             }
 
             return runtimeViews[index];
@@ -413,18 +426,27 @@ namespace GameCreate3.Core.SceneRouting.Hooks
         {
             if (overlayCanvas == null)
             {
-                hintRoot = null;
-                runtimeViews.Clear();
+                ResetRuntimeUiReferences();
                 return;
             }
 
             Destroy(overlayCanvas.gameObject);
-            overlayCanvas = null;
-            hintRoot = null;
-            runtimeViews.Clear();
+            ResetRuntimeUiReferences();
             isHintVisible = false;
             keyboardInputElapsed = 0f;
             waitingForFreshKeyboardInput = false;
+        }
+
+        private void ResetRuntimeUiReferences()
+        {
+            overlayCanvas = null;
+            hintRoot = null;
+            runtimeViews.Clear();
+        }
+
+        private static bool IsRuntimeViewAlive(RuntimeHintItemView view)
+        {
+            return view != null && view.root != null && view.image != null && view.text != null;
         }
 
         private static bool HasAnyContent(SceneHintEntry entry)

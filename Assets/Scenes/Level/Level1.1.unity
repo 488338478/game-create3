@@ -404,6 +404,7 @@ MonoBehaviour:
   holdWhiteDelay: 0.4
   submitToWhiteoutDelay: 1.5
   requiredSubmits: 3
+  targetRouteId: 2
   targetScene: Level2
   alignmentTask: {fileID: 0}
   taskDefinition: {fileID: 0}

@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 1563846086484988735}
   - component: {fileID: 6318809966718661073}
   - component: {fileID: 2873877039295347544}
+  - component: {fileID: 4400000002}
   - component: {fileID: 6553254381967822091}
   - component: {fileID: 6553254381967822092}
   - component: {fileID: 8501281493030173883}
@@ -290,6 +291,26 @@ MonoBehaviour:
   movementMotor: {fileID: 0}
   jumpMotor: {fileID: 0}
   interactionDetector: {fileID: 0}
+--- !u!114 &4400000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6503864650127259009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1f7489e12634f3db7f9a921c7b5cc11, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  targetSceneName: Level4
+  goalBubbleName: GoalBubble
+  targetBody: {fileID: 3745510670163448737}
+  targetAnimator: {fileID: 6553254381967822091}
+  flyClip: {fileID: 7400000, guid: cdc5d61d824549cfb68e1dc5d827c844, type: 2}
+  hoverYOffset: 0
+  fallbackHoverY: 1.79
+  snapToHoverYOnEnable: 1
 --- !u!95 &6553254381967822091
 Animator:
   serializedVersion: 5
@@ -331,6 +352,12 @@ MonoBehaviour:
   moveThreshold: 0.05
   speedScale: 5
   jumpGraceTicks: 3
+  jumpLayerName: jump
+  groundedJumpLayerWeight: 0
+  airborneJumpLayerWeight: 1
+  facingTarget: {fileID: 0}
+  spriteFacesRight: 1
+  level4HorizontalFlyAssist: {fileID: 4400000002}
 --- !u!61 &8501281493030173883
 BoxCollider2D:
   m_ObjectHideFlags: 0

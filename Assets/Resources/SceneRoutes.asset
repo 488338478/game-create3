@@ -28,6 +28,9 @@ MonoBehaviour:
   - routeId: level1cutscene
     sceneName: Level1Cutscene
     useLoading: 1
+  - routeId: level1_1
+    sceneName: Level1.1
+    useLoading: 1
   - routeId: level2_2
     sceneName: "Level2\xB72"
     useLoading: 1
@@ -52,6 +55,3 @@ MonoBehaviour:
   - routeId: restart_current
     sceneName: Level1
     useLoading: 0
-  - routeId: next_stage
-    sceneName: Level1
-    useLoading: 1

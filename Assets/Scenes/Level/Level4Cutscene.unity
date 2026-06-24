@@ -380,7 +380,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 013c3d415bbd4098a70c33144b406af2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextRouteId: 1
+  nextRouteId: main_menu
   videoPlayer: {fileID: 249281664}
 --- !u!1 &1439109004
 GameObject:

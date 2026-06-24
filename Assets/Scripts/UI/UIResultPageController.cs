@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using GameCreate3.Core;
 using GameCreate3.Core.SceneRouting;
+using UnityEngine.SceneManagement;
 
 namespace GameCreate3.UI
 {
@@ -99,12 +100,49 @@ namespace GameCreate3.UI
 
         private static void HandleNext()
         {
-            SceneRouter.Go("next_stage");
+            SceneRouter.Go(ResolveNextRouteId());
         }
 
         private static void HandleMainMenu()
         {
             SceneRouter.Go("main_menu");
+        }
+
+        private static string ResolveNextRouteId()
+        {
+            var currentRouteId = SceneRouter.CurrentRouteId;
+            if (!string.IsNullOrWhiteSpace(currentRouteId))
+            {
+                return currentRouteId switch
+                {
+                    "1" => "level1cutscene",
+                    "level1cutscene" => "level1_1",
+                    "level1_1" => "2",
+                    "2" => "level2_2",
+                    "level2_2" => "level2cutscene",
+                    "level2cutscene" => "3",
+                    "3" => "level3cutscene",
+                    "level3cutscene" => "4",
+                    "4" => "level4cutscene",
+                    "level4cutscene" => "main_menu",
+                    _ => "main_menu"
+                };
+            }
+
+            return SceneManager.GetActiveScene().name switch
+            {
+                "Level1" => "level1cutscene",
+                "Level1Cutscene" => "level1_1",
+                "Level1.1" => "2",
+                "Level2" => "level2_2",
+                "Level2·2" => "level2cutscene",
+                "Level2Cutscene" => "3",
+                "Level3" => "level3cutscene",
+                "Level3Cutscene" => "4",
+                "Level4" => "level4cutscene",
+                "Level4Cutscene" => "main_menu",
+                _ => "main_menu"
+            };
         }
     }
 }

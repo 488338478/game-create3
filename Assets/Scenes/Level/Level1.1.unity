@@ -1888,6 +1888,7 @@ GameObject:
   - component: {fileID: 1683071528}
   - component: {fileID: 1683071527}
   - component: {fileID: 1683071529}
+  - component: {fileID: 1683071530}
   m_Layer: 0
   m_Name: msg
   m_TagString: Untagged
@@ -2008,6 +2009,25 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
+--- !u!114 &1683071530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683071525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4d3c8a11a6f4c8097bc29cf89287911, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetGraphic: {fileID: 1683071527}
+  notificationClip: {fileID: 8300000, guid: a8c5c5210e3d4eb4e893cb9f0e18e09d, type: 3}
+  startDelay: 5
+  blinkStepSeconds: 0.08
+  minimumAlpha: 0.15
+  blinkCount: 2
+  volumeScale: 1
 --- !u!1 &1762716141
 GameObject:
   m_ObjectHideFlags: 0

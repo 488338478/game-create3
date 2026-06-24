@@ -37,8 +37,11 @@ namespace GameCreate3
         [Header("接管期间锁定动画")]
         [Tooltip("移动期间冻结被搬运角色的 SideScrollCharacterAnimatorDriver，避免在泡泡里乱切动画。\nLoop 模式下保持冻结；Once/PingPong 结束后自动解冻。仅对带有该组件的 subject 生效。")]
         [SerializeField] private bool freezeCarriedAnimators = true;
+        [Tooltip("移动期间禁用被搬运角色的输入，避免玩家在泡泡里还能移动。\nLoop 模式下保持禁用；Once/PingPong 结束后按原状态恢复。仅对带有 SideScrollCharacterControllerBase 的 subject 生效。")]
+        [SerializeField] private bool disableCarriedInputs = true;
 
         private List<Vector3> originPositions = new List<Vector3>();
+        private readonly Dictionary<SideScrollCharacterControllerBase, bool> carriedInputStates = new Dictionary<SideScrollCharacterControllerBase, bool>();
         private Coroutine moveCoroutine;
 
         private void Awake()
@@ -61,9 +64,15 @@ namespace GameCreate3
                 if (subjects[i] != null && subjects[i].TryGetComponent<SideScrollCharacterControllerBase>(out _))
                 {
                     subjects[i].position = transform.position;
+                    if (subjects[i].TryGetComponent<Rigidbody2D>(out var body))
+                    {
+                        body.velocity = Vector2.zero;
+                        body.angularVelocity = 0f;
+                    }
                 }
             }
 
+            SetCarriedInputsLocked(true);
             SetCarriedAnimatorsFrozen(true);
             moveCoroutine = mode switch
             {
@@ -80,7 +89,49 @@ namespace GameCreate3
             if (moveCoroutine != null) { StopCoroutine(moveCoroutine); moveCoroutine = null; }
             for (int i = 0; i < subjects.Count; i++)
                 if (subjects[i] != null) subjects[i].position = originPositions[i];
+            SetCarriedInputsLocked(false);
             SetCarriedAnimatorsFrozen(false);
+        }
+
+        /// <summary>禁用/恢复被搬运角色输入（仅对带有 SideScrollCharacterControllerBase 的 subject 生效）。</summary>
+        private void SetCarriedInputsLocked(bool locked)
+        {
+            if (!disableCarriedInputs) return;
+
+            foreach (var s in subjects)
+            {
+                if (s == null || !s.TryGetComponent<SideScrollCharacterControllerBase>(out var controller))
+                {
+                    continue;
+                }
+
+                if (locked)
+                {
+                    if (!carriedInputStates.ContainsKey(controller))
+                    {
+                        carriedInputStates[controller] = controller.InputEnabled;
+                    }
+
+                    controller.SetInputEnabled(false);
+                    if (s.TryGetComponent<Rigidbody2D>(out var body))
+                    {
+                        body.velocity = Vector2.zero;
+                        body.angularVelocity = 0f;
+                    }
+                }
+                else
+                {
+                    if (carriedInputStates.TryGetValue(controller, out var previousEnabled))
+                    {
+                        controller.SetInputEnabled(previousEnabled);
+                    }
+                }
+            }
+
+            if (!locked)
+            {
+                carriedInputStates.Clear();
+            }
         }
 
         /// <summary>冻结/解冻被搬运角色的动画驱动（仅对带有 SideScrollCharacterAnimatorDriver 的 subject 生效）。</summary>
@@ -144,6 +195,7 @@ namespace GameCreate3
             var froms  = CurrentPositions();
             var offset = dest - froms[0];          // 以第一个物件为基准算偏移
             yield return MoveTo(froms, offset);
+            SetCarriedInputsLocked(false);
             SetCarriedAnimatorsFrozen(false);
             moveCoroutine = null;
         }
@@ -158,6 +210,7 @@ namespace GameCreate3
             var returnFroms  = CurrentPositions();
             var returnOffset = froms[0] - returnFroms[0];
             yield return MoveTo(returnFroms, returnOffset);
+            SetCarriedInputsLocked(false);
             SetCarriedAnimatorsFrozen(false);
             moveCoroutine = null;
         }

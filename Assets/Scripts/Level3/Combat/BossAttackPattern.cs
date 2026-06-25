@@ -28,7 +28,7 @@ namespace GameCreate3.Level3
         [Tooltip("生成时缩放倍率")]
         public float spawnScale = 1f;
 
-        [Tooltip("该波次投射物数量上限")]
-        public int maxProjectiles = 50;
+        [Tooltip("每次发射同时生成的投射物数量")]
+        public int burstCount = 1;
     }
 }

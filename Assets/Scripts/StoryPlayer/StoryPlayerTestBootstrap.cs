@@ -243,7 +243,7 @@ namespace GameCreate3.StoryPlayer
             flowBridge = storyPlayerObj.AddComponent<StoryFlowBridge>();
 
             // Initialize StoryPlayer
-            storyPlayer.Initialize(pageRenderer, transitionController);
+            storyPlayer.Initialize(pageRenderer, transitionController, audioAdapter, eventSystem);
 
             // Bind Input
             inputController.Initialize(storyPlayer, pageRenderer);

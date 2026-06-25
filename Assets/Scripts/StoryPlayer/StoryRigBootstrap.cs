@@ -16,6 +16,9 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private SimpleTransitionController transitionController;
         [SerializeField] private StoryInputController inputController;
         [SerializeField] private StoryFlowBridge flowBridge;
+        [SerializeField] private StoryAudioAdapter audioAdapter;
+        [SerializeField] private StoryEventSystem eventSystem;
+        [SerializeField] private StoryVariableStore variableStore;
         [Tooltip("剧情播放期间需要显示／结束后需要隐藏的 UI 根（通常是 StoryCanvas）。")]
         [SerializeField] private GameObject canvasRoot;
 
@@ -27,7 +30,12 @@ namespace GameCreate3.StoryPlayer
                 return;
             }
 
-            storyPlayer.Initialize(pageRenderer, transitionController);
+            if (pageRenderer != null && audioAdapter != null)
+            {
+                pageRenderer.SetAudioService(audioAdapter);
+            }
+
+            storyPlayer.Initialize(pageRenderer, transitionController, audioAdapter, eventSystem, variableStore);
             storyPlayer.OnStateChanged += HandleStateChanged;
 
             if (inputController != null)

@@ -24,6 +24,7 @@ namespace GameCreate3.Level3
         [Header("UI (assign after Canvas is set up)")]
         [SerializeField] private Level3XiaohongshuUI xiaohongshuUI;
         [SerializeField] private Level3HUD hud;
+        [SerializeField] private ParryTutorialPopup parryTutorialPopup;
 
         [Header("VFX")]
         [SerializeField] private FollowerBubbleSpawner followerBubbleSpawner;
@@ -75,6 +76,8 @@ namespace GameCreate3.Level3
                     dualWorldTransition?.OnPhase2();
                     xiaohongshuUI?.OnPhase2();
                     hud?.OnPhase2();
+                    followerBubbleSpawner?.SetAutoActive(true);
+                    parryTutorialPopup?.Show();
                     break;
 
                 case Level3Events.Phase3:
@@ -174,6 +177,8 @@ namespace GameCreate3.Level3
                 screenWhiteout = FindObjectOfType<ScreenWhiteout>(true);
             if (followerBubbleSpawner == null)
                 followerBubbleSpawner = FindObjectOfType<FollowerBubbleSpawner>(true);
+            if (parryTutorialPopup == null)
+                parryTutorialPopup = FindObjectOfType<ParryTutorialPopup>(true);
         }
 
         public void TriggerVictoryTransition()

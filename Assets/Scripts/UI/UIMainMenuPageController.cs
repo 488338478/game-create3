@@ -26,6 +26,9 @@ namespace GameCreate3.UI
         [SerializeField] private Button exitButton;
         [SerializeField] private bool closeMenuAfterStart;
 
+        [Header("Ending")]
+        [SerializeField] private bool disableFullScreenTap;
+
         private bool isMenuOpen;
         private bool isMainMenuVisible = true;
 
@@ -41,7 +44,14 @@ namespace GameCreate3.UI
             AddSelectionEvents(exitButton);
             SceneRouter.OnAfterChange += HandleSceneChanged;
             UpdateContinueButtonState();
-            SetMainMenuVisible(true);
+            if (disableFullScreenTap)
+            {
+                if (menuRoot != null) menuRoot.SetActive(true);
+            }
+            else
+            {
+                SetMainMenuVisible(true);
+            }
         }
 
         private void OnDisable()
@@ -60,11 +70,15 @@ namespace GameCreate3.UI
         protected override void OnOpened(object data)
         {
             UpdateContinueButtonState();
-            SetMainMenuVisible(true);
+            if (!disableFullScreenTap)
+            {
+                SetMainMenuVisible(true);
+            }
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            if (disableFullScreenTap) return;
             if (isMainMenuVisible && !isMenuOpen)
             {
                 HandleStart();

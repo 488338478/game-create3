@@ -17,12 +17,12 @@ PrefabInstance:
       value: note
       objectReference: {fileID: 0}
     - target: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
-      propertyPath: m_Layer
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_Name
       value: note Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 1297498949178415846, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 3933349379900158234, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_LocalPosition.x
@@ -106,11 +106,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_IsTrigger
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_UsedByEffector
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8326657523662634732, guid: 695a1e32c6c11904ca72864ad12420c6, type: 3}
       propertyPath: m_SpriteTilingProperty.pivot.x
@@ -218,10 +218,14 @@ PlatformEffector2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3352607458857409064}
   m_Enabled: 1
-  m_EditorHideFlags: 0
+  m_UseColliderMask: 1
+  m_ColliderMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RotationalOffset: 0
   m_UseOneWay: 1
   m_UseOneWayGrouping: 0
+  m_SurfaceArc: 180
   m_UseSideFriction: 0
   m_UseSideBounce: 0
-  m_SurfaceArc: 180
-  m_RotationalOffset: 0
+  m_SideArc: 1

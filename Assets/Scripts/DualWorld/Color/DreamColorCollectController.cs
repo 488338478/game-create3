@@ -24,7 +24,7 @@ namespace GameCreate3
         [SerializeField] private Transform playerTransform;
         [SerializeField] private float collectDistance = 0.5f;
         [SerializeField] private float colliderCollectPadding = 0.35f;
-        [SerializeField] private bool autoCollect = true;
+        [SerializeField] private bool autoCollect = false;
         [SerializeField] private int requiredCollectibleCount = 3;
         [SerializeField] private bool storeOnlyResonantColors = true;
 
@@ -50,8 +50,12 @@ namespace GameCreate3
         [SerializeField] private float meteorGroundY = -3.2f;
         [SerializeField] private LayerMask meteorGroundMask = ~0;
         [SerializeField] private float meteorGroundProbePadding = 0.08f;
-        [SerializeField] [Range(0.01f, 1f)] private float solvedColorSpawnWeightMultiplier = 0.2f;
+        [SerializeField] [Range(0.01f, 1f)] private float solvedColorSpawnWeightMultiplier = 0.05f;
         [SerializeField] private List<MeteorDefinition> meteorDefinitions = new List<MeteorDefinition>();
+
+        [Header("Grounded Linger")]
+        [SerializeField] private float meteorLingerDuration = 2f;
+        [SerializeField] private float meteorFadeDuration = 0.3f;
 
         [Header("Resonance")]
         [SerializeField] private List<DreamColorResonanceTarget> resonanceTargets = new List<DreamColorResonanceTarget>();
@@ -77,6 +81,16 @@ namespace GameCreate3
             playerTransform = player;
             activeCollectibles.Clear();
             activeCollectibles.AddRange(collectibles);
+
+            foreach (var collectible in collectibles)
+            {
+                if (collectible != null)
+                {
+                    collectible.SetManualCollect(!autoCollect);
+                    collectible.Interacted -= OnCollectibleInteracted;
+                    collectible.Interacted += OnCollectibleInteracted;
+                }
+            }
         }
 
         private void Awake()
@@ -85,6 +99,15 @@ namespace GameCreate3
             {
                 var foundCollectibles = GetComponentsInChildren<ColorCollectible>(true);
                 collectibles.AddRange(foundCollectibles);
+            }
+
+            foreach (var collectible in collectibles)
+            {
+                if (collectible != null)
+                {
+                    collectible.SetManualCollect(!autoCollect);
+                    collectible.Interacted += OnCollectibleInteracted;
+                }
             }
 
             if (meteorContainer == null)
@@ -104,6 +127,7 @@ namespace GameCreate3
             {
                 if (meteor != null)
                 {
+                    SubscribeMeteorEvents(meteor);
                     meteor.ReturnToPool();
                 }
             }
@@ -126,6 +150,7 @@ namespace GameCreate3
             {
                 CheckCollection();
             }
+            // When autoCollect == false, collection is driven by ISideScrollInteractable.Interact()
         }
 
         private void CheckCollection()
@@ -172,15 +197,19 @@ namespace GameCreate3
                     continue;
                 }
 
-                var reachedGround = meteor.Tick(Time.deltaTime);
-                var hitGroundCollider = HasHitGroundCollider(meteor);
-                if (reachedGround || hitGroundCollider || !meteor.IsActive)
-                {
-                    if (hitGroundCollider && meteor.IsActive)
-                    {
-                        meteor.Miss();
-                    }
+                meteor.Tick(Time.deltaTime);
 
+                if (!meteor.IsGrounded && meteor.IsActive)
+                {
+                    var hitGroundCollider = HasHitGroundCollider(meteor);
+                    if (hitGroundCollider)
+                    {
+                        meteor.Ground(meteorLingerDuration, meteorFadeDuration);
+                    }
+                }
+
+                if (!meteor.IsActive)
+                {
                     activeMeteors.RemoveAt(i);
                 }
             }
@@ -276,12 +305,14 @@ namespace GameCreate3
             if (meteorPrefab == null)
             {
                 var runtimeMeteor = CreateRuntimeMeteor();
+                SubscribeMeteorEvents(runtimeMeteor);
                 meteorPool.Add(runtimeMeteor);
                 return runtimeMeteor;
             }
 
             var instance = Instantiate(meteorPrefab, meteorContainer != null ? meteorContainer : transform);
             instance.ReturnToPool();
+            SubscribeMeteorEvents(instance);
             meteorPool.Add(instance);
             return instance;
         }
@@ -465,6 +496,45 @@ namespace GameCreate3
             Completed?.Invoke(collectedOptions.AsReadOnly());
         }
 
+        private void SubscribeMeteorEvents(DreamColorPickup meteor)
+        {
+            meteor.InteractCollected -= OnMeteorInteracted;
+            meteor.InteractCollected += OnMeteorInteracted;
+            meteor.SetManualCollect(!autoCollect);
+            meteor.SetLingerParams(meteorLingerDuration, meteorFadeDuration);
+        }
+
+        private void OnMeteorInteracted(DreamColorPickup meteor)
+        {
+            if (completed) return;
+
+            ItemCollected?.Invoke(meteor.Option);
+
+            if (meteor.IsResonant || !storeOnlyResonantColors)
+            {
+                TryStoreCollectedOption(meteor.Option);
+            }
+
+            meteor.Collect();
+            activeMeteors.Remove(meteor);
+
+            if (ShouldAutoCompleteCollection() && collectedOptions.Count >= requiredCollectibleCount && !completed)
+            {
+                CompleteCollection();
+            }
+        }
+
+        private void OnCollectibleInteracted(ColorCollectible collectible)
+        {
+            if (completed || collectible == null || collectible.IsCollected) return;
+            CollectItem(collectible);
+
+            if (ShouldAutoCompleteCollection() && collectedOptions.Count >= requiredCollectibleCount && !completed)
+            {
+                CompleteCollection();
+            }
+        }
+
         public void SetInteractive(bool enabled)
         {
             interactive = enabled;
@@ -641,6 +711,7 @@ namespace GameCreate3
 
             var collider = visual.AddComponent<CircleCollider2D>();
             collider.radius = Mathf.Max(0.02f, runtimeMeteorColliderRadius);
+            collider.isTrigger = true;
 
             var pickup = root.AddComponent<DreamColorPickup>();
             pickup.ReturnToPool();
@@ -648,7 +719,7 @@ namespace GameCreate3
         }
     }
 
-    public sealed class ColorCollectible : MonoBehaviour
+    public sealed class ColorCollectible : MonoBehaviour, ISideScrollInteractable
     {
         [SerializeField] private int variantId = -1;
         [SerializeField] private string colorId = string.Empty;
@@ -669,6 +740,32 @@ namespace GameCreate3
             paletteSprite = paletteSprite != null ? paletteSprite : (spriteRenderer != null ? spriteRenderer.sprite : null)
         };
         public bool IsCollected { get; private set; }
+
+        public string Prompt => "拾取";
+        public event Action<ColorCollectible> Interacted;
+
+        private bool manualCollect;
+        private InteractPromptIndicator promptIndicator;
+
+        public void SetManualCollect(bool enabled)
+        {
+            manualCollect = enabled;
+            if (promptIndicator != null)
+            {
+                promptIndicator.enabled = enabled;
+            }
+        }
+
+        public bool CanInteract(GameObject interactor)
+        {
+            return manualCollect && !IsCollected && gameObject.activeInHierarchy;
+        }
+
+        public void Interact(GameObject interactor)
+        {
+            if (!manualCollect || IsCollected) return;
+            Interacted?.Invoke(this);
+        }
 
         public void Initialize(Color collectibleColor, SpriteRenderer renderer)
         {
@@ -691,6 +788,18 @@ namespace GameCreate3
             {
                 visualObject = gameObject;
             }
+
+            if (collectibleCollider != null)
+            {
+                collectibleCollider.isTrigger = true;
+            }
+
+            promptIndicator = GetComponent<InteractPromptIndicator>();
+            if (promptIndicator == null)
+            {
+                promptIndicator = gameObject.AddComponent<InteractPromptIndicator>();
+            }
+            promptIndicator.enabled = false;
 
             UpdateVisual();
         }

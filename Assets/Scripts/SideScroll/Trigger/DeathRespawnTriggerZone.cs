@@ -6,6 +6,9 @@ namespace GameCreate3
 {
     public sealed class DeathRespawnTriggerZone : TriggerZoneBase
     {
+        [Header("Timing")]
+        [SerializeField] private float startDelay;
+
         [Header("Target")]
         [SerializeField] private Transform respawnTarget;
 
@@ -109,6 +112,9 @@ namespace GameCreate3
                 animatorDriver.SetAnimationFrozen(true);
 
             TriggerAnimation(player, playerAnimator, deathTrigger);
+
+            if (startDelay > 0f)
+                yield return new WaitForSeconds(startDelay);
 
             if (respawnBubble != null)
             {

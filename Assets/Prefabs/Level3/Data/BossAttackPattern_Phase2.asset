@@ -11,23 +11,17 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe415c4bdfe5c1d7e72381e983b5e487, type: 3}
   m_Name: BossAttackPattern_Phase2
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   waves:
   - startTime: 0
     spawnInterval: 1.4
     duration: 0
-    spawnType: 1
     fallSpeed: 7
-    swayAmplitude: 1
-    swayFrequency: 2
     spawnScale: 0.3
-    maxProjectiles: 60
+    burstCount: 2
   - startTime: 5
     spawnInterval: 1.1
     duration: 0
-    spawnType: 2
     fallSpeed: 8
-    swayAmplitude: 2
-    swayFrequency: 2.5
     spawnScale: 0.3
-    maxProjectiles: 80
+    burstCount: 4

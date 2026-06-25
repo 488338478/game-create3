@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace GameCreate3
 {
-    public sealed class DreamColorPickup : MonoBehaviour
+    public sealed class DreamColorPickup : MonoBehaviour, ISideScrollInteractable
     {
         [SerializeField] private PaletteColorOption option;
         [SerializeField] private bool resonant = true;
@@ -18,17 +19,28 @@ namespace GameCreate3
         private float moveSpeed;
         private float minY;
         private bool active;
+        private bool grounded;
+        private bool manualCollect;
+        private float groundedTimer;
+        private float lingerDuration;
+        private float fadeDuration;
+        private float fadeElapsed;
         private Sprite visualSprite;
         private Sprite baseSprite;
         private Vector3 previousPosition;
+        private InteractPromptIndicator promptIndicator;
 
         public PaletteColorOption Option => option;
         public Color Color => option.fallbackColor;
         public bool IsResonant => resonant;
         public bool IsCollected { get; private set; }
         public bool IsActive => active;
+        public bool IsGrounded => grounded;
         public Vector3 PreviousPosition => previousPosition;
         public Collider2D PickupCollider => pickupCollider;
+
+        public string Prompt => "拾取";
+        public event Action<DreamColorPickup> InteractCollected;
 
         private void Awake()
         {
@@ -53,6 +65,14 @@ namespace GameCreate3
             }
 
             baseSprite = spriteRenderer != null ? spriteRenderer.sprite : null;
+
+            promptIndicator = GetComponent<InteractPromptIndicator>();
+            if (promptIndicator == null)
+            {
+                promptIndicator = gameObject.AddComponent<InteractPromptIndicator>();
+            }
+            promptIndicator.enabled = false;
+
             UpdateVisual();
             ReturnToPool();
         }
@@ -67,6 +87,9 @@ namespace GameCreate3
             minY = minYPos;
             active = true;
             IsCollected = false;
+            grounded = false;
+            groundedTimer = 0f;
+            fadeElapsed = 0f;
 
             transform.position = spawnPosition;
             previousPosition = spawnPosition;
@@ -99,6 +122,11 @@ namespace GameCreate3
                 return false;
             }
 
+            if (grounded)
+            {
+                return TickGrounded(deltaTime);
+            }
+
             previousPosition = transform.position;
             var rad = moveAngle * Mathf.Deg2Rad;
             var position = previousPosition;
@@ -113,8 +141,39 @@ namespace GameCreate3
 
             if (position.y <= minY)
             {
-                Miss();
-                return true;
+                if (manualCollect)
+                {
+                    Ground(lingerDuration > 0f ? lingerDuration : 2f, fadeDuration > 0f ? fadeDuration : 0.3f);
+                }
+                else
+                {
+                    Miss();
+                }
+                return !manualCollect;
+            }
+
+            return false;
+        }
+
+        private bool TickGrounded(float deltaTime)
+        {
+            groundedTimer -= deltaTime;
+            if (groundedTimer <= 0f)
+            {
+                fadeElapsed += deltaTime;
+                var t = Mathf.Clamp01(fadeElapsed / fadeDuration);
+                if (spriteRenderer != null)
+                {
+                    var c = spriteRenderer.color;
+                    c.a = 1f - t;
+                    spriteRenderer.color = c;
+                }
+
+                if (t >= 1f)
+                {
+                    Miss();
+                    return true;
+                }
             }
 
             return false;
@@ -170,6 +229,16 @@ namespace GameCreate3
         {
             active = false;
             IsCollected = false;
+            grounded = false;
+            groundedTimer = 0f;
+            fadeElapsed = 0f;
+
+            if (spriteRenderer != null)
+            {
+                var c = spriteRenderer.color;
+                c.a = 1f;
+                spriteRenderer.color = c;
+            }
 
             if (visualObject != null)
             {
@@ -189,6 +258,56 @@ namespace GameCreate3
             if (pickupCollider != null)
             {
                 pickupCollider.enabled = enabled && active && !IsCollected;
+            }
+        }
+
+        public bool CanInteract(GameObject interactor)
+        {
+            return manualCollect && active && !IsCollected;
+        }
+
+        public void Interact(GameObject interactor)
+        {
+            if (!manualCollect || !active || IsCollected) return;
+            InteractCollected?.Invoke(this);
+        }
+
+        public void SetManualCollect(bool enabled)
+        {
+            manualCollect = enabled;
+            if (promptIndicator != null)
+            {
+                promptIndicator.enabled = enabled;
+            }
+        }
+
+        public void SetLingerParams(float linger, float fade)
+        {
+            lingerDuration = linger;
+            fadeDuration = Mathf.Max(0.05f, fade);
+        }
+
+        public void Ground(float linger, float fade)
+        {
+            if (!active || IsCollected || grounded) return;
+
+            if (!manualCollect)
+            {
+                Miss();
+                return;
+            }
+
+            grounded = true;
+            moveSpeed = 0f;
+            groundedTimer = linger;
+            lingerDuration = linger;
+            fadeDuration = Mathf.Max(0.05f, fade);
+            fadeElapsed = 0f;
+
+            if (pickupCollider != null)
+            {
+                pickupCollider.isTrigger = true;
+                pickupCollider.enabled = true;
             }
         }
 

@@ -14,14 +14,68 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sequenceId: L1
   pages:
+  - pageId: pre1
+    pageType: 4
+    backgroundImage: {fileID: 0}
+    videoClip: {fileID: 32900000, guid: 36ebf0075151333468273d6699a151a2, type: 3}
+    loopVideo: 0
+    videoPlaybackSpeed: 0.6
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 5
+    waitForInput: 0
+    elements: []
+    transitionIn: 0
+    transitionOut: 1
+    transitionDuration: 0.5
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
+  - pageId: pre2
+    pageType: 4
+    backgroundImage: {fileID: 0}
+    videoClip: {fileID: 32900000, guid: b84c251912683cb40bd91de628b358e3, type: 3}
+    loopVideo: 0
+    videoPlaybackSpeed: 0.9
+    foregroundImage: {fileID: 0}
+    textBlocks: []
+    displayDuration: 5
+    waitForInput: 0
+    elements: []
+    transitionIn: 1
+    transitionOut: 1
+    transitionDuration: 0.5
+    pageEvents: []
+    audioConfig:
+      bgm: {fileID: 0}
+      loopBgm: 0
+      bgmVolume: 0
+      voiceOver: {fileID: 0}
+      soundEffects: []
   - pageId: 1
-    pageType: 0
+    pageType: 2
     backgroundImage: {fileID: 21300000, guid: ca3d110f2b4c23a4b8b4b79ec7f278c7, type: 3}
+    videoClip: {fileID: 0}
+    loopVideo: 0
+    videoPlaybackSpeed: 1
     foregroundImage: {fileID: 0}
     textBlocks: []
     displayDuration: 3
     waitForInput: 0
-    elements: []
+    elements:
+    - elementType: 0
+      elementId: 
+      image: {fileID: 0}
+      text: 
+      audioClip: {fileID: 0}
+      delay: 0
+      duration: 0
+      animationType: 0
+      animationDuration: 0
     transitionIn: 1
     transitionOut: 0
     transitionDuration: 0.5
@@ -37,7 +91,10 @@ MonoBehaviour:
       soundEffects: []
   - pageId: 2.2
     pageType: 0
-    backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
+    backgroundImage: {fileID: 21300000, guid: ca3d110f2b4c23a4b8b4b79ec7f278c7, type: 3}
+    videoClip: {fileID: 0}
+    loopVideo: 0
+    videoPlaybackSpeed: 1
     foregroundImage: {fileID: 0}
     textBlocks: []
     displayDuration: 2
@@ -59,6 +116,9 @@ MonoBehaviour:
   - pageId: 2
     pageType: 1
     backgroundImage: {fileID: 21300000, guid: 6c7cad5197659b643bb70a6a618e02f2, type: 3}
+    videoClip: {fileID: 0}
+    loopVideo: 0
+    videoPlaybackSpeed: 1
     foregroundImage: {fileID: 0}
     textBlocks:
     - textId: 1
@@ -98,6 +158,9 @@ MonoBehaviour:
   - pageId: 3
     pageType: 3
     backgroundImage: {fileID: 21300000, guid: 062d8aaf738bf004a99d254aecd8c37e, type: 3}
+    videoClip: {fileID: 0}
+    loopVideo: 0
+    videoPlaybackSpeed: 1
     foregroundImage: {fileID: 0}
     textBlocks: []
     displayDuration: 7
@@ -119,6 +182,9 @@ MonoBehaviour:
   - pageId: 4
     pageType: 3
     backgroundImage: {fileID: 21300000, guid: 1683e775d1c7dec4697190e2c673bf6a, type: 3}
+    videoClip: {fileID: 0}
+    loopVideo: 0
+    videoPlaybackSpeed: 1
     foregroundImage: {fileID: 0}
     textBlocks: []
     displayDuration: 7
@@ -140,6 +206,9 @@ MonoBehaviour:
   - pageId: 5
     pageType: 0
     backgroundImage: {fileID: 21300000, guid: 622725cc44995fe43aee6fb7f63c97c4, type: 3}
+    videoClip: {fileID: 0}
+    loopVideo: 0
+    videoPlaybackSpeed: 1
     foregroundImage: {fileID: 0}
     textBlocks: []
     displayDuration: 5
@@ -155,7 +224,7 @@ MonoBehaviour:
       bgmVolume: 0
       voiceOver: {fileID: 0}
       soundEffects: []
-  defaultPlaybackMode: 0
+  defaultPlaybackMode: 1
   allowSkip: 0
   autoAdvanceDelay: 3
   sequenceFont: {fileID: 11400000, guid: ef9eb6d1111e4ed4896bd70d6b1322ad, type: 2}

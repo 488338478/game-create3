@@ -16,6 +16,7 @@ namespace GameCreate3.Level3
 
         private SideScrollWorkspaceBase workspace;
         private Transform playerTransform;
+        private PlayerCombatState combatState;
         private InputAction parryAction;
         private Animator animator;
         private bool isEnabled;
@@ -29,7 +30,10 @@ namespace GameCreate3.Level3
         {
             workspace = GetComponentInParent<SideScrollWorkspaceBase>(true);
             if (workspace != null && workspace.PlayerController != null)
+            {
                 playerTransform = workspace.PlayerController.transform;
+                combatState = workspace.PlayerController.GetComponent<PlayerCombatState>();
+            }
             animator = playerTransform != null
                 ? playerTransform.GetComponentInChildren<Animator>()
                 : GetComponentInChildren<Animator>();
@@ -49,6 +53,7 @@ namespace GameCreate3.Level3
         private void Update()
         {
             if (!isEnabled) return;
+            if (combatState != null && combatState.IsInvincible) return;
 
             if (cooldownTimer > 0f)
             {

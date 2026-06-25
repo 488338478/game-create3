@@ -8,6 +8,12 @@ namespace GameCreate3.Level3
         [Header("Health")]
         [SerializeField] private int maxHits = 5;
 
+        [Header("Animation")]
+        [SerializeField] private Animator animator;
+        [SerializeField] private string hitTriggerName = "Death";
+        [SerializeField] private int hitAnimLayerIndex = 4;
+        [SerializeField] private string hitAnimStateName = "bear_death";
+
         [Header("Hit Stun")]
         [SerializeField] private float postAnimInvincibility = 0.5f;
 
@@ -20,20 +26,20 @@ namespace GameCreate3.Level3
 
         private SideScrollWorkspaceBase workspace;
         private SideScrollCharacterControllerBase playerController;
-        private Animator animator;
         private SpriteRenderer spriteRenderer;
         private Coroutine hitRoutine;
 
-        private static readonly int DeathTrigger = Animator.StringToHash("Death");
-        private const int DeathLayerIndex = 4;
+        private int hitTriggerHash;
 
         private void Awake()
         {
             workspace = GetComponentInParent<SideScrollWorkspaceBase>(true);
             playerController = GetComponent<SideScrollCharacterControllerBase>();
-            animator = GetComponentInChildren<Animator>(true);
+            if (animator == null)
+                animator = GetComponentInChildren<Animator>(true);
             spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
             CurrentHits = maxHits;
+            hitTriggerHash = Animator.StringToHash(hitTriggerName);
         }
 
         public void OnProjectileHit(int damage = 1)
@@ -57,19 +63,19 @@ namespace GameCreate3.Level3
         {
             IsInvincible = true;
             playerController?.SetInputEnabled(false);
-            animator?.SetTrigger(DeathTrigger);
+            animator?.SetTrigger(hitTriggerHash);
 
             yield return null;
             float animDuration = 0.72f;
             if (animator != null)
             {
                 float timeout = 0.5f;
-                while (!animator.GetCurrentAnimatorStateInfo(DeathLayerIndex).IsName("bear_death") && timeout > 0f)
+                while (!animator.GetCurrentAnimatorStateInfo(hitAnimLayerIndex).IsName(hitAnimStateName) && timeout > 0f)
                 {
                     timeout -= Time.deltaTime;
                     yield return null;
                 }
-                var stateInfo = animator.GetCurrentAnimatorStateInfo(DeathLayerIndex);
+                var stateInfo = animator.GetCurrentAnimatorStateInfo(hitAnimLayerIndex);
                 animDuration = stateInfo.length;
             }
 
@@ -88,6 +94,9 @@ namespace GameCreate3.Level3
                 spriteRenderer.enabled = true;
 
             playerController?.SetInputEnabled(true);
+
+            yield return new WaitForSeconds(postAnimInvincibility);
+
             IsInvincible = false;
             hitRoutine = null;
         }

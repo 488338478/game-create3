@@ -18,6 +18,16 @@ namespace GameCreate3
         [SerializeField] private float fallbackHoverY = 1.79f;
         [SerializeField] private bool snapToHoverYOnEnable = true;
 
+        [Header("Flappy Flight")]
+        [SerializeField] private float flapImpulse = 4f;
+        [SerializeField] private float gravityStrength = 6f;
+        [SerializeField] private float autoMoveSpeed = 2f;
+        [SerializeField] private float maxFallSpeed = -5f;
+        [SerializeField] private float maxRiseSpeed = 8f;
+
+        private CharacterInputProxy inputProxy;
+        private bool flapThisFrame;
+        private float flightYVelocity;
         private RuntimeAnimatorController originalController;
         private AnimatorOverrideController flightController;
         private float originalGravityScale;
@@ -31,12 +41,21 @@ namespace GameCreate3
         {
             targetBody = targetBody != null ? targetBody : GetComponent<Rigidbody2D>();
             targetAnimator = targetAnimator != null ? targetAnimator : GetComponent<Animator>();
+            inputProxy = inputProxy != null ? inputProxy : GetComponent<CharacterInputProxy>();
             CacheOriginalState();
         }
 
         private void OnEnable()
         {
             RefreshFlightMode();
+        }
+
+        private void Update()
+        {
+            if (isFlightModeActive && inputProxy != null && inputProxy.JumpPressed)
+            {
+                flapThisFrame = true;
+            }
         }
 
         private void Start()
@@ -54,19 +73,16 @@ namespace GameCreate3
 
             targetBody.gravityScale = 0f;
 
-            var position = targetBody.position;
-            if (!Mathf.Approximately(position.y, hoverY))
+            flightYVelocity -= gravityStrength * Time.fixedDeltaTime;
+
+            if (flapThisFrame)
             {
-                position.y = hoverY;
-                targetBody.position = position;
+                flightYVelocity = flapImpulse;
+                flapThisFrame = false;
             }
 
-            var velocity = targetBody.velocity;
-            if (!Mathf.Approximately(velocity.y, 0f))
-            {
-                velocity.y = 0f;
-                targetBody.velocity = velocity;
-            }
+            flightYVelocity = Mathf.Clamp(flightYVelocity, maxFallSpeed, maxRiseSpeed);
+            targetBody.velocity = new Vector2(autoMoveSpeed, flightYVelocity);
         }
 
         private void OnDisable()
@@ -125,9 +141,8 @@ namespace GameCreate3
                 targetBody.position = position;
             }
 
-            var velocity = targetBody.velocity;
-            velocity.y = 0f;
-            targetBody.velocity = velocity;
+            flightYVelocity = 0f;
+            targetBody.velocity = new Vector2(targetBody.velocity.x, 0f);
 
             ApplyFlightAnimationOverride();
         }

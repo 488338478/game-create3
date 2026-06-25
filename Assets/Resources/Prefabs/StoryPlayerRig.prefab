@@ -134,6 +134,113 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &1100000000000000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1100000000000000002}
+  - component: {fileID: 1100000000000000003}
+  - component: {fileID: 1100000000000000004}
+  - component: {fileID: 1100000000000000005}
+  m_Layer: 0
+  m_Name: VideoDisplay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1100000000000000002
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1100000000000000001}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7877404761839389328}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &1100000000000000003
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1100000000000000001}
+  m_CullTransparentMesh: 1
+--- !u!114 &1100000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1100000000000000001}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Texture: {fileID: 0}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+--- !u!328 &1100000000000000005
+VideoPlayer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1100000000000000001}
+  m_Enabled: 1
+  m_VideoClip: {fileID: 0}
+  m_TargetCameraAlpha: 1
+  m_TargetCamera3DLayout: 0
+  m_TargetCamera: {fileID: 0}
+  m_TargetTexture: {fileID: 0}
+  m_TimeReference: 0
+  m_TargetMaterialRenderer: {fileID: 0}
+  m_TargetMaterialProperty: <noninit>
+  m_RenderMode: 2
+  m_AspectRatio: 2
+  m_DataSource: 0
+  m_TimeUpdateMode: 2
+  m_PlaybackSpeed: 1
+  m_AudioOutputMode: 0
+  m_TargetAudioSources: []
+  m_DirectAudioVolumes: []
+  m_Url: 
+  m_EnabledAudioTracks: 
+  m_DirectAudioMutes: 
+  m_ControlledAudioTrackCount: 0
+  m_PlayOnAwake: 0
+  m_SkipOnDrop: 1
+  m_Looping: 0
+  m_WaitForFirstFrame: 1
+  m_FrameReadyEventEnabled: 0
+  m_VideoShaders: []
 --- !u!1 &1598779729301827783
 GameObject:
   m_ObjectHideFlags: 0
@@ -201,6 +308,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2394246633926053634}
+  - {fileID: 1100000000000000002}
   - {fileID: 6847374973637206162}
   - {fileID: 6591321300452787656}
   - {fileID: 8920793358188107560}
@@ -424,6 +532,9 @@ GameObject:
   - component: {fileID: 5159583725843612215}
   - component: {fileID: 1186386489953629244}
   - component: {fileID: 521118264816997031}
+  - component: {fileID: 2200000000000000001}
+  - component: {fileID: 2200000000000000002}
+  - component: {fileID: 2200000000000000003}
   m_Layer: 0
   m_Name: StoryPlayerSystem
   m_TagString: Untagged
@@ -458,10 +569,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c4494eb844017f4fb90751eb7f20d00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  variableStore: {fileID: 0}
-  audioSource: {fileID: 0}
-  audioAdapter: {fileID: 0}
-  eventSystem: {fileID: 0}
+  variableStore: {fileID: 2200000000000000003}
+  eventSystem: {fileID: 2200000000000000001}
   defaultPlaybackMode: 0
   allowSkip: 1
   fastForwardSpeed: 5
@@ -487,6 +596,8 @@ MonoBehaviour:
   contentLabel: {fileID: 8612485946457924344}
   textContainer: {fileID: 6591321300452787656}
   textGroup: {fileID: 0}
+  videoPlayer: {fileID: 1100000000000000005}
+  videoRawImage: {fileID: 1100000000000000004}
   fadeOverlay: {fileID: 1337693884362598573}
   effectContainer: {fileID: 6847374973637206162}
   defaultTypewriterInterval: 0.05
@@ -561,9 +672,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9751db902f2b03849a982ff336037ae6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bgmSource: {fileID: 0}
-  sfxSource: {fileID: 0}
-  voiceSource: {fileID: 0}
   effectContainer: {fileID: 6847374973637206162}
 --- !u!114 &521118264816997031
 MonoBehaviour:
@@ -577,7 +685,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbfc182a81fb2c44c86d4a06893fc6d0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  flowController: {fileID: 0}
+  flowControllerRef: {fileID: 0}
   autoBindToStoryPlayer: 1
   defaultLevelSceneName: Level_01
   mainMenuSceneName: MainMenu
@@ -928,4 +1036,73 @@ MonoBehaviour:
   transitionController: {fileID: 6469063229592155406}
   inputController: {fileID: 8266450990260295907}
   flowBridge: {fileID: 521118264816997031}
+  audioAdapter: {fileID: 2200000000000000002}
+  eventSystem: {fileID: 2200000000000000001}
+  variableStore: {fileID: 2200000000000000003}
   canvasRoot: {fileID: 2975171024778318096}
+--- !u!114 &2200000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4616879462998631111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9751db902f2b03849a982ff336037ae6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  effectContainer: {fileID: 6847374973637206162}
+--- !u!114 &2200000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4616879462998631111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91bf250b7690a454c95d0ae578f7fb48, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  bgmSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  voiceSource: {fileID: 0}
+  bgmFadeDuration: 1
+  crossFadeDuration: 1.5
+  fadeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &2200000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4616879462998631111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff236336f6b499c4783e68db588da633, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:

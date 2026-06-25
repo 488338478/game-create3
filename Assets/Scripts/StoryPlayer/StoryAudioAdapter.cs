@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace GameCreate3.StoryPlayer
 {
-    public sealed class StoryAudioAdapter : MonoBehaviour
+    public sealed class StoryAudioAdapter : MonoBehaviour, IAudioService
     {
         [Header("Audio Sources")]
         [SerializeField] private AudioSource bgmSource;
@@ -17,7 +17,6 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private float crossFadeDuration = 1.5f;
         [SerializeField] private AnimationCurve fadeCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        private StoryEventSystem eventSystem;
         private AudioClip currentBgm;
         private AudioClip pendingBgm;
         private CancellationTokenSource fadeCts;
@@ -70,47 +69,6 @@ namespace GameCreate3.StoryPlayer
             fadeCts?.Cancel();
             fadeCts?.Dispose();
             fadeCts = null;
-        }
-
-        public void BindEventSystem(StoryEventSystem eventSystem)
-        {
-            if (this.eventSystem != null)
-            {
-                this.eventSystem.OnEventTriggered -= HandleStoryEvent;
-            }
-
-            this.eventSystem = eventSystem;
-
-            if (eventSystem != null)
-            {
-                eventSystem.OnEventTriggered += HandleStoryEvent;
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (eventSystem != null)
-            {
-                eventSystem.OnEventTriggered -= HandleStoryEvent;
-            }
-        }
-
-        private void HandleStoryEvent(StoryPageEvent evt)
-        {
-            switch (evt.EventType)
-            {
-                case StoryEventType.PlaySound:
-                    PlaySfxFromEvent(evt.EventData);
-                    break;
-
-                case StoryEventType.PlayMusic:
-                    PlayBgmFromEvent(evt.EventData);
-                    break;
-
-                case StoryEventType.StopMusic:
-                    StopBgm();
-                    break;
-            }
         }
 
         public void ApplyPageAudioConfig(StoryAudioConfig config)
@@ -228,6 +186,19 @@ namespace GameCreate3.StoryPlayer
             _ = StopBgmAsync(true);
         }
 
+        public void PlayBgm(string clipName, float volume = 1f, bool loop = true)
+        {
+            var clip = Resources.Load<AudioClip>($"Audio/BGM/{clipName}");
+            if (clip != null)
+            {
+                _ = PlayBgmAsync(clip, volume, loop, true);
+            }
+            else
+            {
+                Debug.LogWarning($"[StoryAudioAdapter] BGM not found: {clipName}");
+            }
+        }
+
         public void PlaySfx(AudioClip clip, float volume = 1f)
         {
             if (clip == null || sfxSource == null)
@@ -304,43 +275,6 @@ namespace GameCreate3.StoryPlayer
             }
 
             PlaySfx(sfx.Clip, sfx.Volume);
-        }
-
-        private void PlaySfxFromEvent(string eventData)
-        {
-            if (string.IsNullOrEmpty(eventData))
-            {
-                return;
-            }
-
-            var parts = eventData.Split('|');
-            var soundName = parts[0];
-            var volume = parts.Length > 1 && float.TryParse(parts[1], out var v) ? v : 1f;
-
-            PlaySfx(soundName, volume);
-        }
-
-        private void PlayBgmFromEvent(string eventData)
-        {
-            if (string.IsNullOrEmpty(eventData))
-            {
-                return;
-            }
-
-            var parts = eventData.Split('|');
-            var musicName = parts[0];
-            var volume = parts.Length > 1 && float.TryParse(parts[1], out var v) ? v : 1f;
-            var loop = parts.Length <= 2 || !bool.TryParse(parts[2], out var l) || l;
-
-            var clip = Resources.Load<AudioClip>($"Audio/BGM/{musicName}");
-            if (clip != null)
-            {
-                _ = PlayBgmAsync(clip, volume, loop, true);
-            }
-            else
-            {
-                Debug.LogWarning($"[StoryAudioAdapter] BGM not found: {musicName}");
-            }
         }
 
         private async Task CrossFadeAsync(AudioClip newClip, float targetVolume, bool loop, float duration, CancellationToken ct)

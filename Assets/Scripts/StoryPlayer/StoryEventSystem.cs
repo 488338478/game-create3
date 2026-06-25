@@ -8,19 +8,18 @@ namespace GameCreate3.StoryPlayer
 {
     public sealed class StoryEventSystem : MonoBehaviour
     {
-        [Header("Audio")]
-        [SerializeField] private AudioSource bgmSource;
-        [SerializeField] private AudioSource sfxSource;
-        [SerializeField] private AudioSource voiceSource;
-
         [Header("Effects")]
         [SerializeField] private Transform effectContainer;
 
+        private IAudioService audioService;
+        private StoryVariableStore variableStore;
         private StoryPage currentPage;
         private CancellationTokenSource eventCts;
         private HashSet<int> triggeredEvents;
         private float pageStartTime;
         private bool isRunning;
+
+        public static StoryEventSystem Active { get; private set; }
 
         public bool IsRunning => isRunning;
 
@@ -28,37 +27,33 @@ namespace GameCreate3.StoryPlayer
         public event Action<string> OnDialogueRequested;
         public event Action<string> OnEffectRequested;
         public event Action OnVariableChanged;
-
-        // 跨实例的全局事件 — StoryEventSystem 由 StoryPlayer 动态创建，
-        // 用静态事件让外部服务（如 StrobeEffectController）无需绑定具体实例就能监听。
-        public static event Action<string> OnPostProcessEffectRequested;
+        public event Action<string> OnPostProcessEffectRequested;
 
         private void Awake()
         {
-            Initialize();
+            triggeredEvents = new HashSet<int>();
+            isRunning = false;
+            Active = this;
         }
 
         private void OnDestroy()
         {
-            Cleanup();
-        }
-
-        private void Initialize()
-        {
-            triggeredEvents = new HashSet<int>();
-            isRunning = false;
-        }
-
-        private void Cleanup()
-        {
+            if (Active == this) Active = null;
             eventCts?.Cancel();
             eventCts?.Dispose();
             eventCts = null;
         }
 
+        public void Initialize(IAudioService audio, StoryVariableStore store)
+        {
+            audioService = audio;
+            variableStore = store;
+        }
+
         public void StartEventTracking(StoryPage page)
         {
-            Cleanup();
+            eventCts?.Cancel();
+            eventCts?.Dispose();
             ClearActiveEffects();
 
             currentPage = page;
@@ -67,7 +62,6 @@ namespace GameCreate3.StoryPlayer
             isRunning = true;
 
             eventCts = new CancellationTokenSource();
-
             _ = ProcessEventsAsync(eventCts.Token);
         }
 
@@ -135,7 +129,7 @@ namespace GameCreate3.StoryPlayer
             }
             catch (OperationCanceledException)
             {
-                Debug.Log("[StoryEventSystem] Event processing cancelled.");
+                // expected
             }
             catch (Exception ex)
             {
@@ -146,21 +140,20 @@ namespace GameCreate3.StoryPlayer
         private void TriggerEvent(StoryPageEvent evt, int eventIndex)
         {
             triggeredEvents.Add(eventIndex);
-
             OnEventTriggered?.Invoke(evt);
 
             switch (evt.EventType)
             {
                 case StoryEventType.PlaySound:
-                    PlaySound(evt.EventData);
+                    HandlePlaySound(evt.EventData);
                     break;
 
                 case StoryEventType.PlayMusic:
-                    PlayMusic(evt.EventData);
+                    HandlePlayMusic(evt.EventData);
                     break;
 
                 case StoryEventType.StopMusic:
-                    StopMusic();
+                    audioService?.StopBgm();
                     break;
 
                 case StoryEventType.TriggerEffect:
@@ -172,7 +165,7 @@ namespace GameCreate3.StoryPlayer
                     break;
 
                 case StoryEventType.Branch:
-                    TriggerBranch(evt.EventData);
+                    OnDialogueRequested?.Invoke(evt.EventData);
                     break;
 
                 case StoryEventType.PostProcessEffect:
@@ -181,9 +174,9 @@ namespace GameCreate3.StoryPlayer
             }
         }
 
-        private void PlaySound(string eventData)
+        private void HandlePlaySound(string eventData)
         {
-            if (string.IsNullOrEmpty(eventData))
+            if (string.IsNullOrEmpty(eventData) || audioService == null)
             {
                 return;
             }
@@ -192,20 +185,12 @@ namespace GameCreate3.StoryPlayer
             var soundName = parts[0];
             var volume = parts.Length > 1 && float.TryParse(parts[1], out var v) ? v : 1f;
 
-            var clip = Resources.Load<AudioClip>($"Audio/SFX/{soundName}");
-            if (clip != null && sfxSource != null)
-            {
-                sfxSource.PlayOneShot(clip, volume);
-            }
-            else
-            {
-                Debug.LogWarning($"[StoryEventSystem] Sound not found: {soundName}");
-            }
+            audioService.PlaySfx(soundName, volume);
         }
 
-        private void PlayMusic(string eventData)
+        private void HandlePlayMusic(string eventData)
         {
-            if (string.IsNullOrEmpty(eventData))
+            if (string.IsNullOrEmpty(eventData) || audioService == null)
             {
                 return;
             }
@@ -213,28 +198,8 @@ namespace GameCreate3.StoryPlayer
             var parts = eventData.Split('|');
             var musicName = parts[0];
             var volume = parts.Length > 1 && float.TryParse(parts[1], out var v) ? v : 1f;
-            var loop = parts.Length <= 2 || !bool.TryParse(parts[2], out var l) || l;
 
-            var clip = Resources.Load<AudioClip>($"Audio/BGM/{musicName}");
-            if (clip != null && bgmSource != null)
-            {
-                bgmSource.clip = clip;
-                bgmSource.volume = volume;
-                bgmSource.loop = loop;
-                bgmSource.Play();
-            }
-            else
-            {
-                Debug.LogWarning($"[StoryEventSystem] Music not found: {musicName}");
-            }
-        }
-
-        private void StopMusic()
-        {
-            if (bgmSource != null)
-            {
-                bgmSource.Stop();
-            }
+            audioService.PlayBgm(musicName, volume);
         }
 
         private void TriggerEffect(string effectName)
@@ -291,34 +256,26 @@ namespace GameCreate3.StoryPlayer
             var key = parts[0].Trim();
             var value = parts[1].Trim();
 
-            var variableStore = FindObjectOfType<StoryVariableStore>();
-            if (variableStore != null)
+            if (variableStore == null)
             {
-                if (bool.TryParse(value, out var boolValue))
-                {
-                    variableStore.SetBool(key, boolValue);
-                }
-                else if (int.TryParse(value, out var intValue))
-                {
-                    variableStore.SetInt(key, intValue);
-                }
-                else
-                {
-                    variableStore.SetString(key, value);
-                }
-
-                OnVariableChanged?.Invoke();
-            }
-        }
-
-        private void TriggerBranch(string branchData)
-        {
-            if (string.IsNullOrEmpty(branchData))
-            {
+                Debug.LogWarning("[StoryEventSystem] No variable store available.");
                 return;
             }
 
-            OnDialogueRequested?.Invoke(branchData);
+            if (bool.TryParse(value, out var boolValue))
+            {
+                variableStore.SetBool(key, boolValue);
+            }
+            else if (int.TryParse(value, out var intValue))
+            {
+                variableStore.SetInt(key, intValue);
+            }
+            else
+            {
+                variableStore.SetString(key, value);
+            }
+
+            OnVariableChanged?.Invoke();
         }
 
         public void TriggerManualEvent(StoryEventType eventType, string eventData)
@@ -331,23 +288,6 @@ namespace GameCreate3.StoryPlayer
             };
 
             TriggerEvent(manualEvent, -1);
-        }
-
-        public void PlayVoiceOver(AudioClip clip)
-        {
-            if (voiceSource != null && clip != null)
-            {
-                voiceSource.clip = clip;
-                voiceSource.Play();
-            }
-        }
-
-        public void StopVoiceOver()
-        {
-            if (voiceSource != null)
-            {
-                voiceSource.Stop();
-            }
         }
     }
 }

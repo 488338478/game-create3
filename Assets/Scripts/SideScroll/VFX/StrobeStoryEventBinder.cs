@@ -23,7 +23,7 @@ namespace GameCreate3.SideScroll.VFX
         [Tooltip("挂在持久 GameObject 上时建议勾选 — 避免重复订阅。")]
         [SerializeField] private bool unsubscribeOnDisable = true;
 
-        private bool isSubscribed;
+        private StoryEventSystem boundInstance;
 
         private void OnEnable()
         {
@@ -42,18 +42,26 @@ namespace GameCreate3.SideScroll.VFX
 
         private void Subscribe()
         {
-            if (isSubscribed) return;
-            Debug.Log("[StrobeStoryEventBinder] 订阅 StoryEventSystem.OnPostProcessEffectRequested。");
-            StoryEventSystem.OnPostProcessEffectRequested += HandleEffect;
-            isSubscribed = true;
+            var instance = StoryEventSystem.Active;
+            if (instance == null || instance == boundInstance) return;
+            Unsubscribe();
+            boundInstance = instance;
+            boundInstance.OnPostProcessEffectRequested += HandleEffect;
         }
 
         private void Unsubscribe()
         {
-            if (!isSubscribed) return;
-            Debug.Log("[StrobeStoryEventBinder] 取消订阅 StoryEventSystem.OnPostProcessEffectRequested。");
-            StoryEventSystem.OnPostProcessEffectRequested -= HandleEffect;
-            isSubscribed = false;
+            if (boundInstance == null) return;
+            boundInstance.OnPostProcessEffectRequested -= HandleEffect;
+            boundInstance = null;
+        }
+
+        private void Update()
+        {
+            if (boundInstance == null && StoryEventSystem.Active != null)
+            {
+                Subscribe();
+            }
         }
 
         private void HandleEffect(string eventData)

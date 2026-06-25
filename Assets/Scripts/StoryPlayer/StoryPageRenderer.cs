@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 namespace GameCreate3.StoryPlayer
 {
@@ -26,6 +27,10 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private RectTransform textContainer;
         [SerializeField] private CanvasGroup textGroup;
 
+        [Header("Video")]
+        [SerializeField] private VideoPlayer videoPlayer;
+        [SerializeField] private RawImage videoRawImage;
+
         [Header("Effects")]
         [SerializeField] private CanvasGroup fadeOverlay;
         [SerializeField] private RectTransform effectContainer;
@@ -36,6 +41,8 @@ namespace GameCreate3.StoryPlayer
 
         private bool isReady;
         private bool isRendering;
+        private bool isVideoPlaying;
+        private bool videoErrorOccurred;
         private CancellationTokenSource renderCts;
         private float playbackSpeed = 1f;
         private int currentTextBlockIndex;
@@ -47,6 +54,7 @@ namespace GameCreate3.StoryPlayer
         private TextStyleState defaultSpeakerStyle;
         private TextStyleState defaultContentStyle;
         private TMP_FontAsset activeSequenceFont;
+        private IAudioService audioService;
 
         public bool IsReady => isReady;
         public bool IsRendering => isRendering;
@@ -73,6 +81,11 @@ namespace GameCreate3.StoryPlayer
             CaptureDefaultTextState();
             ClearAllContent();
             SetAllAlpha(0f);
+        }
+
+        public void SetAudioService(IAudioService audio)
+        {
+            audioService = audio;
         }
 
         public void Cleanup()
@@ -104,8 +117,17 @@ namespace GameCreate3.StoryPlayer
 
             try
             {
-                await RenderBackgroundAsync(page, renderCts.Token);
-                await RenderForegroundAsync(page, renderCts.Token);
+                if (page.IsVideoPage)
+                {
+                    await RenderVideoAsync(page, renderCts.Token);
+                }
+                else
+                {
+                    StopVideo();
+                    await RenderBackgroundAsync(page, renderCts.Token);
+                    await RenderForegroundAsync(page, renderCts.Token);
+                }
+
                 await RenderTextBlocksAsync(page, renderCts.Token);
                 await RenderElementsAsync(page, renderCts.Token);
 
@@ -127,6 +149,11 @@ namespace GameCreate3.StoryPlayer
 
         public void PrepareBackground(StoryPage page)
         {
+            if (!page.IsVideoPage)
+            {
+                StopVideo();
+            }
+
             ClearTextContent();
 
             if (backgroundImage != null)
@@ -161,6 +188,11 @@ namespace GameCreate3.StoryPlayer
 
         public bool RequestInput()
         {
+            if (isVideoPlaying)
+            {
+                return true;
+            }
+
             if (isTypewriterPlaying)
             {
                 SkipCurrentAnimation();
@@ -177,8 +209,20 @@ namespace GameCreate3.StoryPlayer
             return false;
         }
 
+        private void SkipVideo()
+        {
+            isVideoPlaying = false;
+            StopVideo();
+        }
+
         public void SkipCurrentAnimation()
         {
+            if (isVideoPlaying)
+            {
+                SkipVideo();
+                return;
+            }
+
             if (isTypewriterPlaying && contentLabel != null)
             {
                 contentLabel.text = currentFullText;
@@ -197,6 +241,121 @@ namespace GameCreate3.StoryPlayer
             EnsureDefaultTextStateCaptured();
             activeSequenceFont = fontAsset;
             ApplyActiveSequenceFont();
+        }
+
+        private async Task RenderVideoAsync(StoryPage page, CancellationToken ct)
+        {
+            if (videoPlayer == null || videoRawImage == null || page.VideoClip == null)
+            {
+                return;
+            }
+
+            videoPlayer.Stop();
+            videoPlayer.clip = page.VideoClip;
+            videoPlayer.isLooping = page.LoopVideo;
+            videoPlayer.playbackSpeed = page.VideoPlaybackSpeed * playbackSpeed;
+
+            videoPlayer.errorReceived += OnVideoError;
+            videoErrorOccurred = false;
+
+            videoPlayer.Prepare();
+
+            var prepareTimeout = 5f;
+            var elapsed = 0f;
+            while (!videoPlayer.isPrepared && !videoErrorOccurred)
+            {
+                ct.ThrowIfCancellationRequested();
+                elapsed += Time.deltaTime;
+                if (elapsed > prepareTimeout)
+                {
+                    Debug.LogWarning($"[StoryPageRenderer] VideoPlayer prepare timeout: {page.VideoClip.name}");
+                    videoPlayer.errorReceived -= OnVideoError;
+                    return;
+                }
+                await Task.Yield();
+            }
+
+            if (videoErrorOccurred)
+            {
+                videoPlayer.errorReceived -= OnVideoError;
+                return;
+            }
+
+            var renderTexture = videoPlayer.targetTexture;
+            if (renderTexture == null || renderTexture.width != (int)page.VideoClip.width
+                || renderTexture.height != (int)page.VideoClip.height)
+            {
+                if (renderTexture != null) renderTexture.Release();
+                renderTexture = new RenderTexture(
+                    (int)page.VideoClip.width,
+                    (int)page.VideoClip.height,
+                    0);
+                videoPlayer.targetTexture = renderTexture;
+            }
+
+            videoRawImage.texture = renderTexture;
+            videoRawImage.enabled = true;
+            isVideoPlaying = true;
+
+            if (backgroundImage != null)
+            {
+                backgroundImage.color = Color.clear;
+            }
+
+            videoPlayer.Play();
+
+            if (!page.LoopVideo)
+            {
+                // Wait for VideoPlayer to actually start (up to 1 second)
+                var startTimeout = 1f;
+                elapsed = 0f;
+                while (!videoPlayer.isPlaying && isVideoPlaying && !videoErrorOccurred)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    elapsed += Time.deltaTime;
+                    if (elapsed > startTimeout) break;
+                    await Task.Yield();
+                }
+
+                // Wait for playback to finish
+                while (videoPlayer.isPlaying && isVideoPlaying && !videoErrorOccurred)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    await Task.Yield();
+                }
+
+                if (videoRawImage != null)
+                {
+                    videoRawImage.enabled = false;
+                }
+            }
+
+            videoPlayer.errorReceived -= OnVideoError;
+            isVideoPlaying = false;
+        }
+
+        private void OnVideoError(VideoPlayer source, string message)
+        {
+            Debug.LogError($"[StoryPageRenderer] VideoPlayer error: {message}");
+            videoErrorOccurred = true;
+            isVideoPlaying = false;
+        }
+
+        private void StopVideo()
+        {
+            isVideoPlaying = false;
+
+            if (videoPlayer != null)
+            {
+                videoPlayer.Stop();
+                videoPlayer.clip = null;
+            }
+
+            if (videoRawImage != null)
+            {
+                videoRawImage.texture = null;
+                videoRawImage.enabled = false;
+            }
         }
 
         private async Task RenderBackgroundAsync(StoryPage page, CancellationToken ct)
@@ -449,7 +608,7 @@ namespace GameCreate3.StoryPlayer
             switch (element.ElementType)
             {
                 case StoryElementType.Background:
-                    if (backgroundImage != null)
+                    if (backgroundImage != null && element.Image != null)
                     {
                         backgroundImage.sprite = element.Image;
                         await PlayElementAnimationAsync(backgroundImage, element, ct);
@@ -457,7 +616,7 @@ namespace GameCreate3.StoryPlayer
                     break;
 
                 case StoryElementType.Character:
-                    if (foregroundImage != null)
+                    if (foregroundImage != null && element.Image != null)
                     {
                         foregroundImage.sprite = element.Image;
                         await PlayElementAnimationAsync(foregroundImage, element, ct);
@@ -476,8 +635,7 @@ namespace GameCreate3.StoryPlayer
                 case StoryElementType.Audio:
                     if (element.AudioClip != null)
                     {
-                        var audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
-                        audioSource.PlayOneShot(element.AudioClip);
+                        audioService?.PlaySfx(element.AudioClip);
                     }
                     break;
             }
@@ -610,6 +768,8 @@ namespace GameCreate3.StoryPlayer
 
         private void ClearAllContent()
         {
+            StopVideo();
+
             if (backgroundImage != null)
             {
                 backgroundImage.sprite = null;

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Video;
 
 namespace GameCreate3.StoryPlayer
 {
@@ -70,6 +71,9 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private string pageId;
         [SerializeField] private StoryPageType pageType = StoryPageType.Mixed;
         [SerializeField] private Sprite backgroundImage;
+        [SerializeField] private VideoClip videoClip;
+        [SerializeField] private bool loopVideo;
+        [SerializeField] private float videoPlaybackSpeed = 1f;
         [SerializeField] private Sprite foregroundImage;
         [SerializeField] private List<StoryTextBlock> textBlocks = new List<StoryTextBlock>();
         [SerializeField] private float displayDuration = -1f;
@@ -84,6 +88,10 @@ namespace GameCreate3.StoryPlayer
         public string PageId => pageId;
         public StoryPageType PageType => pageType;
         public Sprite BackgroundImage => backgroundImage;
+        public VideoClip VideoClip => videoClip;
+        public bool LoopVideo => loopVideo;
+        public float VideoPlaybackSpeed => videoPlaybackSpeed;
+        public bool IsVideoPage => videoClip != null;
         public Sprite ForegroundImage => foregroundImage;
         public IReadOnlyList<StoryTextBlock> TextBlocks => textBlocks;
         public float DisplayDuration => displayDuration;
@@ -109,7 +117,8 @@ namespace GameCreate3.StoryPlayer
         Static,
         Text,
         CG,
-        Mixed
+        Mixed,
+        Video
     }
 
     [Serializable]

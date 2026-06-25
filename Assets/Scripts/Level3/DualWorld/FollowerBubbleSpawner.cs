@@ -13,86 +13,80 @@ namespace GameCreate3.Level3
         [Header("Bubble Prefab")]
         [SerializeField] private GameObject bubblePrefab;
 
-        [Header("Spawn Rules")]
-        [Tooltip("每 N 粉丝生成一个气泡")]
-        [SerializeField] private int followersPerBubble = 100;
-        [SerializeField] private int maxBubbles = 20;
-        [SerializeField] private float spawnInterval = 0.05f;
+        [Header("Images")]
+        [SerializeField] private Sprite[] gainSprites;
+        [SerializeField] private Sprite[] lossSprites;
+        [SerializeField] private Sprite[] autoSprites;
 
-        [Header("Bubble Animation")]
-        [SerializeField] private float floatDistance = 60f;
+        [Header("Animation")]
+        [SerializeField] private float floatDistance = 80f;
         [SerializeField] private float lifetime = 1.2f;
-        [SerializeField] private Color gainColor = new Color(1f, 0.4f, 0.5f, 1f);
-        [SerializeField] private Color lossColor = new Color(0.5f, 0.5f, 0.5f, 1f);
-        [SerializeField] private int fontSize = 24;
 
-        private Canvas parentCanvas;
+        private bool autoActive;
+        private float autoTimer;
 
-        private void Awake()
+        public void SetAutoActive(bool active) => autoActive = active;
+
+        private void Update()
         {
-            parentCanvas = GetComponentInParent<Canvas>(true);
+            if (!autoActive || autoSprites == null || autoSprites.Length == 0) return;
+
+            autoTimer += Time.deltaTime;
+            if (autoTimer >= 1f)
+            {
+                autoTimer -= 1f;
+                SpawnOne(autoSprites);
+            }
         }
 
         public void SpawnBubbles(int delta)
         {
-            if (delta == 0 || spawnCenter == null || bubblePrefab == null) return;
-            StartCoroutine(SpawnSequence(delta));
+            if (delta == 0) return;
+            var sprites = delta > 0 ? gainSprites : lossSprites;
+            SpawnOne(sprites);
         }
 
-        private IEnumerator SpawnSequence(int delta)
+        private void SpawnOne(Sprite[] sprites)
         {
-            var absDelta = Mathf.Abs(delta);
-            var count = Mathf.Clamp(absDelta / followersPerBubble, 1, maxBubbles);
-            var isGain = delta > 0;
-            var perBubbleValue = absDelta / count;
-            var prefix = isGain ? "+" : "-";
+            if (spawnCenter == null || bubblePrefab == null) return;
 
-            for (int i = 0; i < count; i++)
+            var angle = Random.Range(0f, Mathf.PI * 2f);
+            var offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * spawnRadius;
+
+            var bubble = Instantiate(bubblePrefab, spawnCenter);
+            var rt = bubble.GetComponent<RectTransform>();
+            rt.anchoredPosition = offset;
+            rt.localScale = Vector3.one;
+
+            var img = bubble.GetComponent<Image>();
+            if (img != null && sprites != null && sprites.Length > 0)
             {
-                var angle = Random.Range(0f, Mathf.PI * 2f);
-                var offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * spawnRadius;
-
-                var bubble = Instantiate(bubblePrefab, spawnCenter);
-                var rt = bubble.GetComponent<RectTransform>();
-                rt.anchoredPosition = offset;
-
-                var text = bubble.GetComponentInChildren<Text>();
-                if (text != null)
-                {
-                    text.text = $"{prefix}{perBubbleValue}";
-                    text.color = isGain ? gainColor : lossColor;
-                    text.fontSize = fontSize;
-                }
-
-                StartCoroutine(AnimateBubble(rt, text, offset));
-
-                if (spawnInterval > 0f && i < count - 1)
-                    yield return new WaitForSeconds(spawnInterval);
+                img.sprite = sprites[Random.Range(0, sprites.Length)];
+                img.SetNativeSize();
             }
+
+            StartCoroutine(AnimateBubble(rt, img, offset));
         }
 
-        private IEnumerator AnimateBubble(RectTransform rt, Text text, Vector2 startPos)
+        private IEnumerator AnimateBubble(RectTransform rt, Image img, Vector2 startPos)
         {
             var elapsed = 0f;
-            var startAlpha = text != null ? text.color.a : 1f;
-            var direction = (startPos.normalized + Vector2.up).normalized;
 
             while (elapsed < lifetime)
             {
                 elapsed += Time.deltaTime;
                 var t = elapsed / lifetime;
 
-                rt.anchoredPosition = startPos + direction * (floatDistance * t);
+                rt.anchoredPosition = startPos + Vector2.up * (floatDistance * t);
 
-                if (text != null)
+                if (img != null)
                 {
-                    var c = text.color;
-                    c.a = startAlpha * (1f - t * t);
-                    text.color = c;
+                    var c = img.color;
+                    c.a = 1f - t * t;
+                    img.color = c;
                 }
 
-                var scale = 1f + 0.2f * Mathf.Sin(t * Mathf.PI);
-                rt.localScale = Vector3.one * scale;
+                rt.localScale = Vector3.one * (1f + 0.15f * Mathf.Sin(t * Mathf.PI));
 
                 yield return null;
             }

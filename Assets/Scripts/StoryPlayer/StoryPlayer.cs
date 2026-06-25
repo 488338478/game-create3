@@ -9,9 +9,9 @@ namespace GameCreate3.StoryPlayer
     {
         [Header("Dependencies")]
         [SerializeField] private StoryVariableStore variableStore;
-        [SerializeField] private AudioSource audioSource;
-        [SerializeField] private StoryAudioAdapter audioAdapter;
         [SerializeField] private StoryEventSystem eventSystem;
+
+        private IAudioService audioService;
 
         [Header("Settings")]
         [SerializeField] private StoryPlaybackMode defaultPlaybackMode = StoryPlaybackMode.ClickToAdvance;
@@ -42,44 +42,29 @@ namespace GameCreate3.StoryPlayer
 
         private bool initialized;
 
-        private void Awake()
-        {
-            // Prefab 化 fallback —— 如果 7 个剧情组件都挂在同一 GameObject 上（rig prefab 模式），
-            // Awake 时自动 GetComponent 把 IStoryPageRenderer / ITransitionController 兜起来，
-            // 不需要外部 Bootstrap 串 Initialize 链。
-            if (initialized) return;
-            if (pageRenderer == null) pageRenderer = GetComponent<IStoryPageRenderer>();
-            if (transitionController == null) transitionController = GetComponent<ITransitionController>();
-            if (pageRenderer != null && transitionController != null)
-            {
-                Initialize(pageRenderer, transitionController);
-            }
-        }
-
-        public void Initialize(IStoryPageRenderer renderer, ITransitionController transition)
+        public void Initialize(
+            IStoryPageRenderer renderer,
+            ITransitionController transition,
+            IAudioService audio = null,
+            StoryEventSystem events = null,
+            StoryVariableStore store = null)
         {
             if (initialized) return;
             initialized = true;
             pageRenderer = renderer ?? throw new ArgumentNullException(nameof(renderer));
             transitionController = transition ?? throw new ArgumentNullException(nameof(transition));
+            audioService = audio;
+
+            if (events != null) eventSystem = events;
+            if (store != null) variableStore = store;
+
+            if (eventSystem != null)
+            {
+                eventSystem.Initialize(audioService, variableStore);
+            }
 
             pageRenderer.OnRenderComplete += HandleRenderComplete;
             pageRenderer.OnInputRequested += HandleInputRequested;
-
-            if (audioAdapter == null)
-            {
-                audioAdapter = GetComponent<StoryAudioAdapter>();
-            }
-
-            if (eventSystem == null)
-            {
-                eventSystem = GetComponent<StoryEventSystem>();
-            }
-
-            if (audioAdapter != null && eventSystem != null)
-            {
-                audioAdapter.BindEventSystem(eventSystem);
-            }
         }
 
         private void OnDestroy()
@@ -172,7 +157,7 @@ namespace GameCreate3.StoryPlayer
             pageRenderer?.SetSequenceFont(null);
             pageRenderer?.SetPlaybackSpeed(1f);
             eventSystem?.StopEventTracking();
-            audioAdapter?.StopBgm();
+            audioService?.StopBgm();
 
             currentSequence = null;
             currentPageIndex = -1;
@@ -204,12 +189,20 @@ namespace GameCreate3.StoryPlayer
 
         public void NextPage()
         {
-            if (currentState != StoryPlayerState.WaitingInput)
+            if (currentState == StoryPlayerState.WaitingInput)
             {
+                inputWaitTcs?.TrySetResult(true);
                 return;
             }
 
-            inputWaitTcs?.TrySetResult(true);
+            if (currentState == StoryPlayerState.PlayingPage && CanSkip)
+            {
+                var page = GetCurrentPage();
+                if (page != null && page.IsVideoPage)
+                {
+                    pageRenderer?.SkipCurrentAnimation();
+                }
+            }
         }
 
         private async Task PlaySequenceAsync(CancellationToken ct)
@@ -292,12 +285,18 @@ namespace GameCreate3.StoryPlayer
 
             SetState(StoryPlayerState.PlayingPage);
 
-            audioAdapter?.ApplyPageAudioConfig(nextPage.AudioConfig);
+            audioService?.ApplyPageAudioConfig(nextPage.AudioConfig);
             eventSystem?.StartEventTracking(nextPage);
 
             await pageRenderer.RenderPageAsync(nextPage);
 
             if (isSkipping)
+            {
+                return;
+            }
+
+            // 视频页：RenderVideoAsync 已经等到视频播完，不再额外等待
+            if (nextPage.IsVideoPage && !nextPage.LoopVideo)
             {
                 return;
             }
@@ -308,13 +307,11 @@ namespace GameCreate3.StoryPlayer
 
             if (playbackMode == StoryPlaybackMode.ClickToAdvance)
             {
-                // 默认等点击；若某页显式给了 DisplayDuration > 0，则该页按秒自动翻
                 shouldAutoAdvance = nextPage.DisplayDuration > 0f;
                 autoAdvanceDelay = nextPage.DisplayDuration;
             }
             else
             {
-                // AutoAdvance：默认按秒自动翻；某页 WaitForInput=true 时强制等点击
                 shouldAutoAdvance = !nextPage.WaitForInput;
                 autoAdvanceDelay = nextPage.DisplayDuration > 0f
                     ? nextPage.DisplayDuration

@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using GameCreate3.Core.SceneRouting;
 
 namespace GameCreate3.StoryPlayer
@@ -8,7 +7,7 @@ namespace GameCreate3.StoryPlayer
     public sealed class StoryFlowBridge : MonoBehaviour
     {
         [Header("Flow Controller")]
-        [SerializeField] private FlowController flowController;
+        [SerializeField] private FlowController flowControllerRef;
 
         [Header("Settings")]
         [SerializeField] private bool autoBindToStoryPlayer = true;
@@ -16,6 +15,7 @@ namespace GameCreate3.StoryPlayer
         [SerializeField] private string mainMenuSceneName = "MainMenu";
         [SerializeField] private string gallerySceneName = "CGGallery";
 
+        private IFlowController flowController;
         private StoryPlayer storyPlayer;
 
         public event Action<string> OnLevelEnterRequested;
@@ -37,16 +37,21 @@ namespace GameCreate3.StoryPlayer
 
         private void Initialize()
         {
-            if (flowController == null)
+            if (flowController == null && flowControllerRef != null)
             {
-                flowController = FindObjectOfType<FlowController>();
+                flowController = flowControllerRef;
             }
 
             if (autoBindToStoryPlayer)
             {
-                storyPlayer = FindObjectOfType<StoryPlayer>();
+                storyPlayer = GetComponentInParent<StoryPlayer>();
                 BindStoryPlayer(storyPlayer);
             }
+        }
+
+        public void SetFlowController(IFlowController controller)
+        {
+            flowController = controller;
         }
 
         private void Cleanup()

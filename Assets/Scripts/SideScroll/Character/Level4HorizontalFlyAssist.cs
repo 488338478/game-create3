@@ -37,6 +37,14 @@ namespace GameCreate3
 
         public bool IsFlightModeActive => isFlightModeActive;
 
+        public void ResetFlightState()
+        {
+            if (!isFlightModeActive || targetBody == null) return;
+            flightYVelocity = 0f;
+            targetBody.gravityScale = 0f;
+            targetBody.velocity = new Vector2(autoMoveSpeed, 0f);
+        }
+
         private void Awake()
         {
             targetBody = targetBody != null ? targetBody : GetComponent<Rigidbody2D>();

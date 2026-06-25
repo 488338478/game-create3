@@ -47,7 +47,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level/Level4Cutscene.unity
     guid: 907d445e1f89aa4459a9bf6fac198628
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Level/Ending.unity
     guid: af6bdee8d51bdd342a6e25d355578df8
   - enabled: 1

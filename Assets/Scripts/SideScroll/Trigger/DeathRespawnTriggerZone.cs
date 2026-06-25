@@ -155,12 +155,18 @@ namespace GameCreate3
                 body.angularVelocity = 0f;
             }
 
+            var flyAssist = player.GetComponent<Level4HorizontalFlyAssist>();
+            if (flyAssist != null && flyAssist.IsFlightModeActive)
+            {
+                flyAssist.ResetFlightState();
+            }
+
             for (var i = 0; i < colliders.Length; i++)
             {
                 colliders[i].enabled = colliderStates[i];
             }
 
-            player.SetInputEnabled(previousInputEnabled);
+            player.SetInputEnabled(true);
             // 接管结束：解冻后再播放重生动画，之后交还给正常驱动。
             if (animatorDriver != null)
                 animatorDriver.SetAnimationFrozen(false);

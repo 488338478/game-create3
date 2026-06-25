@@ -1054,11 +1054,64 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionAmplitude: {x: 4, y: 4, z: 0}
   positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  chaosAmount: 0.277
+  positionSmoothTime: 1
   randomizePhaseOnEnable: 1
+--- !u!114 &418041302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 418041294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e80432ab83fdbb4fa628e3bf4d2e2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stunTrigger: Stun
+  stunDuration: 0.8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  hitSfxClip: {fileID: 8300000, guid: 1da0ec48678fa6e41b32d67511b524e5, type: 3}
+--- !u!58 &418041303
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 418041294}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: -0.0000013113022}
+  serializedVersion: 2
+  m_Radius: 1.3
 --- !u!4 &466422323 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7804889481516318588, guid: 5c57ee0e27b1aea4ab53ac7a4a84d198, type: 3}
@@ -1609,11 +1662,64 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionAmplitude: {x: 4, y: 4, z: 0}
   positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  chaosAmount: 0.277
+  positionSmoothTime: 1
   randomizePhaseOnEnable: 1
+--- !u!114 &571433254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571433246}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e80432ab83fdbb4fa628e3bf4d2e2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stunTrigger: Stun
+  stunDuration: 0.8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  hitSfxClip: {fileID: 8300000, guid: 1da0ec48678fa6e41b32d67511b524e5, type: 3}
+--- !u!58 &571433255
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571433246}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: -0.00000017881393}
+  serializedVersion: 2
+  m_Radius: 1.3
 --- !u!4 &612104880 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7804889481516318588, guid: 5c57ee0e27b1aea4ab53ac7a4a84d198, type: 3}
@@ -1823,11 +1929,64 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionAmplitude: {x: 4, y: 4, z: 0}
   positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  chaosAmount: 0.277
+  positionSmoothTime: 1
   randomizePhaseOnEnable: 1
+--- !u!114 &993727523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993727515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e80432ab83fdbb4fa628e3bf4d2e2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stunTrigger: Stun
+  stunDuration: 0.8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  hitSfxClip: {fileID: 8300000, guid: 1da0ec48678fa6e41b32d67511b524e5, type: 3}
+--- !u!58 &993727524
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993727515}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: -0.0000009536743}
+  serializedVersion: 2
+  m_Radius: 1.3
 --- !u!1 &1009451038
 GameObject:
   m_ObjectHideFlags: 0
@@ -1963,11 +2122,64 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionAmplitude: {x: 4, y: 4, z: 0}
   positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  chaosAmount: 0.277
+  positionSmoothTime: 1
   randomizePhaseOnEnable: 1
+--- !u!114 &1016379205
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016379197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e80432ab83fdbb4fa628e3bf4d2e2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stunTrigger: Stun
+  stunDuration: 0.8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  hitSfxClip: {fileID: 8300000, guid: 1da0ec48678fa6e41b32d67511b524e5, type: 3}
+--- !u!58 &1016379206
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1016379197}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0.0000038146973, y: -0.00000071525574}
+  serializedVersion: 2
+  m_Radius: 1.3
 --- !u!1 &1039585356
 GameObject:
   m_ObjectHideFlags: 0
@@ -2563,6 +2775,10 @@ PrefabInstance:
       value: -0.14463103
       objectReference: {fileID: 0}
     - target: {fileID: 2096774280041968630, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2096774280041968630, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
       value: 2.32
       objectReference: {fileID: 0}
@@ -2650,6 +2866,10 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: -0.18171364
       objectReference: {fileID: 0}
+    - target: {fileID: 3157961414717169236, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3754966951572453204, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -2702,6 +2922,10 @@ PrefabInstance:
       propertyPath: m_Offset.y
       value: -0.25526005
       objectReference: {fileID: 0}
+    - target: {fileID: 4777436664742136983, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4787871855760272750, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_Layer
       value: 3
@@ -2744,7 +2968,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4880713794010467139, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880713794010467139, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5463437045701336783, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_Layer
@@ -2805,6 +3033,10 @@ PrefabInstance:
     - target: {fileID: 6883638743938075993, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_Offset.y
       value: -0.16888201
+      objectReference: {fileID: 0}
+    - target: {fileID: 6883638743938075993, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6883638743938075993, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
@@ -2869,6 +3101,10 @@ PrefabInstance:
     - target: {fileID: 8130171858104934723, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_Offset.y
       value: -0.020143032
+      objectReference: {fileID: 0}
+    - target: {fileID: 8130171858104934723, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8879299352790650730, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       propertyPath: m_LocalScale.x
@@ -2944,18 +3180,48 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2676987434205437948, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 571433250}
+    - targetCorrespondingSourceObject: {fileID: 2676987434205437948, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 571433254}
+    - targetCorrespondingSourceObject: {fileID: 2676987434205437948, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 571433255}
     - targetCorrespondingSourceObject: {fileID: 1848886698783068413, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 993727519}
+    - targetCorrespondingSourceObject: {fileID: 1848886698783068413, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 993727523}
+    - targetCorrespondingSourceObject: {fileID: 1848886698783068413, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 993727524}
     - targetCorrespondingSourceObject: {fileID: 4787871855760272750, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1840227317}
+    - targetCorrespondingSourceObject: {fileID: 4787871855760272750, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1840227321}
+    - targetCorrespondingSourceObject: {fileID: 4787871855760272750, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1840227322}
     - targetCorrespondingSourceObject: {fileID: 6548590986444437092, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 418041298}
+    - targetCorrespondingSourceObject: {fileID: 6548590986444437092, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 418041302}
+    - targetCorrespondingSourceObject: {fileID: 6548590986444437092, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 418041303}
     - targetCorrespondingSourceObject: {fileID: 468389074376181546, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1016379201}
+    - targetCorrespondingSourceObject: {fileID: 468389074376181546, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1016379205}
+    - targetCorrespondingSourceObject: {fileID: 468389074376181546, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1016379206}
     - targetCorrespondingSourceObject: {fileID: 3754966951572453204, guid: 4c183f72c79a8a74ca420154513b27f8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1287864363}
@@ -3302,10 +3568,10 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
-  positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  positionAmplitude: {x: 1, y: 1, z: 0}
+  positionSpeed: 1
+  chaosAmount: 0.215
+  positionSmoothTime: 2
   randomizePhaseOnEnable: 1
 --- !u!1 &1342827819
 GameObject:
@@ -3773,11 +4039,64 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionAmplitude: {x: 4, y: 4, z: 0}
   positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  chaosAmount: 0.277
+  positionSmoothTime: 1
   randomizePhaseOnEnable: 1
+--- !u!114 &1840227321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1840227313}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e80432ab83fdbb4fa628e3bf4d2e2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stunTrigger: Stun
+  stunDuration: 0.8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  hitSfxClip: {fileID: 8300000, guid: 1da0ec48678fa6e41b32d67511b524e5, type: 3}
+--- !u!58 &1840227322
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1840227313}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0.00000023841858}
+  serializedVersion: 2
+  m_Radius: 1.3
 --- !u!1001 &1916814612
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4092,11 +4411,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.7897209
+      value: 0.789714
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.54787064
+      value: -0.5478606
       objectReference: {fileID: 0}
     - target: {fileID: 2566390635703135686, guid: 6c65d716820b55d4e951becf272c9c74, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4601,6 +4920,8 @@ GameObject:
   - component: {fileID: 2135817451}
   - component: {fileID: 2135817450}
   - component: {fileID: 2135817449}
+  - component: {fileID: 2135817452}
+  - component: {fileID: 2135817453}
   m_Layer: 3
   m_Name: musicnote_1 (2)
   m_TagString: Untagged
@@ -4676,10 +4997,10 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   animatePosition: 1
-  positionAmplitude: {x: 0.3, y: 0.3, z: 0}
+  positionAmplitude: {x: 4, y: 4, z: 0}
   positionSpeed: 0.3
-  chaosAmount: 0
-  positionSmoothTime: 0.5
+  chaosAmount: 0.277
+  positionSmoothTime: 1
   randomizePhaseOnEnable: 1
 --- !u!61 &2135817450
 BoxCollider2D:
@@ -4778,6 +5099,59 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &2135817452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2135817447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e80432ab83fdbb4fa628e3bf4d2e2d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stunTrigger: Stun
+  stunDuration: 0.8
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  hitSfxClip: {fileID: 8300000, guid: 1da0ec48678fa6e41b32d67511b524e5, type: 3}
+--- !u!58 &2135817453
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2135817447}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0.0000038146973, y: -0.0000021457672}
+  serializedVersion: 2
+  m_Radius: 1.3
 --- !u!1 &2147001000
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,6 +11,7 @@ namespace GameCreate3.Level3
         [SerializeField] private int passiveGainPerSecond = 10;
         [SerializeField] private int parryGain = 800;
         [SerializeField] private int hitPenalty = 200;
+        [SerializeField] private int hitPenaltyMultiplier = 2;
 
         [Header("Thresholds")]
         [SerializeField] private int[] thresholds = { 2000, 4000, 6000, 8000 };
@@ -66,7 +67,7 @@ namespace GameCreate3.Level3
         public void OnPlayerHit()
         {
             if (!isActive) return;
-            SubtractFollowers(hitPenalty);
+            SubtractFollowers(hitPenalty * hitPenaltyMultiplier);
         }
 
         public void OnSequenceComplete()

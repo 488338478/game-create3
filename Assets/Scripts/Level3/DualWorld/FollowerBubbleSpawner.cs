@@ -17,6 +17,7 @@ namespace GameCreate3.Level3
         [SerializeField] private Sprite[] gainSprites;
         [SerializeField] private Sprite[] lossSprites;
         [SerializeField] private Sprite[] autoSprites;
+        [SerializeField] private int lossAmountPerBubble = 200;
 
         [Header("Animation")]
         [SerializeField] private float floatDistance = 80f;
@@ -43,7 +44,13 @@ namespace GameCreate3.Level3
         {
             if (delta == 0) return;
             var sprites = delta > 0 ? gainSprites : lossSprites;
-            SpawnOne(sprites);
+            var spawnCount = 1;
+
+            if (delta < 0 && lossAmountPerBubble > 0)
+                spawnCount = Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(delta) / (float)lossAmountPerBubble));
+
+            for (var i = 0; i < spawnCount; i++)
+                SpawnOne(sprites);
         }
 
         private void SpawnOne(Sprite[] sprites)

@@ -40,6 +40,7 @@ namespace GameCreate3.Level3
         [SerializeField] private float spawnRateMultiplier = 1f;
         [SerializeField] private float maxSpawnRateMultiplier = 2.5f;
         [SerializeField] private float multiplierIncreasePerSecond = 0.02f;
+        [SerializeField] private float attackIntervalMultiplier = 2f;
 
         private SideScrollWorkspaceBase workspace;
         private readonly Queue<VerbalAttackProjectile> pool = new();
@@ -205,7 +206,8 @@ namespace GameCreate3.Level3
                     while (isSpawning && Time.time < waveEndTime)
                     {
                         SpawnProjectile(wave);
-                        yield return new WaitForSeconds(wave.spawnInterval / spawnRateMultiplier);
+                        var interval = (wave.spawnInterval * attackIntervalMultiplier) / spawnRateMultiplier;
+                        yield return new WaitForSeconds(interval);
                     }
                 }
             }

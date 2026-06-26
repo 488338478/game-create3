@@ -224,7 +224,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: defaultBgmClip
-      value:
+      value: 
       objectReference: {fileID: 8300000, guid: e936d26e562e6964caa943c873d0e8de, type: 3}
     - target: {fileID: 1959735943074390165, guid: 65018531ef8387841ba7d4be290969fc, type: 3}
       propertyPath: playBgmOnAwake
@@ -534,7 +534,7 @@ PrefabInstance:
     - target: {fileID: 5765397139828030918, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 74864d90c88698049b37c68de8496af8, type: 3}
+      objectReference: {fileID: 21300000, guid: 637c4bbbf323cf04384ef0bfd5b4da99, type: 3}
     - target: {fileID: 5765397139828030918, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -550,7 +550,7 @@ PrefabInstance:
     - target: {fileID: 5765397139908092739, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 74864d90c88698049b37c68de8496af8, type: 3}
+      objectReference: {fileID: 21300000, guid: 637c4bbbf323cf04384ef0bfd5b4da99, type: 3}
     - target: {fileID: 5765397139908092739, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -636,8 +636,12 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5765397139924633052, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -319
+      objectReference: {fileID: 0}
+    - target: {fileID: 5765397139924633052, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -354.99997
+      value: 31
       objectReference: {fileID: 0}
     - target: {fileID: 5765397139927417174, guid: ac6734a24bc69fe40a2651087a4cd0b0, type: 3}
       propertyPath: m_Color.a

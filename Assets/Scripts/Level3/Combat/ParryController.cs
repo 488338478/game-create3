@@ -76,15 +76,6 @@ namespace GameCreate3.Level3
                 if (activeWindowTimer <= 0f)
                 {
                     cooldownTimer = parryCooldown;
-                    if (parryHit)
-                    {
-                        workspace?.RaiseWorkspaceEvent(Level3Events.ParrySuccess);
-                        if (parryBurstPrefab != null)
-                        {
-                            var burst = Instantiate(parryBurstPrefab, PlayerCenter, Quaternion.identity);
-                            Destroy(burst, 0.5f);
-                        }
-                    }
                 }
             }
         }
@@ -111,6 +102,14 @@ namespace GameCreate3.Level3
                     var dir = ((Vector2)hit.transform.position - (Vector2)center).normalized;
                     projectile.Deflect(dir);
                     parryHit = true;
+
+                    // 立即触发格挡成功事件和特效
+                    workspace?.RaiseWorkspaceEvent(Level3Events.ParrySuccess);
+                    if (parryBurstPrefab != null)
+                    {
+                        var burst = Instantiate(parryBurstPrefab, PlayerCenter, Quaternion.identity);
+                        Destroy(burst, 0.5f);
+                    }
                 }
             }
         }
